@@ -100,6 +100,7 @@ hàng và một mức phí.
      │                          │                           │
  4.  ├── bấm "Lấy đơn hàng" ───►├── GET /salechannel ──────►│
      │                          │◄── danh sách kênh bán ────┤
+     │                          ├── GET /invoices ─────────►│
      │                          ├── GET /orders ───────────►│
      │                          │◄── đơn + saleChannelId ───┤
      │                          │                           │
@@ -149,6 +150,7 @@ giờ và mỗi lần đồng bộ đều xin mới, nên không có gì để h
 
 ```
 GET https://public.kiotapi.com/salechannel
+GET https://public.kiotapi.com/invoices?fromPurchaseDate=...&pageSize=100&currentItem=...
 GET https://public.kiotapi.com/orders?fromPurchaseDate=...&pageSize=100&currentItem=...
 
 Headers: Authorization: Bearer <token>
@@ -159,6 +161,21 @@ Headers: Authorization: Bearer <token>
 
 Gọi `/salechannel` trước để biết cửa hàng này đặt mã nào cho Shopee/Lazada/TikTok,
 rồi mới đếm đơn theo đúng mã đó.
+
+⚠️ **Phải đọc cả `/invoices` lẫn `/orders`.** KiotViet tách một lần bán thành hai
+chỗ, nằm ở đâu tuỳ đường nó đi vào:
+
+- **Hoá đơn** (`/invoices`) = bán xong. Bán lẻ tại quầy vào thẳng đây, không qua
+  đơn hàng. Kiểm chứng trên cửa hàng thật: `/orders` trả **0** trong khi
+  `/invoices` trả **46** đúng bằng doanh thu dashboard báo — chỉ đọc `/orders`
+  sẽ hiển thị nhầm là cửa hàng không bán được gì.
+- **Đơn hàng** (`/orders`) = đặt trước, chưa giao xong. **Đơn đồng bộ từ
+  Shopee/Lazada/TikTok về nằm ở đây trước**, chỉ thành hoá đơn sau khi giao —
+  chỉ đọc `/invoices` sẽ bỏ sót toàn bộ đơn đang trên đường, đúng phần tín hiệu
+  nhu cầu mà kế hoạch nhập hàng cần nhất.
+
+Khử trùng theo `orderCode`: hoá đơn xuất ra từ một đơn hàng có mang mã đơn gốc,
+nên một lần bán không bị đếm hai lần.
 
 Duyệt hết các trang; dừng khi một trang trả về ít hơn `pageSize` hoặc đã lấy đủ
 số `total` mà KiotViet báo.
@@ -193,7 +210,7 @@ Hệ số này thay thẳng phần seller tự khai. Thẻ kênh đổi nhãn sa
 | `app/services/channel_connectors.py` | Connector KiotViet: lấy token, đọc kênh bán, kéo đơn, phân loại theo kênh |
 | `app/services/channel_link.py` | Vòng đời kết nối, lưu/xoá liên kết, tính số đơn/ngày |
 | `app/models/channel_link.py` | Bảng `channel_connections` |
-| `alembic/versions/0002_channel_connections.py` | Migration |
+| `alembic/versions/0004_channel_connections.py` | Migration |
 | `app/schemas/channel_link.py` | Kiểu dữ liệu API |
 | `app/api/v1/endpoints/channel_link.py` | 4 endpoint |
 
@@ -260,6 +277,24 @@ như vậy, vì một nút bấm vào không thể hoàn tất thì không nên 
 | API kênh bán có thật | `GET public.kiotapi.com/salechannel` → `401` |
 | Backend gọi được tới KiotViet | Bấm Kết nối với khoá sai → KiotViet từ chối → app báo đúng chỗ cần sửa |
 
+### Đã chạy thật trên cửa hàng có dữ liệu
+
+| Bước | Kết quả |
+|---|---|
+| Lấy token | ✅ HTTP 200, token sống 86.400 giây |
+| Bấm "Kết nối" | ✅ `{"success":true,"retailer":"pizzaaddict"}` |
+| Bấm "Lấy đơn hàng" | ✅ **46 hoá đơn, 1.406.817.000₫** (24/06 → 08/08/2026) |
+| Đối chiếu dashboard KiotViet | ✅ Khớp — không phải số tự tạo |
+| Chảy vào Restock Planner | ✅ Hệ số cầu tính từ số đơn thật |
+| Số đo thắng phần tự khai | ✅ Đặt kênh = "không bán được" mà có dữ liệu thật thì vẫn giữ số thật |
+
+⚠️ **Cửa hàng thử nghiệm chưa nối sàn nào vào KiotViet**, nên cả 46 hoá đơn đang
+xếp vào **Cửa hàng riêng**. Đường ống đã thông và có dữ liệu chảy, nhưng để thấy
+đơn tách theo Shopee/Lazada/TikTok thì chủ shop phải nối gian hàng ở mục
+**Bán online → Kết nối sàn thương mại điện tử** trong KiotViet. Việc đó chỉ cần
+tài khoản người bán thường, **không cần tài khoản developer**, và **không phải
+sửa dòng code nào** — connector đọc `/salechannel` nên kênh mới tự hiện.
+
 ### Kiểm thử tự động
 
 | Kiểm thử | Kết quả |
@@ -272,10 +307,13 @@ như vậy, vì một nút bấm vào không thể hoàn tất thì không nên 
 | Token hết hạn giữa chừng | ✅ Ném lỗi, **không âm thầm đếm 0 đơn** |
 | Thiếu cấu hình | ✅ Chặn ngay, liệt kê biến còn thiếu |
 | Gửi đủ header `Retailer` + `Bearer` | ✅ |
+| Đọc cả `/invoices` lẫn `/orders`, khử trùng theo `orderCode` | ✅ Một đơn đã xuất hoá đơn chỉ đếm 1 lần; đơn đang giao vẫn được đếm |
 | Đơn hàng thật thay phần tự khai | ✅ Hệ số tính ra khớp phép tính tay 100% |
 | Regression 48 route toàn hệ thống | ✅ 0 lỗi 500 |
-| Bộ kiểm thử Restock Planner | ✅ 12.619 phép kiểm tra, 0 lỗi |
+| Bộ kiểm thử Restock Planner | ✅ 12.709 phép kiểm tra, 0 lỗi |
 | Frontend build + type-check | ✅ Sạch |
+| `alembic upgrade head` trên DB trắng | ✅ Chuỗi migration thẳng, đúng 1 head |
+| `mypy app` / `ruff check` | ✅ 112 file, 0 lỗi |
 
 ### Ghi chú cho nhóm
 
@@ -288,3 +326,8 @@ sẽ gặp lỗi này.
 container của dự án không chạy alembic lúc khởi động. Cách này **không tự thêm
 cột** khi schema đổi — nếu sau này thêm cột thì cần chạy migration hoặc tạo lại
 bảng.
+
+**Về số hiệu migration:** ban đầu đánh `0002` khi tách nhánh, đổi thành `0004`
+lúc gộp lại. Hai migration cùng nối tiếp `0001_initial` sẽ để lại **hai head**,
+và khi đó `alembic upgrade head` **từ chối chạy hoàn toàn** — kéo theo cả job
+test trên CI chết trước khi chạy test nào. Chuỗi migration phải luôn thẳng.
