@@ -185,7 +185,7 @@ export async function scoreChurn(input: {
 
 // --- Customer Journey Intelligence (Track 1, Đề 2 — bonus) ----------------
 export type JourneyEventType = "search" | "click" | "view" | "review" | "cart" | "purchase" | "livestream";
-export type JourneyEventInput = { type: JourneyEventType; category?: string; query?: string };
+export type JourneyEventInput = { type: JourneyEventType; category?: string; query?: string; ts?: number };
 export type NextAction = "checkout" | "add_to_cart" | "compare" | "keep_browsing" | "leave";
 export type FunnelStage = "awareness" | "consideration" | "intent" | "purchase";
 export type JourneyResult = {
@@ -194,6 +194,8 @@ export type JourneyResult = {
   funnel_stage: FunnelStage; engagement_score: number; nudge: string;
   top_category: string | null; category_breakdown: Record<string, number>;
   recommended_products: BackendProduct[]; reasoning: string;
+  session_duration_seconds: number | null; avg_dwell_seconds: number | null;
+  time_to_purchase_seconds: number | null; cart_abandoned: boolean | null;
 };
 export type JourneyResultMapped = Omit<JourneyResult, "recommended_products"> & { recommended_products: Product[] };
 
@@ -201,6 +203,14 @@ export async function analyzeJourney(events: JourneyEventInput[]): Promise<Journ
   const data = await post<JourneyResult>("/journey/", { events });
   if (!data) return null;
   return { ...data, recommended_products: data.recommended_products.map(mapProduct) };
+}
+
+/** Best-effort persistence of real tracked events (separate from analysis —
+ * never blocks or fails the analyze flow). Returns the count persisted, or
+ * null if unreachable/DEMO_MODE. */
+export async function trackJourneyEvents(sessionId: string, events: JourneyEventInput[]): Promise<number | null> {
+  const r = await post<{ persisted: number }>("/journey/events", { session_id: sessionId, events });
+  return r?.persisted ?? null;
 }
 
 // Journey — auto-load real sessions (analysis is the raw JourneyResult shape)
@@ -717,4 +727,34 @@ export async function syncChannel(): Promise<
 
 export async function disconnectChannel(): Promise<boolean> {
   return (await post<{ removed: boolean }>("/channel-link/disconnect", {})) !== null;
+}
+
+// --- Real review submission + moderation queue -----------------------------
+export type ReviewSubmitStatus = "published" | "pending" | "flagged" | "rejected";
+export type ReviewSubmitResult = { status: ReviewSubmitStatus; message: string; review: StoreReview | null };
+
+export async function submitStoreReview(
+  id: string, authorName: string, rating: number, text: string,
+): Promise<ReviewSubmitResult | null> {
+  return post<ReviewSubmitResult>(`/storefront/products/${encodeURIComponent(id)}/reviews`, {
+    author_name: authorName, rating, text,
+  });
+}
+
+export type ReviewQueueItem = {
+  id: number; product_id: string; product_name: string; author_name: string;
+  rating: number; text: string; status: ReviewSubmitStatus;
+  moderation_reason: string | null; moderation_confidence: number | null; created_at: string;
+};
+
+export async function getReviewQueue(): Promise<ReviewQueueItem[] | null> {
+  return get<ReviewQueueItem[]>("/storefront/reviews/queue");
+}
+
+export async function approveReview(id: number): Promise<{ id: number; status: string } | null> {
+  return post(`/storefront/reviews/${id}/approve`, {});
+}
+
+export async function rejectReview(id: number): Promise<{ id: number; status: string } | null> {
+  return post(`/storefront/reviews/${id}/reject`, {});
 }

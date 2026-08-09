@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Search, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { NAV_ITEMS } from "@/lib/nav";
+import { READY_NAV_ITEMS } from "@/lib/nav";
 import {
   CommandDialog,
   CommandInput,
@@ -68,8 +68,8 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
         className="ml-auto h-8 w-72 justify-start gap-2 px-3 text-text-muted"
       >
         <Search className="h-3.5 w-3.5" />
-        <span className="text-xs">Search…</span>
-        <CommandShortcut>⌘K</CommandShortcut>
+        <span className="text-xs">Tìm tính năng…</span>
+        <CommandShortcut>Ctrl K</CommandShortcut>
       </Button>
 
       {/* User menu placeholder */}
@@ -79,19 +79,18 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
 
       {mounted ? (
         <CommandDialog open={open} onOpenChange={setOpen}>
-          <CommandInput placeholder="Jump to a feature…" />
+          <CommandInput placeholder="Tìm tính năng…" />
           <CommandList>
-            <CommandEmpty>No results.</CommandEmpty>
-            <CommandGroup heading="Navigation">
-              {NAV_ITEMS.map((item) => (
+            <CommandEmpty>Không tìm thấy.</CommandEmpty>
+            <CommandGroup heading="Điều hướng">
+              {READY_NAV_ITEMS.map((item) => (
                 <CommandItem
                   key={item.slug}
-                  value={`${item.label} ${item.slug} #${item.id}`}
+                  value={`${item.label} ${item.slug}`}
                   onSelect={() => runCommand(item.href)}
                 >
                   <item.icon className="h-3.5 w-3.5 text-text-muted" />
                   <span>{item.label}</span>
-                  <CommandShortcut>#{item.id}</CommandShortcut>
                 </CommandItem>
               ))}
             </CommandGroup>

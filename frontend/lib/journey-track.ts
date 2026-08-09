@@ -34,6 +34,23 @@ export function getTracked(): TrackedEvent[] {
   }
 }
 
+const SESSION_ID_KEY = "area303:journey:sid";
+
+/** Stable per-browser session id, used to group persisted events server-side. */
+export function getSessionId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let sid = localStorage.getItem(SESSION_ID_KEY);
+    if (!sid) {
+      sid = crypto.randomUUID();
+      localStorage.setItem(SESSION_ID_KEY, sid);
+    }
+    return sid;
+  } catch {
+    return "";
+  }
+}
+
 export function clearTracked(): void {
   if (typeof window === "undefined") return;
   try {

@@ -59,6 +59,22 @@ async def test_health_endpoint_returns_envelope():
 
 
 @pytest.mark.asyncio
+async def test_cors_allows_both_local_frontend_hosts():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        for origin in ("http://localhost:3000", "http://127.0.0.1:3000"):
+            r = await ac.options(
+                "/api/v1/storefront/products",
+                headers={
+                    "Origin": origin,
+                    "Access-Control-Request-Method": "GET",
+                },
+            )
+            assert r.status_code == 200
+            assert r.headers["access-control-allow-origin"] == origin
+
+
+@pytest.mark.asyncio
 async def test_unknown_route_returns_envelope():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

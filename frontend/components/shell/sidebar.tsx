@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X, Store, ShoppingCart, ArrowLeftRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { navForApp, NAV_SECTIONS, IMPLEMENTED, type AppKind } from "@/lib/nav";
+import { navForApp, NAV_SECTIONS, type AppKind } from "@/lib/nav";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -16,8 +16,8 @@ export function Sidebar() {
   const app: AppKind = pathname.startsWith("/seller") ? "seller" : "shop";
   const items = navForApp(app);
   const brand = app === "seller"
-    ? { label: "Seller Portal", icon: Store, other: "/shop", otherLabel: "Shop" }
-    : { label: "Shop", icon: ShoppingCart, other: "/seller", otherLabel: "Seller Portal" };
+    ? { label: "Người bán", icon: Store, other: "/shop", otherLabel: "Cửa hàng" }
+    : { label: "Cửa hàng", icon: ShoppingCart, other: "/seller", otherLabel: "Người bán" };
   const BrandIcon = brand.icon;
   const home = app === "seller" ? "/seller" : "/shop";
 
@@ -69,7 +69,6 @@ export function Sidebar() {
                   {secItems.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
-                    const live = IMPLEMENTED.has(item.slug);
                     return (
                       <li key={item.slug}>
                         <Link
@@ -85,11 +84,6 @@ export function Sidebar() {
                           )}
                           <Icon className="h-4 w-4 shrink-0" />
                           <span className="truncate">{item.label}</span>
-                          {live ? (
-                            <span className="live-dot ml-auto" title="live" />
-                          ) : (
-                            <span className="mono ml-auto text-2xs text-text-dim tracking-wider">#{item.id}</span>
-                          )}
                         </Link>
                       </li>
                     );
@@ -107,7 +101,7 @@ export function Sidebar() {
             className="flex items-center gap-2 rounded-md bg-surface px-3 py-2 text-xs text-text-muted transition-colors hover:text-text"
           >
             <ArrowLeftRight className="h-3.5 w-3.5" />
-            <span>Switch to <span className="text-text">{brand.otherLabel}</span></span>
+            <span>Chuyển sang <span className="text-text">{brand.otherLabel}</span></span>
           </Link>
         </div>
       </aside>

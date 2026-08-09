@@ -27,10 +27,12 @@ class JourneyEvent(BaseModel):
     type: EventType
     category: Category | None = None
     query: str | None = Field(default=None, max_length=120)  # for search events
+    ts: int | None = Field(default=None, description="Client epoch-ms when the event fired")
 
 
 class JourneyRequest(BaseModel):
     events: list[JourneyEvent] = Field(min_length=1, max_length=100)
+    session_id: str | None = None
 
 
 class JourneyResponse(BaseModel):
@@ -49,3 +51,9 @@ class JourneyResponse(BaseModel):
     # Q2 — top 3 products
     recommended_products: list[ProductCard]
     reasoning: str
+    # Real behaviour timing (mentor feedback: dwell time / cart-abandon /
+    # checkout timing) — None whenever the events carry no `ts`.
+    session_duration_seconds: float | None = None
+    avg_dwell_seconds: float | None = None
+    time_to_purchase_seconds: float | None = None
+    cart_abandoned: bool | None = None

@@ -42,6 +42,21 @@ async def test_shopper_products_returns_envelope():
 
 
 @pytest.mark.asyncio
+async def test_shopper_respects_explicit_budget_ceiling():
+    _setup()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        r = await ac.get(
+            "/api/v1/personal-shopper/products",
+            params={"query": "serum cho da dầu dưới 400k", "top_k": 8},
+        )
+    assert r.status_code == 200
+    products = r.json()["data"]["products"]
+    assert products
+    assert all(product["price_vnd"] <= 400_000 for product in products)
+
+
+@pytest.mark.asyncio
 async def test_shopper_chat_streams_sse():
     _setup()
     transport = ASGITransport(app=app)

@@ -60,7 +60,7 @@ export function DailyBriefingPanel() {
           <div>
             <CardTitle>Hôm nay cần làm gì</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Việc ưu tiên theo tác động doanh thu — agent tổng hợp từ toàn bộ tín hiệu của shop.
+              Việc ưu tiên theo tác động doanh thu, tổng hợp từ các tín hiệu của cửa hàng.
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={load} disabled={busy}>

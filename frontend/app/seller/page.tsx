@@ -15,20 +15,20 @@ export default function SellerHome() {
   const okNodes = PROVINCES.filter((n) => n.status === "ok").length;
 
   return (
-    <DashboardShell breadcrumb={[{ label: "Seller", href: "/seller" }, { label: "Overview" }]}>
+    <DashboardShell breadcrumb={[{ label: "Người bán", href: "/seller" }, { label: "Tổng quan" }]}>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="mono text-2xs uppercase tracking-wider text-text-dim">Seller Portal · today</div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-text">Shop operations</h1>
+          <div className="mono text-2xs uppercase tracking-wider text-text-dim">Cổng người bán · hôm nay</div>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-text">Tình hình cửa hàng</h1>
           <p className="mt-1 text-sm text-text-muted">
-            Theo dõi sức khoẻ shop + công cụ AI cho người bán trên Shopee · Tiki · TikTok Shop.
+            Theo dõi sức khỏe cửa hàng và các việc cần ưu tiên trên Shopee · Tiki · TikTok Shop.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="live"><span className="live-dot" />live</Badge>
+          <Badge variant="live"><span className="live-dot" />trực tiếp</Badge>
           <span className="mono text-xs text-text-muted">{okNodes}/{PROVINCES.length} tỉnh ổn định</span>
           <Button asChild size="sm" variant="primary">
-            <Link href="/seller/review-intelligence"><Star className="h-3.5 w-3.5" />Phân tích review</Link>
+            <Link href="/seller/review-intelligence"><Star className="h-3.5 w-3.5" />Phân tích đánh giá</Link>
           </Button>
         </div>
       </div>

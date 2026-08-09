@@ -9,12 +9,13 @@ import { ProductCard } from "@/components/genai/product-card";
 import {
   analyzeJourney,
   getJourneySessions,
+  trackJourneyEvents,
   type JourneyEventInput,
   type JourneyResultMapped,
   type JourneySessions,
   type JourneySession,
 } from "@/lib/features";
-import { getTracked, clearTracked, JOURNEY_EVENT, type TrackedEvent } from "@/lib/journey-track";
+import { getTracked, clearTracked, getSessionId, JOURNEY_EVENT, type TrackedEvent } from "@/lib/journey-track";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -101,12 +102,14 @@ export function CustomerJourneyPanel() {
     setVideoUrl(null);
     setVideoFailed(false);
     const evs: JourneyEventInput[] = live.map((e) => ({
-      type: e.type as JourneyEventInput["type"], category: e.category, query: e.query,
+      type: e.type as JourneyEventInput["type"], category: e.category, query: e.query, ts: e.ts,
     }));
     const r = await analyzeJourney(evs);
     setError(r === null);
     setResult(r);
     setBusy(false);
+    // Fire-and-forget: persistence must never delay or break the analyze UX.
+    void trackJourneyEvents(getSessionId(), evs);
   }
 
   return (
@@ -161,11 +164,11 @@ export function CustomerJourneyPanel() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Phiên mẫu</CardTitle>
+            <CardTitle>Phiên demo dựng trước</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               {sessions
-                ? `${sessions.total} phiên để xem lại.`
-                : "Chọn một phiên để xem lại."}
+                ? `${sessions.total} hành trình mẫu có video demo replay để xem lại.`
+                : "Chọn một hành trình mẫu để xem video demo replay."}
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={loadSessions} disabled={sessionsLoading}>
@@ -222,10 +225,13 @@ export function CustomerJourneyPanel() {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Video phiên mẫu</CardTitle>
+              <CardTitle>Video demo dựng trước</CardTitle>
+              <p className="mt-1 text-xs text-text-muted">
+                Demo replay minh hoạ đúng chuỗi hành động của phiên, không phải ghi hình thời gian thực.
+              </p>
             </div>
             <Badge variant="muted">
-              <Video className="h-3 w-3" /> mẫu
+              <Video className="h-3 w-3" /> demo replay
             </Badge>
           </CardHeader>
           <CardContent>
@@ -288,6 +294,29 @@ export function CustomerJourneyPanel() {
                 <p className="mt-1 text-xs text-text">{result.nudge}</p>
               </div>
             </div>
+
+            {(result.session_duration_seconds != null || result.avg_dwell_seconds != null
+              || result.cart_abandoned != null || result.time_to_purchase_seconds != null) && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-border pt-3 text-xs text-text-muted">
+                {result.session_duration_seconds != null && (
+                  <span>Thời gian trên trang: <span className="mono text-text">{Math.round(result.session_duration_seconds)}s</span></span>
+                )}
+                {result.avg_dwell_seconds != null && (
+                  <span>Dừng trung bình/bước: <span className="mono text-text">{Math.round(result.avg_dwell_seconds)}s</span></span>
+                )}
+                {result.cart_abandoned != null && (
+                  <span>
+                    Bỏ giỏ hàng:{" "}
+                    <span className={cn("mono", result.cart_abandoned ? "text-danger" : "text-success")}>
+                      {result.cart_abandoned ? "có" : "không"}
+                    </span>
+                  </span>
+                )}
+                {result.time_to_purchase_seconds != null && (
+                  <span>Thời gian đến khi mua: <span className="mono text-text">{Math.round(result.time_to_purchase_seconds)}s</span></span>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

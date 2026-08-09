@@ -30,14 +30,26 @@ const statusVariant: Record<
   resolved: "muted",
 };
 
+const severityLabel: Record<Alert["severity"], string> = {
+  critical: "Nghiêm trọng",
+  warning: "Cảnh báo",
+  info: "Thông tin",
+};
+
+const statusLabel: Record<Alert["status"], string> = {
+  open: "Đang mở",
+  monitoring: "Đang theo dõi",
+  resolved: "Đã xử lý",
+};
+
 export function AlertsTable({ data }: { data: AlertRow[] }) {
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Alerts feed</CardTitle>
+          <CardTitle>Cảnh báo mới nhất</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            5 sự kiện gần nhất trên toàn bộ 17 features.
+            Các sự kiện gần nhất cần người bán chú ý.
           </p>
         </div>
         <Badge variant="muted">{data.length} hiển thị</Badge>
@@ -46,10 +58,10 @@ export function AlertsTable({ data }: { data: AlertRow[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>Feature</TableHead>
+            <TableHead>Tính năng</TableHead>
             <TableHead>Vùng</TableHead>
-            <TableHead>Severity</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Mức độ</TableHead>
+            <TableHead>Trạng thái</TableHead>
             <TableHead className="text-right">Bắt đầu</TableHead>
           </TableRow>
         </TableHeader>
@@ -65,10 +77,10 @@ export function AlertsTable({ data }: { data: AlertRow[] }) {
               </TableCell>
               <TableCell className="mono text-xs text-text-muted">{a.region}</TableCell>
               <TableCell>
-                <Badge variant={severityVariant[a.severity]}>{a.severity}</Badge>
+                <Badge variant={severityVariant[a.severity]}>{severityLabel[a.severity]}</Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={statusVariant[a.status]}>{a.status}</Badge>
+                <Badge variant={statusVariant[a.status]}>{statusLabel[a.status]}</Badge>
               </TableCell>
               <TableCell className="mono text-xs text-text-muted text-right">
                 {a.startedAt}

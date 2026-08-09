@@ -19,7 +19,7 @@ function formatValue(kpi: Kpi): string {
     return kpi.value.toFixed(2);
   }
   if (kpi.value >= 1000) {
-    return kpi.value.toLocaleString("en-US");
+    return kpi.value.toLocaleString("vi-VN");
   }
   return String(kpi.value);
 }

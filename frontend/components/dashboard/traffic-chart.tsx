@@ -27,9 +27,9 @@ export function TrafficChart({
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>GMV — 24h gần nhất</CardTitle>
+          <CardTitle>Doanh thu hàng hóa — 24 giờ gần nhất</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Triệu ₫ theo giờ, phân nhóm theo category.
+            Triệu ₫ theo giờ, phân nhóm theo ngành hàng.
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs text-text-muted">
@@ -44,7 +44,7 @@ export function TrafficChart({
           ))}
           <Badge variant="live">
             <span className="live-dot" />
-            live
+            trực tiếp
           </Badge>
         </div>
       </CardHeader>

@@ -144,7 +144,7 @@ export function ProductCard({
         </div>
         {typeof similarity === "number" && (
           <Badge variant="live">
-            <span className="mono">{(similarity * 100).toFixed(0)}%</span>
+            <span className="mono">Phù hợp {(similarity * 100).toFixed(0)}%</span>
           </Badge>
         )}
       </div>

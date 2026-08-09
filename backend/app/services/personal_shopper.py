@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import unicodedata
 
 from app.core.exceptions import ValidationError
@@ -43,6 +44,24 @@ _STOPWORDS = {
 def _normalize_vietnamese(s: str) -> str:
     """Loại bỏ dấu tiếng Việt để so sánh."""
     return unicodedata.normalize('NFD', s.lower()).encode('ascii', 'ignore').decode('ascii')
+
+
+def _extract_max_price(query: str) -> int | None:
+    """Read common Vietnamese budget phrases such as 'dưới 400k' or 'tối đa 1 triệu'."""
+    normalized = _normalize_vietnamese(query)
+    match = re.search(
+        r"(?:duoi|toi da|khong qua)\s*(\d+(?:[.,]\d+)?)\s*(k|nghin|ngan|trieu|m)?",
+        normalized,
+    )
+    if not match:
+        return None
+    amount = float(match.group(1).replace(",", "."))
+    unit = match.group(2)
+    if unit in {"trieu", "m"}:
+        amount *= 1_000_000
+    elif unit in {"k", "nghin", "ngan"} or amount < 10_000:
+        amount *= 1_000
+    return int(amount)
 
 
 def _build_keyword_index(catalog: list[dict]) -> dict[str, set[str]]:
@@ -379,9 +398,27 @@ async def _retrieve_products(query: str, top_k: int) -> ShopperProductsResponse:
 
     # Step 3: Filter by intent category
     picks = [it for it in picks if it["metadata"].get("category") in allowed_categories]
+
+    # Respect an explicit ceiling instead of recommending an attractive item
+    # that the shopper already said is outside their budget.
+    max_price = _extract_max_price(query)
+    if max_price is not None:
+        affordable = [
+            it for it in picks
+            if int(it["metadata"].get("price_vnd", 0)) <= max_price
+        ]
+        seen = {it["id"] for it in affordable}
+        refill = [
+            it for it in DEMO_CATALOG
+            if it["id"] not in seen
+            and it["metadata"].get("category") in allowed_categories
+            and int(it["metadata"].get("price_vnd", 0)) <= max_price
+        ]
+        refill.sort(key=lambda it: _relevance(it, qtokens, q, cos, fas), reverse=True)
+        picks = (affordable + refill)[:top_k]
     
     # If filtering removed all products, fall back to original picks
-    if not picks:
+    if not picks and max_price is None:
         # Re-run without category filter but limit top_k
         if matched_kws:
             scored_full = sorted(matching, key=lambda it: _relevance_v2(it, matched_kws), reverse=True)

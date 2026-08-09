@@ -171,7 +171,7 @@ export function RecsysPanel() {
         <InsightCard
           label="Số gợi ý"
           value={insights.count}
-          hint="Sản phẩm trong danh sách For You"
+          hint="Sản phẩm trong danh sách dành cho bạn"
         />
         <InsightCard
           label="Khoảng giá"

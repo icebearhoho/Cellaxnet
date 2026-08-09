@@ -93,7 +93,7 @@ export function FlashSalePanel() {
                 {result.trigger_now && <Zap className="h-5 w-5" />}
                 {result.trigger_now ? "Kích hoạt ưu đãi ngay" : result.hesitating ? "Khách đang do dự" : "Bình thường"}
               </div>
-              <div className="mono text-xs text-text-muted">Hesitation score: {result.hesitation_score}</div>
+              <div className="mono text-xs text-text-muted">Điểm do dự: {result.hesitation_score}</div>
               {result.suggested_discount_pct > 0 && (
                 <div className="rounded-md border border-border bg-bg-alt px-3 py-2 text-xs text-text">
                   Giảm giá đề xuất: <span className="mono font-semibold text-accent">{result.suggested_discount_pct}%</span>

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChatBubble, Caret } from "@/components/genai/chat-bubble";
 import { PromptChips } from "@/components/genai/prompt-chips";
 import { ProductCard } from "@/components/genai/product-card";
+import { VoiceMicButton } from "@/components/genai/voice-mic-button";
 import {
   PRODUCTS,
   SHOPPER_CHIPS,
@@ -15,6 +16,7 @@ import {
 } from "@/lib/mock-data";
 import { shopperProducts } from "@/lib/features";
 import { trackEvent, guessCategory } from "@/lib/journey-track";
+import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
 
 type Turn = {
@@ -31,7 +33,7 @@ const INITIAL_GREETING: Turn = {
   id: "t0",
   role: "assistant",
   text:
-    "Chào bạn, mình là Shopper-AI. Mình có thể gợi ý quà, son, đồ đi làm, skincare… theo style và budget của bạn. Bạn đang tìm gì hôm nay?",
+    "Chào bạn! Mình có thể gợi ý quà, son, đồ đi làm hoặc sản phẩm chăm sóc da theo phong cách và ngân sách của bạn. Hôm nay bạn đang tìm gì?",
   products: [],
   createdAt: "now",
 };
@@ -76,7 +78,7 @@ export function PersonalShopperPanel() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [turns.length, pending]);
 
-  async function send(query: string) {
+  async function send(query: string, viaVoice = false) {
     if (!query.trim() || pending) return;
 
     // Record the shopper's real search behaviour for Journey analysis.
@@ -114,6 +116,7 @@ export function PersonalShopperPanel() {
       createdAt: new Date().toISOString().slice(11, 16),
     };
     setTurns((prev) => [...prev, assistantTurn]);
+    if (viaVoice) speak(reply);
 
     // Stop the caret after the full reply is "streamed".
     const total = reply.length * 18;
@@ -136,12 +139,11 @@ export function PersonalShopperPanel() {
             <div className="flex items-center gap-2">
               <span className="live-dot" />
               <span className="mono text-2xs uppercase tracking-wider text-text-dim">
-                shopper-ai · ready
+                Trợ lý mua sắm · sẵn sàng
               </span>
             </div>
             <div className="flex items-center gap-2 text-2xs text-text-muted">
-              <Badge variant="muted">demo</Badge>
-              <Badge variant="live">RAG · Gemini</Badge>
+              <Badge variant="live">Tư vấn theo nhu cầu</Badge>
             </div>
           </div>
 
@@ -203,10 +205,11 @@ export function PersonalShopperPanel() {
               <Input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Hỏi gì đó — ví dụ: son cho da ngăm dưới 350k…"
+                placeholder='Hỏi gì đó — ví dụ: son cho da ngăm dưới 350k… hoặc bấm mic và nói "Hey Cellaxnet"'
                 disabled={pending}
                 className="h-10"
               />
+              <VoiceMicButton disabled={pending} onTranscript={(t) => send(t, true)} />
               <Button type="submit" size="lg" disabled={pending || !draft.trim()}>
                 <Send className="h-3.5 w-3.5" />
                 Gửi
@@ -220,14 +223,13 @@ export function PersonalShopperPanel() {
       <aside className="lg:col-span-4 space-y-4">
         <div className="rounded-[10px] border border-border bg-surface p-4">
           <div className="mono text-2xs uppercase tracking-wider text-text-dim">
-            Context window
+            Nguồn gợi ý
           </div>
           <div className="mt-3 space-y-2 text-sm">
-            <Row k="Vector store" v="Pinecone · 41k tiki catalog" />
-            <Row k="Knowledge base" v="wikipedia_vi (1.29M chunks)" />
-            <Row k="Preference signal" v="sephora_reviews · last 30d" />
-            <Row k="LLM" v="gemini-1.5-pro · temperature 0.6" />
-            <Row k="Latency p50" v="1.4s" mono />
+            <Row k="Danh mục" v="Thời trang, mỹ phẩm, phụ kiện" />
+            <Row k="Sàn tham khảo" v="Shopee · Tiki · TikTok Shop" />
+            <Row k="Ưu tiên" v="Nhu cầu, ngân sách và đánh giá" />
+            <Row k="Cập nhật" v="Dữ liệu mẫu gần đây" />
           </div>
         </div>
 
@@ -242,12 +244,10 @@ export function PersonalShopperPanel() {
 
         <div className="rounded-[10px] border border-border bg-surface p-4 text-xs text-text-muted">
           <span className="mono text-2xs uppercase tracking-wider text-text-dim">
-            Demo mode
+            Lưu ý
           </span>
           <p className="mt-2">
-            Khi backend offline hoặc quota OpenAI/Gemini hết, frontend sẽ tự chuyển sang
-            pre-generated sample outputs trong{" "}
-            <span className="mono text-text">/data/sample/</span>. Cache Redis TTL 10 phút.
+            Gợi ý được tạo từ danh mục mẫu. Hãy kiểm tra giá và thông tin trên trang sản phẩm trước khi mua.
           </p>
         </div>
       </aside>

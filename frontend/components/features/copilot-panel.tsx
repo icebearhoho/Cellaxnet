@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Send, Bot, User, Wrench } from "lucide-react";
+import { Loader2, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { VoiceMicButton } from "@/components/genai/voice-mic-button";
 import { askAgent, type CopilotAgentResult } from "@/lib/features";
+import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
 
 type Message =
@@ -30,7 +31,7 @@ export function CopilotPanel() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length, busy]);
 
-  async function send(question: string) {
+  async function send(question: string, viaVoice = false) {
     const q = question.trim();
     if (!q || busy) return;
     setBusy(true);
@@ -48,6 +49,7 @@ export function CopilotPanel() {
     setError(r === null);
     if (r) {
       setMessages((prev) => [...prev, { id: `a${Date.now()}`, role: "assistant", result: r }]);
+      if (viaVoice) speak(r.answer);
     }
     setBusy(false);
   }
@@ -62,10 +64,9 @@ export function CopilotPanel() {
             <div className="flex items-center gap-2">
               <span className="live-dot" />
               <span className="mono text-2xs uppercase tracking-wider text-text-dim">
-                copilot · multi-step agent ready
+                Trợ lý vận hành · sẵn sàng
               </span>
             </div>
-            <Badge variant="live">multi-tool agent</Badge>
           </div>
 
           <div ref={listRef} className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
@@ -74,7 +75,7 @@ export function CopilotPanel() {
                 <Bot className="h-9 w-9 text-accent" />
                 <p className="mt-3 text-sm font-medium text-text">Hỏi bất cứ điều gì về shop của bạn</p>
                 <p className="mt-1 max-w-sm text-xs text-text-muted">
-                  Agent sẽ tự chọn và gọi nhiều công cụ liên tiếp — phân tích doanh số, giá đối thủ, KOL, tồn kho… — rồi tổng hợp câu trả lời cuối cùng.
+                  Hỏi về doanh số, giá đối thủ, nhà sáng tạo hoặc tồn kho để nhận một câu trả lời tổng hợp.
                 </p>
               </div>
             )}
@@ -95,35 +96,8 @@ export function CopilotPanel() {
                     <Bot className="h-3.5 w-3.5" />
                   </span>
                   <div className="min-w-0 max-w-[85%] space-y-2.5">
-                    {m.result.steps.length > 0 && (
-                      <div className="rounded-[10px] border border-border bg-bg-alt/60 px-3 py-2.5">
-                        <div className="mono text-2xs uppercase tracking-wider text-text-dim">
-                          Chuỗi công cụ đã gọi ({m.result.steps.length})
-                        </div>
-                        <div className="mt-2 space-y-1.5">
-                          {m.result.steps.map((s, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <Badge variant="muted" className="shrink-0">
-                                <Wrench className="h-3 w-3" />
-                                {s.tool}
-                              </Badge>
-                              <span className="text-xs leading-relaxed text-text-muted">{s.summary}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     <div className="rounded-[10px] rounded-tl-sm border border-border bg-bg-alt px-3.5 py-2.5">
                       <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">{m.result.answer}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {m.result.multi_step && <Badge variant="live">multi-step</Badge>}
-                      {m.result.tools_used.map((t) => (
-                        <Badge key={t} variant="muted">
-                          <Wrench className="h-3 w-3" />
-                          {t}
-                        </Badge>
-                      ))}
                     </div>
                   </div>
                 </div>
@@ -133,7 +107,7 @@ export function CopilotPanel() {
             {busy && (
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Agent đang gọi nhiều công cụ và tổng hợp… (có thể mất 5–15 giây)
+                Đang tổng hợp dữ liệu… (có thể mất 5–15 giây)
               </div>
             )}
             {error && (
@@ -152,10 +126,11 @@ export function CopilotPanel() {
               <Input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Hỏi copilot — ví dụ: vì sao doanh số giảm tuần này?"
+                placeholder='Ví dụ: vì sao doanh số giảm tuần này? · hoặc bấm mic và nói "Hey Cellaxnet"'
                 disabled={busy}
                 className="h-10"
               />
+              <VoiceMicButton disabled={busy} onTranscript={(t) => send(t, true)} />
               <Button type="submit" size="lg" disabled={busy || !draft.trim()}>
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                 Gửi
@@ -189,9 +164,7 @@ export function CopilotPanel() {
         <div className="rounded-[10px] border border-border bg-surface p-4 text-xs text-text-muted">
           <span className="mono text-2xs uppercase tracking-wider text-text-dim">Cách hoạt động</span>
           <p className="mt-2">
-            Copilot là một agent điều phối đa bước: từ câu hỏi tiếng Việt, nó lần lượt chọn và gọi nhiều công cụ trong bộ tính năng seller
-            (giá, doanh số, KOL, tồn kho…), rồi tổng hợp thành câu trả lời cuối. Mỗi câu trả lời hiển thị{" "}
-            <span className="mono text-text">chuỗi công cụ</span> mà agent đã sử dụng.
+            Trợ lý kết hợp dữ liệu giá, doanh số, nhà sáng tạo và tồn kho để đưa ra câu trả lời ngắn gọn cùng việc nên làm tiếp theo. Có thể hỏi bằng giọng nói — bấm mic và nói.
           </p>
         </div>
       </aside>

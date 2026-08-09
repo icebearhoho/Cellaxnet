@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Star, ShoppingBag, CheckCircle2, Loader2, PackageOpen, Flame, MessageSquareText, ChevronLeft, ChevronRight, Images } from "lucide-react";
+import { ArrowLeft, Star, ShoppingBag, CheckCircle2, Loader2, PackageOpen, Flame, MessageSquareText, ChevronLeft, ChevronRight, Images, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getStoreProduct, type StoreProduct, type StoreReview } from "@/lib/features";
+import { getStoreProduct, submitStoreReview, type StoreProduct, type StoreReview } from "@/lib/features";
 import { trackEvent } from "@/lib/journey-track";
 import { addToCart } from "@/lib/cart";
 import { StoreImage } from "@/components/store/store-image";
@@ -32,6 +32,8 @@ export default function StoreDetailPage() {
   // behaviour signals: dwell time + max scroll depth
   const [dwell, setDwell] = useState(0);
   const [scroll, setScroll] = useState(0);
+  const reviewsRef = useRef<HTMLDivElement | null>(null);
+  const reviewTrackedRef = useRef(false);
 
   // Dwell timer (seconds on the product page).
   useEffect(() => {
@@ -62,6 +64,12 @@ export default function StoreDetailPage() {
     setAdded(true);
   }
 
+  const recordReviewRead = useCallback(() => {
+    if (!product || reviewTrackedRef.current) return;
+    reviewTrackedRef.current = true;
+    trackEvent("review", { category: product.category });
+  }, [product]);
+
   useEffect(() => {
     if (!id) return;
     let alive = true;
@@ -69,6 +77,7 @@ export default function StoreDetailPage() {
     getStoreProduct(id).then((res) => {
       if (!alive) return;
       const p = res?.product ?? null;
+      reviewTrackedRef.current = false;
       setProduct(p);
       setSelectedImage(0);
       setSimilar(res?.similar ?? []);
@@ -83,8 +92,6 @@ export default function StoreDetailPage() {
 
   // Reading reviews is a real purchase-intent signal — track it once the
   // section has actually sat in view for a bit, not on a drive-by scroll past.
-  const reviewsRef = useRef<HTMLDivElement | null>(null);
-  const reviewTrackedRef = useRef(false);
   useEffect(() => {
     if (!product || reviews.length === 0) return;
     const el = reviewsRef.current;
@@ -94,10 +101,7 @@ export default function StoreDetailPage() {
       ([entry]) => {
         if (entry.isIntersecting && !reviewTrackedRef.current) {
           timer = setTimeout(() => {
-            if (!reviewTrackedRef.current) {
-              reviewTrackedRef.current = true;
-              trackEvent("review", { category: product.category });
-            }
+            recordReviewRead();
           }, 1500);
         } else if (timer) {
           clearTimeout(timer);
@@ -111,7 +115,7 @@ export default function StoreDetailPage() {
       observer.disconnect();
       if (timer) clearTimeout(timer);
     };
-  }, [product, reviews.length]);
+  }, [product, reviews.length, recordReviewRead]);
   if (loading) {
     return (
       <div className="grid place-items-center rounded-3xl border border-border bg-surface py-24 text-text-muted">
@@ -207,7 +211,7 @@ export default function StoreDetailPage() {
           </div>
           <p className="flex items-center gap-1.5 text-2xs text-text-dim">
             <Images className="h-3.5 w-3.5" />
-            {gallery.length} ảnh minh hoạ · Tiki/Unsplash
+            {gallery.length} ảnh minh hoạ · giá bán chính xác hiển thị trong phần thông tin sản phẩm
           </p>
         </div>
 
@@ -230,6 +234,18 @@ export default function StoreDetailPage() {
             <Star className="h-4 w-4 fill-warning stroke-warning" />
             <span className="mono text-text">{product.rating.toFixed(1)}</span>
             <span className="mono text-text-dim">({product.reviews.toLocaleString()} đánh giá)</span>
+            {reviews.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  recordReviewRead();
+                  reviewsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="ml-2 font-semibold text-accent hover:underline"
+              >
+                Đọc đánh giá
+              </button>
+            )}
           </div>
 
           {attributes.length > 0 && (
@@ -303,14 +319,14 @@ export default function StoreDetailPage() {
       </div>
 
       {/* Reviews */}
-      {reviews.length > 0 && (
-        <section ref={reviewsRef}>
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold">
-            <MessageSquareText className="h-5 w-5 text-text-dim" />
-            Đánh giá sản phẩm
-            <span className="mono text-sm font-normal text-text-dim">({reviews.length})</span>
-          </h2>
-          <div className="space-y-3">
+      <section ref={reviewsRef}>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold">
+          <MessageSquareText className="h-5 w-5 text-text-dim" />
+          Đánh giá sản phẩm
+          <span className="mono text-sm font-normal text-text-dim">({reviews.length})</span>
+        </h2>
+        {reviews.length > 0 && (
+          <div className="mb-6 space-y-3">
             {reviews.map((r, i) => (
               <div key={i} className="rounded-2xl border border-border bg-surface p-4">
                 <div className="flex items-center justify-between">
@@ -334,8 +350,13 @@ export default function StoreDetailPage() {
               </div>
             ))}
           </div>
-        </section>
-      )}
+        )}
+        <ReviewForm
+          productId={product.id}
+          onPublished={(review) => setReviews((rs) => [review, ...rs])}
+        />
+      </section>
+
       {/* Similar products */}
       {similar.length > 0 && (
         <section>
@@ -352,6 +373,79 @@ export default function StoreDetailPage() {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function ReviewForm({
+  productId, onPublished,
+}: {
+  productId: string;
+  onPublished: (review: StoreReview) => void;
+}) {
+  const [authorName, setAuthorName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [banner, setBanner] = useState<{ ok: boolean; message: string } | null>(null);
+
+  async function submit() {
+    if (busy || !authorName.trim() || !text.trim()) return;
+    setBusy(true);
+    setBanner(null);
+    const res = await submitStoreReview(productId, authorName.trim(), rating, text.trim());
+    if (!res) {
+      setBanner({ ok: false, message: "Không gửi được đánh giá. Hãy thử lại." });
+      setBusy(false);
+      return;
+    }
+    setBanner({ ok: res.status === "published", message: res.message });
+    if (res.status === "published" && res.review) {
+      onPublished(res.review);
+    }
+    setText("");
+    setBusy(false);
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-bg-alt p-4">
+      <h3 className="text-sm font-bold text-text">Viết đánh giá</h3>
+      <div className="mt-3 space-y-3">
+        <input
+          value={authorName}
+          onChange={(e) => setAuthorName(e.target.value)}
+          placeholder="Tên của bạn"
+          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent"
+        />
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={3}
+          placeholder="Chia sẻ cảm nhận của bạn về sản phẩm…"
+          className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent"
+        />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((r) => (
+              <button key={r} type="button" onClick={() => setRating(r)} aria-label={`${r} sao`}>
+                <Star className={cn("h-4.5 w-4.5", r <= rating ? "fill-warning stroke-warning" : "fill-none stroke-border")} />
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={busy || !authorName.trim() || !text.trim()}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white transition-opacity disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            Gửi đánh giá
+          </button>
+        </div>
+        {banner && (
+          <p className={cn("text-xs", banner.ok ? "text-success" : "text-warning")}>{banner.message}</p>
+        )}
+      </div>
     </div>
   );
 }

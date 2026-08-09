@@ -65,22 +65,22 @@ export const NAV_ITEMS: NavItem[] = [
   // --- SELLER (seller portal) ---
   { id: "AI", slug: "copilot",          label: "Trợ lý vận hành",    href: "/seller/copilot",          icon: Bot,             app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
   { id: "BR", slug: "daily-briefing",   label: "Hôm nay cần làm gì",  href: "/seller/daily-briefing",   icon: ClipboardCheck,  app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
-  { id: "01", slug: "review-intelligence", label: "Review Intelligence", href: "/seller/review-intelligence", icon: Star, app: "seller", section: "intelligence", category: "NLP", owner: "DA" },
-  { id: "02", slug: "dynamic-pricing",  label: "Dynamic Pricing",    href: "/seller/dynamic-pricing",  icon: Tag,           app: "seller", section: "commerce",     category: "Time Series",     owner: "TL" },
+  { id: "01", slug: "review-intelligence", label: "Đánh giá khách hàng", href: "/seller/review-intelligence", icon: Star, app: "seller", section: "intelligence", category: "NLP", owner: "DA" },
+  { id: "02", slug: "dynamic-pricing",  label: "Gợi ý giá bán",    href: "/seller/dynamic-pricing",  icon: Tag,           app: "seller", section: "commerce",     category: "Time Series",     owner: "TL" },
   { id: "04", slug: "customer-risk",    label: "Rủi ro khách hàng",  href: "/seller/customer-risk",    icon: UserMinus,     app: "seller", section: "intelligence", category: "Behavioral AI",   owner: "TL" },
   { id: "06", slug: "demand-forecast",  label: "Demand Forecast",    href: "/seller/demand-forecast",  icon: TrendingUp,    app: "seller", section: "intelligence", category: "Time Series",     owner: "DA" },
   { id: "13", slug: "emotion-sale",     label: "Ưu đãi giữ chân",    href: "/seller/emotion-sale",     icon: Heart,         app: "seller", section: "intelligence", category: "Behavioral AI",   owner: "D1" },
-  { id: "50", slug: "segmentation",     label: "Customer Segmentation", href: "/seller/segmentation",     icon: Users2,        app: "seller", section: "intelligence", category: "Behavioral AI",   owner: "D1" },
+  { id: "50", slug: "segmentation",     label: "Nhóm khách hàng", href: "/seller/segmentation",     icon: Users2,        app: "seller", section: "intelligence", category: "Behavioral AI",   owner: "D1" },
   { id: "09", slug: "content-generator",label: "Nội dung sản phẩm",  href: "/seller/content-generator",icon: PenLine,       app: "seller", section: "creator",      category: "Generative AI",   owner: "FS" },
   { id: "17", slug: "seller-coach",     label: "Cải thiện cửa hàng", href: "/seller/seller-coach",     icon: GraduationCap, app: "seller", section: "creator",      category: "Generative AI",   owner: "FS" },
-  { id: "08", slug: "sentiment-alert",  label: "Sentiment Alert",    href: "/seller/sentiment-alert",  icon: MessageSquare, app: "seller", section: "creator",      category: "NLP",              owner: "D1" },
-  { id: "16", slug: "supply-chain",     label: "Supply Chain",       href: "/seller/supply-chain",     icon: Truck,         app: "seller", section: "operations",   category: "Time Series",     owner: "TL" },
-  { id: "23", slug: "restock-planner",  label: "Restock Planner",    href: "/seller/restock-planner",  icon: PackagePlus,   app: "seller", section: "operations",   category: "Time Series",     owner: "D1" },
-  { id: "18", slug: "product-knowledge",    label: "Product Knowledge",   href: "/seller/product-knowledge",    icon: Brain,     app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
-  { id: "19", slug: "market-intelligence",  label: "Market Intelligence", href: "/seller/market-intelligence",  icon: Swords,    app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
-  { id: "20", slug: "creator-performance",  label: "Creator Performance", href: "/seller/creator-performance",  icon: Users,     app: "seller", section: "creator",      category: "Generative AI", owner: "TL" },
-  { id: "21", slug: "decision-intelligence",label: "Decision Intelligence",href:"/seller/decision-intelligence",icon: Lightbulb, app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
-  { id: "22", slug: "product-graph",       label: "Product Graph",       href: "/seller/product-graph",        icon: Network,   app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
+  { id: "08", slug: "sentiment-alert",  label: "Cảnh báo nhu cầu",    href: "/seller/sentiment-alert",  icon: MessageSquare, app: "seller", section: "creator",      category: "NLP",              owner: "D1" },
+  { id: "16", slug: "supply-chain",     label: "Rủi ro vận chuyển",       href: "/seller/supply-chain",     icon: Truck,         app: "seller", section: "operations",   category: "Time Series",     owner: "TL" },
+  { id: "23", slug: "restock-planner",  label: "Kế hoạch nhập hàng",  href: "/seller/restock-planner",  icon: PackagePlus,   app: "seller", section: "operations",   category: "Time Series",     owner: "D1" },
+  { id: "18", slug: "product-knowledge",    label: "Biến động sản phẩm",   href: "/seller/product-knowledge",    icon: Brain,     app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
+  { id: "19", slug: "market-intelligence",  label: "So sánh đối thủ", href: "/seller/market-intelligence",  icon: Swords,    app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
+  { id: "20", slug: "creator-performance",  label: "Hiệu quả nhà sáng tạo", href: "/seller/creator-performance",  icon: Users,     app: "seller", section: "creator",      category: "Generative AI", owner: "TL" },
+  { id: "21", slug: "decision-intelligence",label: "Hỗ trợ quyết định",href:"/seller/decision-intelligence",icon: Lightbulb, app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
+  { id: "22", slug: "product-graph",       label: "Quan hệ sản phẩm",       href: "/seller/product-graph",        icon: Network,   app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
 
   // --- Bonus (Track 1 official brief, not part of the 17-idea brainstorm) ---
   { id: "T1-2", slug: "customer-journey", label: "Hành trình khách",   href: "/seller/customer-journey", icon: Route,         app: "seller", section: "intelligence", category: "Behavioral AI",   owner: "FS" },
@@ -97,8 +97,13 @@ export const IMPLEMENTED = new Set<string>([
   "copilot", "daily-briefing",
 ]);
 
+/** Routes that are useful to end users today. Keep unfinished concepts out of navigation. */
+export const READY_NAV_ITEMS = NAV_ITEMS.filter(
+  (item) => item.slug === "store" || IMPLEMENTED.has(item.slug),
+);
+
 export function navForApp(app: AppKind): NavItem[] {
-  return NAV_ITEMS.filter((i) => i.app === app);
+  return READY_NAV_ITEMS.filter((i) => i.app === app);
 }
 
 export const SUBTITLE: Record<string, string> = {
@@ -125,10 +130,10 @@ export const SUBTITLE: Record<string, string> = {
 };
 
 export const NAV_SECTIONS: Array<{ id: NavItem["section"]; title: string }> = [
-  { id: "commerce",    title: "Commerce" },
-  { id: "intelligence",title: "Intelligence" },
-  { id: "creator",     title: "Creator" },
-  { id: "operations",  title: "Operations" },
+  { id: "commerce",    title: "Bán hàng" },
+  { id: "intelligence",title: "Phân tích" },
+  { id: "creator",     title: "Nội dung" },
+  { id: "operations",  title: "Vận hành" },
 ];
 
 export const SECTION_TITLES: Record<NavItem["section"], string> = {

@@ -11,6 +11,7 @@ reasoning runs on the LLM with a templated fallback.
 from __future__ import annotations
 
 import math
+import time
 from collections import Counter
 
 from app.schemas.journey import (
@@ -19,6 +20,7 @@ from app.schemas.journey import (
     JourneyResponse,
     NextAction,
 )
+from app.services import behavior_metrics
 from app.services import commerce_store as store
 from app.services.genai.demo_data import image_url_for_type
 from app.services.llm_reasoning import reason_json
@@ -115,7 +117,9 @@ def _next_action(stage: FunnelStage, prob: float, engagement: float,
             f"khách vào phễu mua sắm.")
 
 
-async def analyze_journey(req: JourneyRequest) -> JourneyResponse:
+async def analyze_journey(
+    req: JourneyRequest, *, use_llm_reasoning: bool = True, now_ms: int | None = None
+) -> JourneyResponse:
     counts = {t: 0 for t in ("search", "click", "view", "cart", "purchase", "livestream", "review")}
     for e in req.events:
         counts[e.type] += 1
@@ -171,7 +175,19 @@ async def analyze_journey(req: JourneyRequest) -> JourneyResponse:
         for i, p in enumerate(picks)
     ]
 
-    reasoning = await _reason(counts, top_category, prob, engagement, stage, label)
+    reasoning = (
+        await _reason(counts, top_category, prob, engagement, stage, label)
+        if use_llm_reasoning
+        else _fallback_reasoning(counts, top_category, label, prob, engagement)
+    )
+
+    # Real timing signals (mentor feedback: dwell time / cart-abandon / time to
+    # purchase) — computed from event `ts`, None whenever no timestamps exist.
+    effective_now = now_ms if now_ms is not None else int(time.time() * 1000)
+    abandoned = behavior_metrics.cart_abandoned(req.events, now_ms=effective_now)
+    if abandoned and stage != "purchase":
+        nudge += (" Giỏ hàng đã im lặng khá lâu, không có hành động tiếp theo — "
+                   "đây là dấu hiệu bỏ giỏ rõ, nên nhắc lại ngay.")
 
     return JourneyResponse(
         will_purchase=will_purchase,
@@ -185,6 +201,10 @@ async def analyze_journey(req: JourneyRequest) -> JourneyResponse:
         category_breakdown={str(k): v for k, v in cat_counts.items()},
         recommended_products=products,
         reasoning=reasoning,
+        session_duration_seconds=behavior_metrics.session_duration_seconds(req.events),
+        avg_dwell_seconds=behavior_metrics.avg_dwell_seconds(req.events),
+        time_to_purchase_seconds=behavior_metrics.time_to_purchase_seconds(req.events),
+        cart_abandoned=abandoned,
     )
 
 

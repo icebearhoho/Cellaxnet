@@ -22,7 +22,9 @@ class Settings(BaseSettings):
     APP_ENV: Literal["development", "staging", "production", "test"] = "development"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
-    CORS_ORIGINS: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    CORS_ORIGINS: list[str] = Field(
+        default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"]
+    )
 
     # --- Postgres ---
     POSTGRES_HOST: str = "localhost"

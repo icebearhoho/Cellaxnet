@@ -25,10 +25,10 @@ function CtrBar({ value }: { value: number }) {
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-2xs">
         <span className="mono uppercase tracking-wider text-text-dim">
-          predicted CTR
+          Lượt nhấp dự kiến
         </span>
         <span className="mono text-text" data-tnum>
-          {pct.toFixed(1)}‰
+          {pct.toFixed(1)}%
         </span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
@@ -78,12 +78,12 @@ export function ContentGeneratorPanel() {
       <Card className="lg:col-span-4">
         <CardHeader>
           <div>
-            <CardTitle>Product input</CardTitle>
+            <CardTitle>Thông tin sản phẩm</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Prompt + RAG context từ wikipedia_vi + tiki catalog.
+              Nhập thông tin một lần để tạo nội dung phù hợp cho từng sàn.
             </p>
           </div>
-          <Badge variant="muted">few-shot</Badge>
+          <Badge variant="muted">3 sàn</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <Field label="Tên sản phẩm">
@@ -103,7 +103,7 @@ export function ContentGeneratorPanel() {
             />
           </Field>
 
-          <Field label="Platform">
+          <Field label="Sàn đang xem">
             <div className="grid grid-cols-3 gap-2">
               {PLATFORMS.map((p) => (
                 <button
@@ -123,25 +123,16 @@ export function ContentGeneratorPanel() {
             </div>
           </Field>
 
-          <div className="rounded-md border border-border bg-bg-alt p-3 text-2xs text-text-muted">
-            <div className="mono mb-1 uppercase tracking-wider text-text-dim">
-              Prompt template
-            </div>
-            <code className="mono block whitespace-pre-wrap text-text">
-              {`Bạn là copywriter cho ${activePlatform}. Viết mô tả sản phẩm bằng tiếng Việt:\n- Sản phẩm: ${productName || "—"}\n- Đặc điểm: ${features || "—"}`}
-            </code>
-          </div>
-
           <Button onClick={generate} disabled={generating} className="w-full">
             {generating ? (
               <>
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                Generating…
+                Đang tạo…
               </>
             ) : (
               <>
                 <Wand2 className="h-3.5 w-3.5" />
-                Generate 3 phiên bản
+                Tạo 3 phiên bản
               </>
             )}
           </Button>
@@ -153,15 +144,14 @@ export function ContentGeneratorPanel() {
         <div className="flex items-center justify-between">
           <div>
             <div className="mono text-2xs uppercase tracking-wider text-text-dim">
-              Outputs
+              Nội dung đã tạo
             </div>
             <div className="text-sm text-text-muted">
-              3 platform · predicted CTR từ historical data
+              So sánh nội dung và hiệu quả dự kiến trên 3 sàn
             </div>
           </div>
           <Badge variant="live">
-            <span className="live-dot" />
-            Gemini 1.5 Pro
+            Sẵn sàng sử dụng
           </Badge>
         </div>
 

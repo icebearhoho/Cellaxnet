@@ -68,7 +68,7 @@ export function ProductKnowledgePanel() {
             <CardTitle>Sản phẩm &amp; tín hiệu doanh số</CardTitle>
             <p className="mt-1 text-xs text-text-muted">Giải thích vì sao doanh số thay đổi giữa hai kỳ.</p>
           </div>
-          <Badge variant="muted">explainability</Badge>
+          <Badge variant="muted">Phân tích nguyên nhân</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

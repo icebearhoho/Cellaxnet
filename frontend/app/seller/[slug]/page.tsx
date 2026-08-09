@@ -17,11 +17,11 @@ export default async function SellerFeaturePage({
 
   if (!item || item.app !== "seller") {
     return (
-      <DashboardShell breadcrumb={[{ label: "Seller", href: "/seller" }, { label: "Not found" }]}>
+      <DashboardShell breadcrumb={[{ label: "Người bán", href: "/seller" }, { label: "Không tìm thấy" }]}>
         <Card>
           <CardHeader>
             <CardTitle>Not found</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">No Seller feature matches this route.</p>
+            <p className="mt-1 text-xs text-text-muted">Không có tính năng dành cho người bán nào khớp với đường dẫn này.</p>
           </CardHeader>
         </Card>
       </DashboardShell>
@@ -29,11 +29,11 @@ export default async function SellerFeaturePage({
   }
 
   return (
-    <DashboardShell breadcrumb={[{ label: "Seller", href: "/seller" }, { label: item.label }]}>
+    <DashboardShell breadcrumb={[{ label: "Người bán", href: "/seller" }, { label: item.label }]}>
       <FeatureHeader
         id={item.id}
         title={item.label}
-        subtitle={SUBTITLE[slug] ?? "Feature thuộc Seller Portal."}
+        subtitle={SUBTITLE[slug] ?? "Tính năng dành cho người bán."}
         category={item.category}
         owner={item.owner}
       />

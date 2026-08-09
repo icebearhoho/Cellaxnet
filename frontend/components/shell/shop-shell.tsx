@@ -103,7 +103,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
 
       <footer className="mx-auto max-w-6xl px-4 pb-10 pt-4 text-center text-xs text-text-dim sm:px-6">
-        AREA-303 · mua sắm thời trang &amp; mỹ phẩm với AI
+        AREA-303 · mua sắm thời trang &amp; mỹ phẩm
       </footer>
 
       <ShopSessionBar />

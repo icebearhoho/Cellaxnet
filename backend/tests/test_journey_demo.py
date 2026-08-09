@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from app.schemas.journey import JourneyEvent, JourneyRequest
-from app.services import commerce_store
+from app.services import commerce_store, portfolio
 from app.services.journey import analyze_journey
 
 EXPECTED_VIDEO_NAMES = {
@@ -58,3 +58,33 @@ async def test_reading_a_review_increases_purchase_probability():
     )
 
     assert with_review.purchase_probability > without_review.purchase_probability
+
+
+@pytest.mark.asyncio
+async def test_demo_sessions_flag_cart_abandonment_correctly():
+    result = await portfolio.journey_sessions()
+    by_id = {s["id"]: s["analysis"]["cart_abandoned"] for s in result["sessions"]}
+
+    # S4 = "bỏ giỏ giữa chừng — nguy cơ rời": cart with nothing after, checked
+    # long after the fact — the mentor-requested real abandon signal.
+    assert by_id["S4"] is True
+    # S1 also ends on "cart" but means "vừa thêm giỏ" (just added) — checked
+    # moments later, so it must NOT read as abandoned.
+    assert by_id["S1"] is False
+    # S3/S6/S9 convert (cart -> purchase) — never abandoned.
+    assert by_id["S3"] is False
+    assert by_id["S6"] is False
+    assert by_id["S9"] is False
+    # S8 never adds to cart at all — abandonment doesn't apply.
+    assert by_id["S8"] is False
+
+
+@pytest.mark.asyncio
+async def test_prebuilt_sessions_use_fast_deterministic_reasoning(monkeypatch):
+    async def fail_if_called(*args, **kwargs):
+        raise AssertionError("prebuilt sessions must not wait for LLM reasoning")
+
+    monkeypatch.setattr("app.services.journey._reason", fail_if_called)
+    result = await portfolio.journey_sessions()
+    assert result["total"] == 10
+    assert all(session["analysis"]["reasoning"] for session in result["sessions"])

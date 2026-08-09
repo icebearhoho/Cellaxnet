@@ -40,12 +40,12 @@ export function ChatBubble({
 
       <div className={cn("flex min-w-0 flex-col gap-1", isUser ? "items-end" : "items-start")}>
         <div className="flex items-center gap-2 text-2xs uppercase tracking-wider text-text-dim">
-          <span>{role === "user" ? "bạn" : "shopper-ai"}</span>
+          <span>{role === "user" ? "bạn" : "trợ lý"}</span>
           {timestamp && <span className="mono normal-case tracking-normal">{timestamp}</span>}
           {streaming && (
             <span className="inline-flex items-center gap-1 text-accent">
               <span className="h-1 w-1 animate-pulse rounded-full bg-accent" />
-              streaming
+              đang trả lời
             </span>
           )}
         </div>

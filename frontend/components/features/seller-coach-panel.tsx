@@ -82,17 +82,17 @@ export function SellerCoachPanel() {
       <Card className="lg:col-span-4">
         <CardHeader>
           <div>
-            <CardTitle>Audit score</CardTitle>
+            <CardTitle>Điểm sức khỏe cửa hàng</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              5 chiều đánh giá shop — Gemini tổng hợp từ listing, reviews, inventory.
+              Tổng hợp từ sản phẩm, đánh giá khách hàng và tình trạng tồn kho.
             </p>
           </div>
           <Badge variant={scoreBand(overall) === "good" ? "live" : "warning"}>
-            {scoreBand(overall) === "good" ? "healthy" : "needs work"}
+            {scoreBand(overall) === "good" ? "Hoạt động tốt" : "Cần cải thiện"}
           </Badge>
         </CardHeader>
         <CardContent className="flex justify-center pb-6">
-          <ScoreGauge score={overall} label="Overall score" />
+          <ScoreGauge score={overall} label="Điểm tổng" />
         </CardContent>
       </Card>
 
@@ -100,12 +100,12 @@ export function SellerCoachPanel() {
       <Card className="lg:col-span-8">
         <CardHeader>
           <div>
-            <CardTitle>5-chiều audit</CardTitle>
+            <CardTitle>5 nhóm đánh giá</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Visualize các điểm yếu để ưu tiên fix.
+              So sánh các điểm còn yếu để chọn việc cần làm trước.
             </p>
           </div>
-          <Badge variant="muted">5 axes</Badge>
+          <Badge variant="muted">5 tiêu chí</Badge>
         </CardHeader>
         <CardContent>
           <AuditRadar data={radarData} />
@@ -116,7 +116,7 @@ export function SellerCoachPanel() {
       <Card className="lg:col-span-7">
         <CardHeader>
           <div>
-            <CardTitle>5-step audit</CardTitle>
+            <CardTitle>Chi tiết đánh giá</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               Điểm từng trục + gợi ý cụ thể.
             </p>
@@ -133,15 +133,12 @@ export function SellerCoachPanel() {
       <Card className="lg:col-span-5">
         <CardHeader>
           <div>
-            <CardTitle>Roadmap 4 tuần</CardTitle>
+            <CardTitle>Kế hoạch 4 tuần</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Gemini đề xuất từ điểm audit.
+              Các việc nên ưu tiên dựa trên tình trạng hiện tại.
             </p>
           </div>
-          <Badge variant="live">
-            <span className="live-dot" />
-            GPT-4o-mini
-          </Badge>
+          <Badge variant="live">Sẵn sàng thực hiện</Badge>
         </CardHeader>
         <CardContent>
           <ol className="relative space-y-4 border-l border-border-strong pl-5">

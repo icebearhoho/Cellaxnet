@@ -92,11 +92,11 @@ def _analyze_sentiment_heuristic(req: SentimentRequest) -> SentimentResponse:
         score += {1: -2, 2: -1, 3: 0, 4: 1, 5: 2}[req.rating]
 
     if score > 1:
-        s, reason = "positive", f"Positive cues ({pos}) outweigh negative ({neg})."
+        s, reason = "positive", f"Tín hiệu tích cực ({pos}) nhiều hơn tín hiệu tiêu cực ({neg})."
     elif score < -1:
-        s, reason = "negative", f"Negative cues ({neg}) dominate the review."
+        s, reason = "negative", f"Đánh giá có nhiều tín hiệu tiêu cực ({neg})."
     else:
-        s, reason = "neutral", "Mixed or weak signal — lukewarm / factual review."
+        s, reason = "neutral", "Tín hiệu còn lẫn lộn hoặc chủ yếu mô tả thông tin thực tế."
 
     confidence = min(0.95, 0.5 + 0.12 * abs(score))
     return SentimentResponse(sentiment=cast(_SentimentLit, s), confidence=round(confidence, 2), reason=reason)
@@ -109,32 +109,32 @@ def _detect_fake_heuristic(req: FakeReviewRequest) -> FakeReviewResponse:
 
     generic_hits = [g for g in _GENERIC if g in low]
     if generic_hits:
-        signals.append(f"generic phrases: {', '.join(generic_hits[:2])}")
+        signals.append(f"Cụm từ quá chung chung: {', '.join(generic_hits[:2])}")
     if len(words) < 6:
-        signals.append("very short, no product-specific detail")
+        signals.append("Nội dung rất ngắn, không có chi tiết về sản phẩm")
     if low.count("!") >= 3:
-        signals.append("excessive exclamation")
+        signals.append("Dùng quá nhiều dấu chấm than")
     # repetition of the same token (hollow enthusiasm)
     if words and max((words.count(w) for w in set(words)), default=0) >= 3:
-        signals.append("repetitive wording")
+        signals.append("Lặp lại từ ngữ")
     # 5★ + purely generic praise is a classic CG pattern
     specifics = any(k in low for k in (
         "fit", "size", "fabric", "color", "colour", "wash", "material", "scent",
         "smell", "delivery", "ship", "vải", "size", "màu", "giao", "chất liệu",
     ))
     if not specifics:
-        signals.append("no concrete specifics (fit/fabric/scent/delivery)")
+        signals.append("Không có chi tiết cụ thể về chất liệu, mùi hương hoặc giao hàng")
 
     score = len(signals) - (1 if specifics else 0)
     is_fake = score >= 2
     confidence = min(0.95, 0.5 + 0.13 * score) if is_fake else min(0.9, 0.5 + 0.1 * (2 - score))
     reason = (
-        "Multiple fabrication signals with no concrete detail." if is_fake
-        else "Reads like a genuine review (specific and/or balanced)."
+        "Có nhiều dấu hiệu bất thường nhưng thiếu chi tiết cụ thể." if is_fake
+        else "Nội dung có chi tiết cụ thể hoặc cách diễn đạt cân bằng."
     )
     return FakeReviewResponse(
         is_fake=is_fake, confidence=round(max(0.5, confidence), 2),
-        signals=signals or ["no strong fake signals"], reason=reason,
+        signals=signals or ["Không có dấu hiệu giả mạo rõ ràng"], reason=reason,
     )
 
 
@@ -152,8 +152,8 @@ _SENTIMENT_SYSTEM = (
     '{"sentiment": "positive|neutral|negative", "confidence": 0.0-1.0, '
     '"reason": "one short sentence"}\n'
     "Weigh the star rating heavily when present. 'neutral' is for mixed or "
-    "purely factual reviews. Write the reason in the SAME language as the review "
-    "(Vietnamese review → Vietnamese reason, English → English)."
+    "purely factual reviews. The seller dashboard is Vietnamese-only. Always "
+    "write reason in Vietnamese, even when the review itself is English."
 )
 
 _FAKE_SYSTEM = (
@@ -164,8 +164,8 @@ _FAKE_SYSTEM = (
     "JSON object, no prose:\n"
     '{"is_fake": true|false, "confidence": 0.0-1.0, '
     '"signals": ["short phrase", ...], "reason": "one short sentence"}\n'
-    "Write the reason in the SAME language as the review "
-    "(Vietnamese review → Vietnamese, English → English)."
+    "The seller dashboard is Vietnamese-only. Always write reason and every "
+    "signal in Vietnamese, even when the review itself is English."
 )
 
 
@@ -191,7 +191,7 @@ async def analyze_sentiment(req: SentimentRequest) -> SentimentResponse:
         return SentimentResponse(
             sentiment=cast(_SentimentLit, sentiment),
             confidence=round(min(0.99, max(0.0, conf)), 2),
-            reason=str(data.get("reason", "")).strip() or "LLM classification.",
+            reason=str(data.get("reason", "")).strip() or "Đã phân loại nội dung đánh giá.",
         )
     except Exception as exc:  # noqa: BLE001 — any LLM failure falls back
         log.warning("insights.sentiment.llm_fallback", error=str(exc))
@@ -219,8 +219,8 @@ async def detect_fake(req: FakeReviewRequest) -> FakeReviewResponse:
         return FakeReviewResponse(
             is_fake=is_fake,
             confidence=round(min(0.99, max(0.5, conf)), 2),
-            signals=signals or (["LLM flagged as fabricated"] if is_fake else ["reads genuine"]),
-            reason=str(data.get("reason", "")).strip() or "LLM classification.",
+            signals=signals or (["Có dấu hiệu nội dung được tạo tự động"] if is_fake else ["Nội dung có vẻ tự nhiên"]),
+            reason=str(data.get("reason", "")).strip() or "Đã kiểm tra độ đáng tin của đánh giá.",
         )
     except Exception as exc:  # noqa: BLE001 — any LLM failure falls back
         log.warning("insights.fake.llm_fallback", error=str(exc))

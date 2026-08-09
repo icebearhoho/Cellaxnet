@@ -21,7 +21,7 @@ export function GeoMap({ nodes }: { nodes: typeof PROVINCES }) {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Supply chain — 63 tỉnh thành</CardTitle>
+          <CardTitle>Chuỗi cung ứng — 63 tỉnh thành</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
             Rủi ro vận hành theo kho vùng (màu = mức độ cảnh báo).
           </p>
@@ -72,8 +72,8 @@ export function GeoMap({ nodes }: { nodes: typeof PROVINCES }) {
                 <Popup>
                   <div className="mono text-xs">
                     <div className="font-semibold">{n.name}</div>
-                    <div>risk {(n.load * 100).toFixed(0)}%</div>
-                    <div>status: {statusLabel[n.status]}</div>
+                    <div>Mức rủi ro: {(n.load * 100).toFixed(0)}%</div>
+                    <div>Trạng thái: {statusLabel[n.status]}</div>
                   </div>
                 </Popup>
               </CircleMarker>

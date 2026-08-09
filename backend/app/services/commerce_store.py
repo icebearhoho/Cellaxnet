@@ -117,6 +117,27 @@ _CATALOG_SPEC: dict[str, dict] = {
 _TRENDS = ["rising", "rising", "stable", "stable", "cooling", "cooling"]
 _STOCK_STATUS = ["ok", "ok", "ok", "low", "out"]
 
+# --- synthetic per-session timestamps (for real dwell/cart-abandon metrics) - #
+# S4 ends on "cart" with nothing after it and is meant to demo an abandoned
+# cart ("nguy cơ rời") — checked a long while later, on purpose. Every other
+# session (including S1, which also ends on "cart" but means "just added,
+# about to buy") is checked moments after it ends, so it reads as fresh.
+_ABANDON_CHECK_DELAY_OVERRIDES = {"S4": 20 * 60}
+_DEFAULT_CHECK_DELAY_SECONDS = 8
+
+
+def _attach_synthetic_timestamps(rng: random.Random, sessions: list[dict]) -> None:
+    base = 1_700_000_000_000  # arbitrary anchor; only deltas/gaps matter
+    for s in sessions:
+        t = base
+        for e in s["events"]:
+            e["ts"] = t
+            t += rng.randint(3_000, 45_000)
+        last_ts = s["events"][-1]["ts"] if s["events"] else base
+        delay = _ABANDON_CHECK_DELAY_OVERRIDES.get(s["id"], _DEFAULT_CHECK_DELAY_SECONDS)
+        s["checked_at_ms"] = last_ts + delay * 1000
+        base += 3_600_000  # stagger sessions well apart from each other
+
 
 def _slug(name: str, i: int) -> str:
     # Fold Vietnamese diacritics to ASCII so product ids are clean URL segments.
@@ -303,6 +324,8 @@ def _build() -> dict:
             {"type": "purchase", "category": "Phụ kiện"}, {"type": "search", "category": "Phụ kiện", "query": "đồng hồ"},
             {"type": "view", "category": "Phụ kiện"}]},
     ]
+
+    _attach_synthetic_timestamps(rng, sessions)
 
     return {"products": products, "creators": creators, "decisions": decisions,
             "customers": customers, "sessions": sessions}

@@ -103,7 +103,7 @@ export function InventoryAlertPanel() {
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="rounded-md border border-border bg-bg-alt px-3 py-2">
-                  <div className="mono text-2xs uppercase tracking-wider text-text-dim">Trend score</div>
+                  <div className="mono text-2xs uppercase tracking-wider text-text-dim">Mức độ quan tâm</div>
                   <div className="mono mt-1 text-text">{result.trend_score}</div>
                 </div>
                 <div className="rounded-md border border-border bg-bg-alt px-3 py-2">
