@@ -217,16 +217,65 @@ class KiotVietConnector:
 
     # --- step 3: read the orders ------------------------------------------
 
-    async def fetch_orders(self, token: str, days: int) -> OrderSummary:
-        """Walk completed sales and tally each marketplace separately.
+    async def _walk(self, client: httpx.AsyncClient, path: str, token: str,
+                    since: str) -> tuple[list[dict], int]:
+        """Page through an endpoint and return every row, plus the page count."""
+        out: list[dict] = []
+        pages = 0
+        current = 0
+        page_size = 100
 
-        Reads /invoices, not /orders. In KiotViet an "order" is a sales order
-        placed ahead of fulfilment, while an "invoice" is a completed sale —
-        and a retail shop rings most sales straight to invoice with no order in
-        between. Verified on a live store: /orders returned 0 while /invoices
-        returned 46 with the revenue the dashboard reports. Restock planning
-        wants sales that actually happened, so invoices are the right signal
-        either way.
+        while pages < 50:  # 50 x 100 rows is plenty for planning
+            params = {
+                "fromPurchaseDate": since,
+                "pageSize": page_size,
+                "currentItem": current,
+                "orderBy": "purchaseDate",
+                "orderDirection": "Desc",
+            }
+            r = await client.get(
+                f"{API_HOST}{path}", params=params, headers=self._headers(token)
+            )
+            if r.status_code == 401:
+                raise ConnectorError("KiotViet từ chối token — kết nối lại")
+            if r.status_code >= 400:
+                raise ConnectorError(
+                    f"KiotViet trả về HTTP {r.status_code}: {r.text[:200]}")
+
+            payload = _safe_json(r)
+            rows = payload.get("data") if isinstance(payload, dict) else None
+            if not rows:
+                break
+
+            out.extend(row for row in rows if isinstance(row, dict))
+            pages += 1
+            current += len(rows)
+            total_available = _as_int(payload.get("total")) if isinstance(payload, dict) else -1
+            if len(rows) < page_size or (0 <= total_available <= current):
+                break
+
+        return out, pages
+
+    async def fetch_orders(self, token: str, days: int) -> OrderSummary:
+        """Walk the retailer's sales and tally each marketplace separately.
+
+        Reads both /invoices and /orders, because KiotViet splits a sale across
+        the two and which one holds it depends on how it arrived:
+
+          * "invoice" = a completed sale. A shop ringing up a walk-in customer
+            goes straight here with no order in between. Verified on a live
+            store: /orders returned 0 while /invoices returned 46, matching the
+            revenue on the dashboard — reading /orders alone would have shown
+            an empty shop.
+          * "order" = a sale placed ahead of fulfilment. Marketplace orders
+            synced in from Shopee/Lazada/TikTok land here first and only become
+            an invoice once fulfilled, so reading /invoices alone would miss
+            everything still in transit — exactly the demand signal restock
+            planning cares most about.
+
+        Rows are deduplicated on the order code an invoice carries once it is
+        raised from an order, so a sale counted as an invoice is not counted a
+        second time as its originating order.
         """
         mapping = await self.channel_map(token)
 
@@ -239,60 +288,41 @@ class KiotVietConnector:
         first_ts: str | None = None
         last_ts: str | None = None
         total = 0
-        pages = 0
-        current = 0
-        page_size = 100
 
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-            while pages < 50:  # 50 x 100 orders is plenty for planning
-                params = {
-                    "fromPurchaseDate": since,
-                    "pageSize": page_size,
-                    "currentItem": current,
-                    "orderBy": "purchaseDate",
-                    "orderDirection": "Desc",
-                }
-                r = await client.get(
-                    f"{API_HOST}/invoices", params=params, headers=self._headers(token)
-                )
-                if r.status_code == 401:
-                    raise ConnectorError("KiotViet từ chối token — kết nối lại")
-                if r.status_code >= 400:
-                    raise ConnectorError(
-                        f"KiotViet trả về HTTP {r.status_code}: {r.text[:200]}")
+            invoices, inv_pages = await self._walk(client, "/invoices", token, since)
+            orders, ord_pages = await self._walk(client, "/orders", token, since)
 
-                payload = _safe_json(r)
-                rows = payload.get("data") if isinstance(payload, dict) else None
-                if not rows:
-                    break
+        # An invoice raised from an order carries that order's code; drop the
+        # order so the same sale is not counted twice.
+        invoiced = {str(row.get("orderCode")).strip()
+                    for row in invoices if str(row.get("orderCode") or "").strip()}
+        pending = [row for row in orders
+                   if str(row.get("code") or "").strip() not in invoiced]
 
-                for row in rows:
-                    total += 1
-                    cid = _as_int(row.get("saleChannelId"))
-                    if cid >= 0:
-                        seen_channel_ids.add(cid)
-                    channel = mapping.get(cid, OWN_CHANNEL)
-                    counts[channel] = counts.get(channel, 0) + 1
-                    revenue[channel] = revenue.get(channel, 0.0) + _as_float(
-                        row.get("total") or row.get("totalPayment") or 0
-                    )
-                    stamp = row.get("purchaseDate") or row.get("createdDate")
-                    if stamp:
-                        s = str(stamp)
-                        first_ts = s if first_ts is None else min(first_ts, s)
-                        last_ts = s if last_ts is None else max(last_ts, s)
+        for row in invoices + pending:
+            total += 1
+            cid = _as_int(row.get("saleChannelId"))
+            if cid >= 0:
+                seen_channel_ids.add(cid)
+            channel = mapping.get(cid, OWN_CHANNEL)
+            counts[channel] = counts.get(channel, 0) + 1
+            revenue[channel] = revenue.get(channel, 0.0) + _as_float(
+                row.get("total") or row.get("totalPayment") or 0
+            )
+            stamp = row.get("purchaseDate") or row.get("createdDate")
+            if stamp:
+                s = str(stamp)
+                first_ts = s if first_ts is None else min(first_ts, s)
+                last_ts = s if last_ts is None else max(last_ts, s)
 
-                pages += 1
-                current += len(rows)
-                total_available = _as_int(payload.get("total")) if isinstance(payload, dict) else -1
-                if len(rows) < page_size or (0 <= total_available <= current):
-                    break
-
+        pages = inv_pages + ord_pages
         per_channel = [
             ChannelOrders(channel=c, orders=n, revenue_vnd=round(revenue.get(c, 0.0), 2))
             for c, n in sorted(counts.items(), key=lambda kv: -kv[1])
         ]
         log.info("kiotviet.orders_fetched", total=total, pages=pages,
+                 invoices=len(invoices), pending_orders=len(pending),
                  channels={c.channel: c.orders for c in per_channel})
         return OrderSummary(
             days=days, total_orders=total, per_channel=per_channel,
