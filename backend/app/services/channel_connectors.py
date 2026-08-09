@@ -226,7 +226,7 @@ class KiotVietConnector:
         page_size = 100
 
         while pages < 50:  # 50 x 100 rows is plenty for planning
-            params = {
+            params: dict[str, str | int] = {
                 "fromPurchaseDate": since,
                 "pageSize": page_size,
                 "currentItem": current,

@@ -680,24 +680,33 @@ async def build_plan(
                                     req.channel_cases, req.channel_fees,
                                     measured_volumes)
 
-    return RestockPlanResponse(
-        month=month, horizon_days=req.horizon_days, budget_vnd=int(req.budget_vnd),
+    # Built as a plain dict and validated in one go: the allocation helpers all
+    # deal in dicts, and Pydantic coerces each nested one into its model here.
+    # Passing them as keyword arguments works identically at runtime but reads
+    # to a type checker as "dict given where model expected" at five call sites.
+    payload: dict[str, object] = {
+        "month": month,
+        "horizon_days": req.horizon_days,
+        "budget_vnd": int(req.budget_vnd),
         **{k: plan[k] for k in (
             "spent_vnd", "remaining_vnd", "budget_used_pct", "item_count",
             "skipped_count", "total_units", "expected_revenue_vnd",
             "expected_profit_vnd", "expected_margin_pct", "roi_pct",
             "items", "skipped",
         )},
-        outlook=outlook,
-        channels=channel_rows,
-        channel_market_fetched_at=_channel_config().get("market_fetched_at"),
-        competition=list(competition.values()),
-        brands=sorted(brands, key=lambda b: -b["pressure"]),
-        summary=_summary(plan, month, outlook, scenario),
-        data_source=meta.get("source", "SerpApi — Google Trends + Google Shopping"),
-        trends_window=meta.get("trends_window"),
-        weeks_of_history=meta.get("weeks_of_history", 0),
-        trends_fetched_at=meta.get("trends_fetched_at"),
-        brand_sale_fetched_at=meta.get("brand_sale_fetched_at"),
-        live_refresh=live, scenario=scenario, competition_sensitivity=sensitivity,
-    )
+        "outlook": outlook,
+        "channels": channel_rows,
+        "channel_market_fetched_at": _channel_config().get("market_fetched_at"),
+        "competition": list(competition.values()),
+        "brands": sorted(brands, key=lambda b: -b["pressure"]),
+        "summary": _summary(plan, month, outlook, scenario),
+        "data_source": meta.get("source", "SerpApi — Google Trends + Google Shopping"),
+        "trends_window": meta.get("trends_window"),
+        "weeks_of_history": meta.get("weeks_of_history", 0),
+        "trends_fetched_at": meta.get("trends_fetched_at"),
+        "brand_sale_fetched_at": meta.get("brand_sale_fetched_at"),
+        "live_refresh": live,
+        "scenario": scenario,
+        "competition_sensitivity": sensitivity,
+    }
+    return RestockPlanResponse.model_validate(payload)

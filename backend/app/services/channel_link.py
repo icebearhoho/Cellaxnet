@@ -12,7 +12,7 @@ channel and needs to tell a Shopee order from a TikTok one.
 
 The table is created on first use rather than assuming `alembic upgrade head`
 has run — this project's containers do not run migrations at boot. Migration
-0002 remains the source of truth for a real deployment. Note that creating on
+0004 remains the source of truth for a real deployment. Note that creating on
 first use does NOT add columns to an existing table, so a schema change still
 needs the migration (or a drop).
 """
@@ -21,8 +21,9 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from typing import cast
 
-from sqlalchemy import select
+from sqlalchemy import Table, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -46,10 +47,11 @@ async def _ensure_table() -> None:
     global _table_ready
     if _table_ready:
         return
+    # `__table__` is typed as the broader FromClause on the declarative base;
+    # it is always a Table for a mapped class, and only Table carries .create().
+    table = cast(Table, ChannelConnection.__table__)
     async with engine.begin() as conn:
-        await conn.run_sync(
-            lambda c: ChannelConnection.__table__.create(bind=c, checkfirst=True)
-        )
+        await conn.run_sync(lambda c: table.create(bind=c, checkfirst=True))
     _table_ready = True
 
 

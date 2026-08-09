@@ -1,16 +1,20 @@
 """marketplace seller-account connections
 
-Revision ID: 0002_channel_connections
-Revises: 0001_initial
+Revision ID: 0004_channel_connections
+Revises: 0003_reviews
 Create Date: 2026-08-07 00:00:00.000000
+
+Written against 0001 on a branch, re-parented onto 0003 when it merged: two
+migrations both revising 0001 leave Alembic with two heads, and `upgrade head`
+then refuses to run at all. The chain must stay linear.
 """
 
 import sqlalchemy as sa
 
 from alembic import op
 
-revision = "0002_channel_connections"
-down_revision = "0001_initial"
+revision = "0004_channel_connections"
+down_revision = "0003_reviews"
 branch_labels = None
 depends_on = None
 
