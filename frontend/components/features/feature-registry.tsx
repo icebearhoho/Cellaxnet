@@ -21,6 +21,7 @@ import { ProductGraphPanel } from "./product-graph-panel";
 import { CopilotPanel } from "./copilot-panel";
 import { DailyBriefingPanel } from "./daily-briefing-panel";
 import { RestockPlannerPanel } from "./restock-planner-panel";
+import { MarketplacePanel } from "./marketplace-panel";
 
 /** Maps a feature slug to its live panel. Keep in sync with IMPLEMENTED in lib/nav. */
 const PANELS: Record<string, ComponentType> = {
@@ -44,6 +45,7 @@ const PANELS: Record<string, ComponentType> = {
   "decision-intelligence": DecisionIntelligencePanel,
   "product-graph": ProductGraphPanel,
   "restock-planner": RestockPlannerPanel,
+  marketplace: MarketplacePanel,
 };
 
 export function FeaturePanel({ slug }: { slug: string }) {

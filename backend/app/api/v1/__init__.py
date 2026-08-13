@@ -21,6 +21,7 @@ from app.api.v1.endpoints import (
     knowledge,
     kpis,
     market,
+    marketplace,
     personal_shopper,
     recsys,
     regret,
@@ -100,9 +101,15 @@ api_router.include_router(
     restock.router, prefix="/restock-planner", tags=["restock-planner"]
 )
 api_router.include_router(
-    # OAuth links to the seller's own Shopee / Lazada / TikTok Shop / Tiki
-    # accounts, so channel sales stop being something the seller types in.
+    # Aggregator link (KiotViet): one authorisation carrying several
+    # marketplaces. Kept alongside the per-marketplace path below while that one
+    # waits on developer-account approval from each platform.
     channel_link.router, prefix="/channel-link", tags=["channel-link"]
+)
+api_router.include_router(
+    # Direct per-marketplace OAuth: seller accounts, shop connections, and the
+    # sync of shop / product / order / inventory data.
+    marketplace.router, prefix="/marketplace", tags=["marketplace"]
 )
 api_router.include_router(
     flash_sale.router, prefix="/flash-sale", tags=["13-flash-sale"]

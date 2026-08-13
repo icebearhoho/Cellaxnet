@@ -729,6 +729,121 @@ export async function disconnectChannel(): Promise<boolean> {
   return (await post<{ removed: boolean }>("/channel-link/disconnect", {})) !== null;
 }
 
+// --- Marketplace connect: seller accounts + per-platform shop links --------
+// Direct OAuth to Shopee / Lazada / TikTok Shop. Separate from the KiotViet
+// aggregator link above: one seller account here owns many shops, each shop
+// authorised against its own marketplace with its own credentials.
+
+export type MarketplaceId = "shopee" | "lazada" | "tiktok";
+export type ShopStatus =
+  | "pending" | "connected" | "expired" | "revoked" | "error" | "disconnected";
+
+export type MarketplacePlatform = {
+  platform: MarketplaceId;
+  display_name: string;
+  configured: boolean;
+  missing_settings: string[];
+  console_url: string;
+  /** Built vs merely planned — the UI must not present these the same way. */
+  implemented: boolean;
+};
+
+export type SellerAccount = {
+  id: number;
+  name: string;
+  business_type: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  status: string;
+  shop_count: number;
+  created_at: string | null;
+};
+
+export type ShopConnection = {
+  id: number;
+  seller_account_id: number;
+  platform: MarketplaceId;
+  platform_label: string;
+  external_shop_id: string;
+  shop_name: string | null;
+  region: string;
+  status: ShopStatus;
+  status_label: string;
+  authorized_at: string | null;
+  last_synced_at: string | null;
+  last_error: string | null;
+  products: number;
+  orders: number;
+};
+
+export async function getMarketplacePlatforms(): Promise<MarketplacePlatform[] | null> {
+  return get<MarketplacePlatform[]>("/marketplace/platforms");
+}
+
+export async function getSellerAccounts(): Promise<SellerAccount[] | null> {
+  return get<SellerAccount[]>("/marketplace/accounts");
+}
+
+export async function createSellerAccount(input: {
+  name: string; business_type?: string;
+  contact_email?: string | null; contact_phone?: string | null;
+}): Promise<SellerAccount | null> {
+  return post<SellerAccount>("/marketplace/accounts", input);
+}
+
+export async function getShopConnections(
+  sellerAccountId?: number,
+): Promise<ShopConnection[] | null> {
+  const qs = sellerAccountId ? `?seller_account_id=${sellerAccountId}` : "";
+  return get<ShopConnection[]>(`/marketplace/shops${qs}`);
+}
+
+/**
+ * Starts authorisation. Reports its refusal rather than collapsing to `null`:
+ * the usual reason is that the marketplace's app credentials are not configured
+ * yet, and the seller needs to be told which ones — "something went wrong"
+ * sends them looking at their own account instead.
+ */
+export async function beginShopConnect(
+  sellerAccountId: number, platform: MarketplaceId,
+): Promise<{ ok: true; authorizeUrl: string } | { ok: false; message: string }> {
+  try {
+    const env = await api.post<{ authorize_url: string }>("/marketplace/connect", {
+      seller_account_id: sellerAccountId, platform,
+    });
+    return { ok: true, authorizeUrl: (env.data as { authorize_url: string }).authorize_url };
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      return { ok: false, message: e.envelope.error?.message ?? e.message };
+    }
+    return { ok: false, message: "Không gọi được backend." };
+  }
+}
+
+export type ShopSyncResult = {
+  shop_connection_id: number; products: number; orders: number; errors: string[];
+};
+
+export async function syncShop(
+  shopId: number,
+): Promise<{ ok: true; data: ShopSyncResult } | { ok: false; message: string }> {
+  try {
+    const env = await api.post<ShopSyncResult>(`/marketplace/shops/${shopId}/sync`, {});
+    return { ok: true, data: env.data as ShopSyncResult };
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      return { ok: false, message: e.envelope.error?.message ?? e.message };
+    }
+    return { ok: false, message: "Không gọi được backend." };
+  }
+}
+
+export async function disconnectShop(shopId: number): Promise<boolean> {
+  return (await post<{ disconnected: boolean }>(
+    `/marketplace/shops/${shopId}/disconnect`, {}
+  )) !== null;
+}
+
 // --- Real review submission + moderation queue -----------------------------
 export type ReviewSubmitStatus = "published" | "pending" | "flagged" | "rejected";
 export type ReviewSubmitResult = { status: ReviewSubmitStatus; message: string; review: StoreReview | null };
