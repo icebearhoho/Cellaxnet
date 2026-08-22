@@ -3,14 +3,15 @@
 Importing this package registers every adapter, so callers can resolve one by
 platform name without knowing which module defines it.
 
-Lazada is not implemented yet; adding it means writing a module here that
-satisfies `MarketplaceAdapter` and calling `register()`, with no change to the
-connect flow, the sync loop, the storage layer or the UI. TikTok Shop was added
-exactly that way and touched nothing above this package.
+Shopee, TikTok Shop and Lazada are all in. Each was added the same way: one
+module here satisfying `MarketplaceAdapter` and calling `register()`, with no
+change to the connect flow, the sync loop, the storage layer or the UI. A fourth
+marketplace is the same shape of work.
 """
 
 from app.services.marketplace import (  # noqa: F401 — importing registers each adapter
     crypto,
+    lazada,
     shopee,
     tiktok,
 )
