@@ -4,7 +4,7 @@
  * the frontend camelCase types and falls back to the supplied mock data when the
  * backend is unreachable or NEXT_PUBLIC_DEMO_MODE=true — so the UI never breaks.
  */
-import { api } from "@/lib/api";
+import { api, ApiClientError } from "@/lib/api";
 import type {
   Product,
   Recommendation,
@@ -498,6 +498,350 @@ export async function getStoreProducts(q?: string, category?: string): Promise<S
 
 export async function getStoreProduct(id: string): Promise<StoreDetail | null> {
   return get<StoreDetail>(`/storefront/products/${encodeURIComponent(id)}`);
+}
+
+// --- Smart Restock Planner — chia vốn nhập hàng theo mùa vụ + sale big brand ---
+export type ChannelId = "shopee" | "lazada" | "tiktok" | "own";
+export type CaseId = "hot" | "slow" | "seasonal" | "dead";
+
+export type ChannelMarketRow = {
+  category: string; listings: number; share_pct: number;
+  median_price_vnd: number; on_sale: number; avg_discount: number;
+};
+export type ChannelResult = {
+  channel: ChannelId; name: string; kind: "marketplace" | "own";
+  case: CaseId; case_label: string; case_desc: string;
+  commission_pct: number;
+  volume_factor: number; season_adj: number; trend_adj: number; demand_factor: number;
+  expected_demand: number; order_qty: number; spend_vnd: number;
+  expected_revenue_vnd: number; expected_profit_vnd: number;
+  commission_cost_vnd: number; budget_share_pct: number; sku_count: number;
+  verdict: string; measured: ChannelMarketRow[]; measurable: boolean;
+  volume_from_orders: boolean;
+};
+
+export type RestockItem = {
+  sku: string; name: string; brand: string; category: string;
+  channel: ChannelId; channel_name: string;
+  price_vnd: number; cost_vnd: number; stock: number; days_of_stock_left: number;
+  season_index: number; competition_multiplier: number;
+  baseline_demand: number; expected_demand: number;
+  need_qty: number; order_qty: number; partial: boolean;
+  spend_vnd: number; expected_revenue_vnd: number; expected_profit_vnd: number;
+  unit_margin_vnd: number; roi: number; urgency: number; reason: string;
+};
+export type RestockSkipped = {
+  sku: string; name: string; category: string; need_qty: number;
+  cost_vnd: number; reason: string;
+};
+export type RestockOutlook = {
+  category: string; season_index: number; season_index_prev: number;
+  season_change_pct: number; momentum: number; direction: string;
+  competition_multiplier: number; competition_level: string;
+  combined_factor: number; outlook: "expand" | "hold" | "contract";
+  advice: string; peak_month: number | null; low_month: number | null;
+  monthly_index: number[];
+};
+export type RestockCompetition = {
+  category: string; pressure: number; demand_multiplier: number;
+  level: "low" | "medium" | "high"; note: string;
+  brands_on_sale: number; brands_checked: number; avg_discount: number;
+  leader_brand: string | null;
+};
+export type RestockBrand = {
+  brand: string; category: string; offers_seen: number; offers_on_sale: number;
+  sale_ratio: number; avg_discount: number; pressure: number;
+};
+export type RestockPlan = {
+  month: number; horizon_days: number;
+  budget_vnd: number; spent_vnd: number; remaining_vnd: number; budget_used_pct: number;
+  item_count: number; skipped_count: number; total_units: number;
+  expected_revenue_vnd: number; expected_profit_vnd: number;
+  expected_margin_pct: number; roi_pct: number;
+  items: RestockItem[]; skipped: RestockSkipped[];
+  outlook: RestockOutlook[];
+  channels: ChannelResult[]; channel_market_fetched_at: string | null;
+  competition: RestockCompetition[]; brands: RestockBrand[];
+  summary: string; data_source: string; trends_window: string | null;
+  weeks_of_history: number; trends_fetched_at: string | null;
+  brand_sale_fetched_at: string | null; live_refresh: boolean;
+  scenario: boolean; competition_sensitivity: number;
+};
+
+/**
+ * Why this one call reports its failures instead of collapsing to `null` like
+ * the helpers above: the backend applies a global 30-req/min per-IP rate limit
+ * (RateLimitMiddleware), and this panel is the one users click repeatedly while
+ * tuning budget/month/horizon. Swallowing a 429 into `null` renders as "backend
+ * unreachable", which sends people restarting a perfectly healthy stack. The
+ * caller needs to tell "slow down" apart from "it's down" and "your input is
+ * invalid".
+ */
+export type RestockFailure =
+  | { kind: "rate_limited"; message: string; retryAfterS: number }
+  | { kind: "validation"; message: string }
+  | { kind: "offline"; message: string }
+  | { kind: "demo"; message: string };
+
+export type RestockResult =
+  | { ok: true; plan: RestockPlan }
+  | { ok: false; failure: RestockFailure };
+
+export async function planRestock(input: {
+  budget_vnd: number;
+  month?: number;
+  horizon_days?: number;
+  categories?: Category[];
+  scenario_pressure?: number | null;
+  refresh_live?: boolean;
+  channel_cases?: Partial<Record<ChannelId, CaseId>>;
+  channel_fees?: Partial<Record<ChannelId, number>>;
+}): Promise<RestockResult> {
+  if (DEMO) {
+    return {
+      ok: false,
+      failure: {
+        kind: "demo",
+        message:
+          "Đang ở chế độ demo (NEXT_PUBLIC_DEMO_MODE=true) nên không gọi backend. Đặt lại thành false trong frontend/.env.local.",
+      },
+    };
+  }
+  try {
+    const env = await api.post<RestockPlan>("/restock-planner/", input);
+    return { ok: true, plan: env.data as RestockPlan };
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      if (e.status === 429) {
+        const details = e.envelope.error?.details as
+          | { limit?: number }
+          | undefined;
+        return {
+          ok: false,
+          failure: {
+            kind: "rate_limited",
+            retryAfterS: 60,
+            message: `Bấm quá nhanh — backend giới hạn ${details?.limit ?? 30} lượt/phút. Chờ khoảng 1 phút rồi bấm lại (backend vẫn chạy bình thường).`,
+          },
+        };
+      }
+      if (e.status === 422) {
+        return {
+          ok: false,
+          failure: {
+            kind: "validation",
+            message: `Giá trị nhập không hợp lệ: ${e.envelope.error?.message ?? "kiểm tra lại vốn / số ngày phủ tồn kho"}.`,
+          },
+        };
+      }
+      return {
+        ok: false,
+        failure: {
+          kind: "offline",
+          message: `Backend trả lỗi ${e.status}: ${e.envelope.error?.message ?? e.message}`,
+        },
+      };
+    }
+    return {
+      ok: false,
+      failure: {
+        kind: "offline",
+        message:
+          "Không kết nối được backend. Kiểm tra docker compose đã chạy và cổng 8000 mở.",
+      },
+    };
+  }
+}
+
+// --- Kết nối KiotViet — một liên kết mang cả Shopee/Lazada/TikTok Shop ----
+export type LinkStatus =
+  | "not_configured" | "disconnected" | "pending" | "connected" | "error";
+
+export type MarketplaceRow = {
+  channel: string; name: string; orders: number;
+  revenue_vnd: number; daily_orders: number;
+};
+
+export type ChannelLinkStatus = {
+  platform: string;
+  name: string;
+  status: LinkStatus;
+  configured: boolean;
+  missing_settings: string[];
+  retailer: string | null;
+  connected_at: string | null;
+  last_synced_at: string | null;
+  last_error: string | null;
+  sync_days: number | null;
+  total_orders: number | null;
+  marketplaces: MarketplaceRow[];
+  docs_url: string;
+  portal_url: string;
+  credentials_hint: string;
+  supported: string[];
+};
+
+export async function getChannelLink(): Promise<ChannelLinkStatus | null> {
+  return get<ChannelLinkStatus>("/channel-link/");
+}
+
+/**
+ * Verifies the store's API keys against KiotViet. No redirect: KiotViet
+ * authenticates server-to-server, so this either succeeds or returns the
+ * reason it did not — usually wrong keys, which the caller should show
+ * verbatim rather than flattening into "connection failed".
+ */
+export async function connectChannel(): Promise<
+  { ok: true } | { ok: false; message: string }
+> {
+  try {
+    await api.post("/channel-link/connect", {});
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      return { ok: false, message: e.envelope.error?.message ?? e.message };
+    }
+    return { ok: false, message: "Không gọi được backend." };
+  }
+}
+
+export type SyncResult = {
+  days: number; total_orders: number; pages_read: number;
+  first_order_at: string | null; last_order_at: string | null;
+  marketplaces: MarketplaceRow[];
+};
+
+export async function syncChannel(): Promise<
+  { ok: true; data: SyncResult } | { ok: false; message: string }
+> {
+  try {
+    const env = await api.post<SyncResult>("/channel-link/sync", {});
+    return { ok: true, data: env.data as SyncResult };
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      return { ok: false, message: e.envelope.error?.message ?? e.message };
+    }
+    return { ok: false, message: "Không gọi được backend." };
+  }
+}
+
+export async function disconnectChannel(): Promise<boolean> {
+  return (await post<{ removed: boolean }>("/channel-link/disconnect", {})) !== null;
+}
+
+// --- Marketplace connect: seller accounts + per-platform shop links --------
+// Direct OAuth to Shopee / Lazada / TikTok Shop. Separate from the KiotViet
+// aggregator link above: one seller account here owns many shops, each shop
+// authorised against its own marketplace with its own credentials.
+
+export type MarketplaceId = "shopee" | "lazada" | "tiktok";
+export type ShopStatus =
+  | "pending" | "connected" | "expired" | "revoked" | "error" | "disconnected";
+
+export type MarketplacePlatform = {
+  platform: MarketplaceId;
+  display_name: string;
+  configured: boolean;
+  missing_settings: string[];
+  console_url: string;
+  /** Built vs merely planned — the UI must not present these the same way. */
+  implemented: boolean;
+};
+
+export type SellerAccount = {
+  id: number;
+  name: string;
+  business_type: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  status: string;
+  shop_count: number;
+  created_at: string | null;
+};
+
+export type ShopConnection = {
+  id: number;
+  seller_account_id: number;
+  platform: MarketplaceId;
+  platform_label: string;
+  external_shop_id: string;
+  shop_name: string | null;
+  region: string;
+  status: ShopStatus;
+  status_label: string;
+  authorized_at: string | null;
+  last_synced_at: string | null;
+  last_error: string | null;
+  products: number;
+  orders: number;
+};
+
+export async function getMarketplacePlatforms(): Promise<MarketplacePlatform[] | null> {
+  return get<MarketplacePlatform[]>("/marketplace/platforms");
+}
+
+export async function getSellerAccounts(): Promise<SellerAccount[] | null> {
+  return get<SellerAccount[]>("/marketplace/accounts");
+}
+
+export async function createSellerAccount(input: {
+  name: string; business_type?: string;
+  contact_email?: string | null; contact_phone?: string | null;
+}): Promise<SellerAccount | null> {
+  return post<SellerAccount>("/marketplace/accounts", input);
+}
+
+export async function getShopConnections(
+  sellerAccountId?: number,
+): Promise<ShopConnection[] | null> {
+  const qs = sellerAccountId ? `?seller_account_id=${sellerAccountId}` : "";
+  return get<ShopConnection[]>(`/marketplace/shops${qs}`);
+}
+
+/**
+ * Starts authorisation. Reports its refusal rather than collapsing to `null`:
+ * the usual reason is that the marketplace's app credentials are not configured
+ * yet, and the seller needs to be told which ones — "something went wrong"
+ * sends them looking at their own account instead.
+ */
+export async function beginShopConnect(
+  sellerAccountId: number, platform: MarketplaceId,
+): Promise<{ ok: true; authorizeUrl: string } | { ok: false; message: string }> {
+  try {
+    const env = await api.post<{ authorize_url: string }>("/marketplace/connect", {
+      seller_account_id: sellerAccountId, platform,
+    });
+    return { ok: true, authorizeUrl: (env.data as { authorize_url: string }).authorize_url };
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      return { ok: false, message: e.envelope.error?.message ?? e.message };
+    }
+    return { ok: false, message: "Không gọi được backend." };
+  }
+}
+
+export type ShopSyncResult = {
+  shop_connection_id: number; products: number; orders: number; errors: string[];
+};
+
+export async function syncShop(
+  shopId: number,
+): Promise<{ ok: true; data: ShopSyncResult } | { ok: false; message: string }> {
+  try {
+    const env = await api.post<ShopSyncResult>(`/marketplace/shops/${shopId}/sync`, {});
+    return { ok: true, data: env.data as ShopSyncResult };
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      return { ok: false, message: e.envelope.error?.message ?? e.message };
+    }
+    return { ok: false, message: "Không gọi được backend." };
+  }
+}
+
+export async function disconnectShop(shopId: number): Promise<boolean> {
+  return (await post<{ disconnected: boolean }>(
+    `/marketplace/shops/${shopId}/disconnect`, {}
+  )) !== null;
 }
 
 // --- Real review submission + moderation queue -----------------------------

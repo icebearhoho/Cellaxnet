@@ -73,6 +73,59 @@ class Settings(BaseSettings):
     # SerpApi — real Google News for Supply Chain early warning.
     SERPAPI_KEY: str | None = None
 
+    # --- Marketplace orders via KiotViet ---
+    # The seller links Shopee, Lazada and TikTok Shop to KiotViet once, and
+    # KiotViet returns every order stamped with the channel it came from. One
+    # set of store API keys replaces three marketplace app approvals, each of
+    # which gates on business documents.
+    #
+    # These come from the seller's own store: Thiết lập cửa hàng → Thiết lập
+    # kết nối API. Authentication is an OAuth2 client-credentials grant, so
+    # there is no redirect URL and nothing to register with a developer portal.
+    # Left as None, the connection card reports "chưa cấu hình" instead of
+    # offering a Connect button that cannot possibly complete.
+    KIOTVIET_CLIENT_ID: str | None = None
+    KIOTVIET_CLIENT_SECRET: str | None = None
+    # The store's retailer name; KiotViet rejects API calls without it even
+    # when the token is valid.
+    KIOTVIET_RETAILER: str | None = None
+    # How far back an order sync looks.
+    CHANNEL_SYNC_DAYS: int = 60
+
+    # --- Marketplace connections (Shopee / Lazada / TikTok Shop) ------------
+    # Each marketplace issues its own app credentials; one app cannot speak to
+    # another's API. Left as None, that marketplace reports "chưa cấu hình" and
+    # its Connect button stays disabled rather than starting a flow that cannot
+    # finish.
+    SHOPEE_PARTNER_ID: str | None = None
+    SHOPEE_PARTNER_KEY: str | None = None
+    # Shopee runs a separate sandbox host. Switching environment is a config
+    # change, never a code change.
+    SHOPEE_SANDBOX: bool = True
+
+    LAZADA_APP_KEY: str | None = None
+    LAZADA_APP_SECRET: str | None = None
+
+    TIKTOK_APP_KEY: str | None = None
+    TIKTOK_APP_SECRET: str | None = None
+    TIKTOK_SERVICE_ID: str | None = None
+
+    # Where marketplaces send the seller back after authorisation. Must be
+    # registered verbatim in each marketplace's app settings.
+    OAUTH_REDIRECT_BASE: str = "http://localhost:8000/api/v1/marketplace/callback"
+    # How long an authorisation may sit half-finished before its state token
+    # stops being accepted.
+    OAUTH_STATE_TTL_SECONDS: int = 900
+
+    # Fernet key for encrypting stored tokens at rest. Generated per deployment
+    # with Fernet.generate_key(). Absent, the app refuses to store credentials
+    # rather than writing them in the clear — a missing key is a configuration
+    # error, not a reason to downgrade security silently.
+    CREDENTIAL_ENCRYPTION_KEY: str | None = None
+    # Salt for the one-way buyer reference. Buyer identity is never stored, but
+    # repeat purchases still need to be recognisable.
+    BUYER_REF_SALT: str = "area303-buyer-ref"
+
     # Cache TTL for LLM responses (seconds).
     LLM_CACHE_TTL_SECONDS: int = 600  # 10 min per project plan
 

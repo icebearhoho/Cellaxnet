@@ -1,0 +1,123 @@
+{
+ "fetched_at": "2026-08-02T10:45:04",
+ "geo": "vn",
+ "brands": [
+  {
+   "brand": "Uniqlo",
+   "category": "Thời trang",
+   "offers_seen": 40,
+   "offers_on_sale": 6,
+   "sale_ratio": 0.15,
+   "avg_discount": 0.2564,
+   "pressure": 0.0385
+  },
+  {
+   "brand": "Zara",
+   "category": "Thời trang",
+   "offers_seen": 40,
+   "offers_on_sale": 0,
+   "sale_ratio": 0.0,
+   "avg_discount": 0.0,
+   "pressure": 0.0
+  },
+  {
+   "brand": "H&M",
+   "category": "Thời trang",
+   "offers_seen": 39,
+   "offers_on_sale": 0,
+   "sale_ratio": 0.0,
+   "avg_discount": 0.0,
+   "pressure": 0.0
+  },
+  {
+   "brand": "Coolmate",
+   "category": "Thời trang",
+   "offers_seen": 40,
+   "offers_on_sale": 10,
+   "sale_ratio": 0.25,
+   "avg_discount": 0.1556,
+   "pressure": 0.0389
+  },
+  {
+   "brand": "YODY",
+   "category": "Thời trang",
+   "offers_seen": 40,
+   "offers_on_sale": 2,
+   "sale_ratio": 0.05,
+   "avg_discount": 0.3139,
+   "pressure": 0.0157
+  },
+  {
+   "brand": "Laneige",
+   "category": "Mỹ phẩm",
+   "offers_seen": 40,
+   "offers_on_sale": 9,
+   "sale_ratio": 0.225,
+   "avg_discount": 0.2637,
+   "pressure": 0.0593
+  },
+  {
+   "brand": "The Ordinary",
+   "category": "Mỹ phẩm",
+   "offers_seen": 40,
+   "offers_on_sale": 2,
+   "sale_ratio": 0.05,
+   "avg_discount": 0.3849,
+   "pressure": 0.0192
+  },
+  {
+   "brand": "Innisfree",
+   "category": "Mỹ phẩm",
+   "offers_seen": 40,
+   "offers_on_sale": 5,
+   "sale_ratio": 0.125,
+   "avg_discount": 0.2079,
+   "pressure": 0.026
+  },
+  {
+   "brand": "Cocoon",
+   "category": "Mỹ phẩm",
+   "offers_seen": 40,
+   "offers_on_sale": 4,
+   "sale_ratio": 0.1,
+   "avg_discount": 0.1783,
+   "pressure": 0.0178
+  },
+  {
+   "brand": "Bourjois",
+   "category": "Mỹ phẩm",
+   "offers_seen": 31,
+   "offers_on_sale": 2,
+   "sale_ratio": 0.0645,
+   "avg_discount": 0.2285,
+   "pressure": 0.0147
+  },
+  {
+   "brand": "Casio",
+   "category": "Phụ kiện",
+   "offers_seen": 40,
+   "offers_on_sale": 2,
+   "sale_ratio": 0.05,
+   "avg_discount": 0.1485,
+   "pressure": 0.0074
+  },
+  {
+   "brand": "Charles Keith",
+   "category": "Phụ kiện",
+   "offers_seen": 40,
+   "offers_on_sale": 0,
+   "sale_ratio": 0.0,
+   "avg_discount": 0.0,
+   "pressure": 0.0
+  },
+  {
+   "brand": "Vascara",
+   "category": "Phụ kiện",
+   "offers_seen": 23,
+   "offers_on_sale": 0,
+   "sale_ratio": 0.0,
+   "avg_discount": 0.0,
+   "pressure": 0.0
+  }
+ ]
+}

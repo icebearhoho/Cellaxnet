@@ -1,0 +1,119 @@
+{
+ "fetched_at": "2026-08-07T14:49:36",
+ "geo": "vn",
+ "source": "SerpApi — Google Shopping (merchant field)",
+ "categories": {
+  "Thời trang": {
+   "total_listings": 120,
+   "channels": {
+    "other": {
+     "listings": 114,
+     "share_pct": 95.0,
+     "median_price_vnd": 542150,
+     "on_sale": 22,
+     "avg_discount": 0.3626,
+     "merchants": [
+      "188.com.vn",
+      "ACFC Vietnam",
+      "Bovest.vn",
+      "Canifa",
+      "Cardina",
+      "Công ty Cổ phần thời trang MM Outfit"
+     ]
+    },
+    "shopee": {
+     "listings": 6,
+     "share_pct": 5.0,
+     "median_price_vnd": 298250,
+     "on_sale": 2,
+     "avg_discount": 0.3879,
+     "merchants": [
+      "Shopee"
+     ]
+    }
+   }
+  },
+  "Mỹ phẩm": {
+   "total_listings": 120,
+   "channels": {
+    "shopee": {
+     "listings": 41,
+     "share_pct": 34.2,
+     "median_price_vnd": 150000,
+     "on_sale": 1,
+     "avg_discount": 0.0639,
+     "merchants": [
+      "Shopee",
+      "shopee.vn"
+     ]
+    },
+    "other": {
+     "listings": 76,
+     "share_pct": 63.3,
+     "median_price_vnd": 281250,
+     "on_sale": 10,
+     "avg_discount": 0.2556,
+     "merchants": [
+      "AB Beauty World",
+      "ASH Vietnam",
+      "Beaumax Skincare",
+      "Chatuchak.VN",
+      "Chiaki.vn",
+      "Cty In Ấn Quảng Cáo Thương Hiệu"
+     ]
+    },
+    "lazada": {
+     "listings": 3,
+     "share_pct": 2.5,
+     "median_price_vnd": 59000,
+     "on_sale": 0,
+     "avg_discount": 0.0,
+     "merchants": [
+      "Lazada Vietnam"
+     ]
+    }
+   }
+  },
+  "Phụ kiện": {
+   "total_listings": 80,
+   "channels": {
+    "other": {
+     "listings": 70,
+     "share_pct": 87.5,
+     "median_price_vnd": 2466600,
+     "on_sale": 7,
+     "avg_discount": 0.2032,
+     "merchants": [
+      "24kara Watches",
+      "3sports.vn",
+      "ACFC Vietnam",
+      "Aldo VN",
+      "Chapi.vn",
+      "Clever Hippo"
+     ]
+    },
+    "shopee": {
+     "listings": 9,
+     "share_pct": 11.2,
+     "median_price_vnd": 170050,
+     "on_sale": 0,
+     "avg_discount": 0.0,
+     "merchants": [
+      "Shopee",
+      "shopee.vn"
+     ]
+    },
+    "lazada": {
+     "listings": 1,
+     "share_pct": 1.2,
+     "median_price_vnd": 2243000,
+     "on_sale": 0,
+     "avg_discount": 0.0,
+     "merchants": [
+      "Lazada Vietnam"
+     ]
+    }
+   }
+  }
+ }
+}

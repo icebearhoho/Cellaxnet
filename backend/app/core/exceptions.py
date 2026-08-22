@@ -7,6 +7,7 @@ the FastAPI app in :mod:`app.main`.
 
 from __future__ import annotations
 
+import json
 import uuid
 from typing import Any
 
@@ -133,6 +134,31 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     )
 
 
+def _serialisable_errors(exc: RequestValidationError) -> list[dict]:
+    """Pydantic error list with the non-JSON bits stringified.
+
+    When a field validator raises ValueError, pydantic puts the *exception
+    object itself* in `ctx["error"]`, and `input` can hold arbitrary values.
+    Handing those straight to JSONResponse blows up during serialisation, and
+    the failure surfaces as a 500 with a traceback — so a plain bad-input
+    request looks like a server crash. Any schema in the codebase that uses a
+    custom validator hits this, not just one feature.
+    """
+    cleaned: list[dict] = []
+    for err in exc.errors():
+        e = dict(err)
+        ctx = e.get("ctx")
+        if isinstance(ctx, dict):
+            e["ctx"] = {k: str(v) for k, v in ctx.items()}
+        if "input" in e:
+            try:
+                json.dumps(e["input"])
+            except (TypeError, ValueError):
+                e["input"] = str(e["input"])
+        cleaned.append(e)
+    return cleaned
+
+
 async def validation_error_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
@@ -142,7 +168,7 @@ async def validation_error_handler(
         error=ErrorPayload(
             code=ErrorCode.VALIDATION_ERROR,
             message="Request validation failed.",
-            details={"errors": exc.errors()},
+            details={"errors": _serialisable_errors(exc)},
         ),
         status_code=422,
     )

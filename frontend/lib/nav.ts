@@ -23,6 +23,8 @@ import {
   ClipboardCheck,
   Network,
   Store,
+  Link2,
+  PackagePlus,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,7 +49,9 @@ export type NavItem = {
     | "Time Series"
     | "Computer Vision"
     | "Generative AI"
-    | "Behavioral AI";
+    | "Behavioral AI"
+    // Not a model family: plumbing that brings the seller's real data in.
+    | "Integration";
   owner: "TL" | "DA" | "FS" | "D1" | "D2";
 };
 
@@ -74,6 +78,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "17", slug: "seller-coach",     label: "Cải thiện cửa hàng", href: "/seller/seller-coach",     icon: GraduationCap, app: "seller", section: "creator",      category: "Generative AI",   owner: "FS" },
   { id: "08", slug: "sentiment-alert",  label: "Cảnh báo nhu cầu",    href: "/seller/sentiment-alert",  icon: MessageSquare, app: "seller", section: "creator",      category: "NLP",              owner: "D1" },
   { id: "16", slug: "supply-chain",     label: "Rủi ro vận chuyển",       href: "/seller/supply-chain",     icon: Truck,         app: "seller", section: "operations",   category: "Time Series",     owner: "TL" },
+  { id: "23", slug: "restock-planner",  label: "Kế hoạch nhập hàng",  href: "/seller/restock-planner",  icon: PackagePlus,   app: "seller", section: "operations",   category: "Time Series",     owner: "D1" },
+  { id: "24", slug: "marketplace",      label: "Kết nối bán hàng",    href: "/seller/marketplace",      icon: Link2,         app: "seller", section: "operations",   category: "Integration",     owner: "D1" },
   { id: "18", slug: "product-knowledge",    label: "Biến động sản phẩm",   href: "/seller/product-knowledge",    icon: Brain,     app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
   { id: "19", slug: "market-intelligence",  label: "So sánh đối thủ", href: "/seller/market-intelligence",  icon: Swords,    app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
   { id: "20", slug: "creator-performance",  label: "Hiệu quả nhà sáng tạo", href: "/seller/creator-performance",  icon: Users,     app: "seller", section: "creator",      category: "Generative AI", owner: "TL" },
@@ -91,7 +97,7 @@ export const IMPLEMENTED = new Set<string>([
   "sentiment-alert", "supply-chain",
   "emotion-sale", "segmentation",
   "product-knowledge", "market-intelligence", "creator-performance", "decision-intelligence",
-  "product-graph",
+  "product-graph", "restock-planner", "marketplace",
   "copilot", "daily-briefing",
 ]);
 
@@ -124,6 +130,7 @@ export const SUBTITLE: Record<string, string> = {
   "creator-performance": "Đo hiệu quả KOL/KOC theo doanh số quy đổi, doanh số/1k view và tỷ lệ tương tác.",
   "decision-intelligence": "Học từ quyết định quá khứ để rút ra hành động nên lặp lại và thời điểm chạy ads tốt nhất.",
   "product-graph": "Quan hệ SKU/brand + sản phẩm tương tự",
+  "restock-planner": "Với số vốn có sẵn, tháng này nên nhập mã nào và bao nhiêu cái — theo mùa vụ 5 năm và mức sale hiện tại của big brand.",
 };
 
 export const NAV_SECTIONS: Array<{ id: NavItem["section"]; title: string }> = [
