@@ -34,13 +34,14 @@ APP_KEY = "6kvjtestappkey"
 APP_SECRET = "tiktok-test-app-secret"
 SHOP_ID = "7495000000000000000"
 CIPHER = "TTP_test_cipher_value"
+SERVICE_ID = "SVC-1005678"
 
 
 @pytest.fixture(autouse=True)
 def _configure(monkeypatch):
     monkeypatch.setattr(settings, "TIKTOK_APP_KEY", APP_KEY)
     monkeypatch.setattr(settings, "TIKTOK_APP_SECRET", APP_SECRET)
-    monkeypatch.setattr(settings, "TIKTOK_SERVICE_ID", None)
+    monkeypatch.setattr(settings, "TIKTOK_SERVICE_ID", SERVICE_ID)
     yield
 
 
@@ -123,15 +124,32 @@ def test_unconfigured_adapter_names_the_missing_settings(monkeypatch):
     assert "TIKTOK_APP_KEY" in str(exc.value)
 
 
-def test_authorize_url_carries_state():
+def test_missing_service_id_is_named_even_when_app_key_is_set(monkeypatch):
+    """service_id is distinct from the App Key; falling back to the App Key
+    produces "This service does not exist" from TikTok, an error that names
+    nothing. The check has to name the real cause instead.
+    """
+    monkeypatch.setattr(settings, "TIKTOK_SERVICE_ID", None)
+    assert not tt.adapter.configured()
+    assert tt.adapter.missing_settings() == ["TIKTOK_SERVICE_ID"]
+    with pytest.raises(AdapterError) as exc:
+        tt.adapter.authorize_url("state123", "https://example.test/cb")
+    assert "TIKTOK_SERVICE_ID" in str(exc.value)
+
+
+def test_authorize_url_carries_state_and_the_configured_service_id():
     url = tt.adapter.authorize_url("state123", "https://example.test/cb")
     assert url.startswith(tt.AUTHORIZE_URL)
     assert "state=state123" in url
+    assert f"service_id={SERVICE_ID}" in url
 
 
-def test_authorize_url_prefers_service_id_when_set(monkeypatch):
-    monkeypatch.setattr(settings, "TIKTOK_SERVICE_ID", "SVC-9")
-    assert "service_id=SVC-9" in tt.adapter.authorize_url("s", "https://example.test/cb")
+def test_authorize_url_never_falls_back_to_the_app_key():
+    """Regression guard for the actual bug: App Key and service_id must never
+    collide, since TikTok validates them against different records.
+    """
+    url = tt.adapter.authorize_url("s", "https://example.test/cb")
+    assert f"service_id={APP_KEY}" not in url
 
 
 # --------------------------------------------------------------------------- #

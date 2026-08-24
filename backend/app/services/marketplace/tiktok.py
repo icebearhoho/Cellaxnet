@@ -101,7 +101,10 @@ class TikTokAdapter:
     # --- configuration ----------------------------------------------------
 
     def configured(self) -> bool:
-        return bool(settings.TIKTOK_APP_KEY and settings.TIKTOK_APP_SECRET)
+        return bool(
+            settings.TIKTOK_APP_KEY and settings.TIKTOK_APP_SECRET
+            and settings.TIKTOK_SERVICE_ID
+        )
 
     def missing_settings(self) -> list[str]:
         out = []
@@ -109,6 +112,12 @@ class TikTokAdapter:
             out.append("TIKTOK_APP_KEY")
         if not settings.TIKTOK_APP_SECRET:
             out.append("TIKTOK_APP_SECRET")
+        if not settings.TIKTOK_SERVICE_ID:
+            # Distinct from the App Key: shown just below the app name on its
+            # detail page in Partner Center. Falling back to the App Key here
+            # produces "This service does not exist" on the authorize screen —
+            # a TikTok-side error that names nothing, so the check has to.
+            out.append("TIKTOK_SERVICE_ID")
         return out
 
     def _require_config(self) -> tuple[str, str]:
@@ -157,9 +166,14 @@ class TikTokAdapter:
         TikTok echoes `state` back on the callback, so unlike Shopee it does not
         need to be smuggled through the redirect URL. The redirect itself is
         configured in Partner Center rather than passed here, so it is not sent.
+
+        `service_id` is not the App Key — it is a separate id shown just below
+        the app name on its detail page in Partner Center. Passing the App Key
+        here is accepted by the URL builder but rejected by TikTok with
+        "This service does not exist", which names nothing wrong.
         """
-        app_key, _ = self._require_config()
-        service_id = settings.TIKTOK_SERVICE_ID or app_key
+        self._require_config()
+        service_id = settings.TIKTOK_SERVICE_ID
         return f"{AUTHORIZE_URL}?{urlencode({'service_id': service_id, 'state': state})}"
 
     async def exchange_code(self, code: str, params: dict[str, str]) -> TokenBundle:
