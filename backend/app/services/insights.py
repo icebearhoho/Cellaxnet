@@ -40,6 +40,7 @@ from app.services import btc_market
 from app.services import commerce_store as store
 from app.services.genai.base import LlmMessage
 from app.services.genai.factory import get_llm_client
+from app.services.restock import channel_config
 
 log = get_logger("app.services.insights")
 
@@ -234,6 +235,49 @@ async def detect_fake(req: FakeReviewRequest) -> FakeReviewResponse:
 # #02 Dynamic Pricing — comps-median baseline (same idea as
 # dynamic_pricing/src/02_recommend.py, using the demo catalog as comps).
 # ---------------------------------------------------------------------------
+@dataclass(frozen=True)
+class _CostFloor:
+    """The lowest price that still pays the seller, and what it is made of."""
+
+    floor: int
+    channel_name: str | None
+    commission_pct: float
+
+
+def _cost_floor(req: PricingRequest) -> _CostFloor | None:
+    """Cheapest price that clears `min_margin_pct` *after* commission.
+
+    Revenue keeps only ``1 - commission``, and the margin is taken on revenue,
+    so the floor solves ``(p·(1-c) - cost) / (p·(1-c)) = m`` for p. Selling at
+    the market median is worthless advice if the channel's cut turns it into a
+    loss, which is exactly what a seller cannot see from the median alone.
+    """
+    if req.unit_cost is None:
+        return None
+
+    commission_pct, channel_name = 0.0, None
+    if req.channel:
+        definition = channel_config()["definitions"].get(req.channel)
+        if definition:
+            commission_pct = float(definition.get("commission_pct", 0.0))
+            channel_name = definition.get("name")
+
+    keep = max(1.0 - commission_pct / 100.0, 0.01)
+    margin = max(1.0 - req.min_margin_pct / 100.0, 0.01)
+    floor = req.unit_cost / (keep * margin)
+    return _CostFloor(
+        floor=int(-(-floor // 100) * 100),  # round up: rounding down breaks the floor
+        channel_name=channel_name,
+        commission_pct=commission_pct,
+    )
+
+
+def _net_margin_pct(price: int, cost: int, commission_pct: float) -> float:
+    """Margin on revenue actually kept at `price`, after commission."""
+    revenue = price * (1.0 - commission_pct / 100.0)
+    return round((revenue - cost) / revenue * 100.0, 1) if revenue > 0 else 0.0
+
+
 def _vnd(amount: int) -> str:
     """Vietnamese money formatting: 67.900₫, not the 67,900₫ Python defaults to."""
     return f"{amount:,}".replace(",", ".") + "₫"
@@ -314,10 +358,38 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             recommended = round((cur + median) / 2)
             rationale = f"{_vnd(cur)} đã sát {basis} — chỉ cần tinh chỉnh nhẹ."
 
+    # The floor outranks the market: undercutting the competition at a loss is
+    # not a cheaper price, it is a slower way to lose money.
+    cost_floor = _cost_floor(req)
+    floor_above_market = False
+    margin_at_rec: float | None = None
+    if cost_floor is not None:
+        assert req.unit_cost is not None  # _cost_floor returns None without it
+        if recommended < cost_floor.floor:
+            recommended = cost_floor.floor
+            floor_above_market = median < cost_floor.floor
+            fee = (
+                f" sau phí {cost_floor.channel_name} {cost_floor.commission_pct:g}%"
+                if cost_floor.channel_name else ""
+            )
+            rationale = (
+                f"{basis[0].upper()}{basis[1:]} thấp hơn giá vốn cho phép. Để giữ biên "
+                f"{req.min_margin_pct:g}%{fee}, giá thấp nhất là {_vnd(cost_floor.floor)} — "
+                f"đề xuất giữ ở mức này thay vì chạy theo thị trường."
+            )
+        margin_at_rec = _net_margin_pct(
+            int(recommended), req.unit_cost, cost_floor.commission_pct
+        )
+
     return PricingResponse(
         recommended_price=int(recommended), low=int(min(p25, recommended)),
         high=int(max(p75, recommended)), category_median=int(median),
         sample_size=stats.sample_size, rationale=rationale,
+        price_floor=cost_floor.floor if cost_floor else None,
+        margin_pct_at_recommended=margin_at_rec,
+        channel_name=cost_floor.channel_name if cost_floor else None,
+        channel_commission_pct=cost_floor.commission_pct if cost_floor else None,
+        floor_above_market=floor_above_market,
         data_source=stats.source, shop_count=stats.shop_count,
     )
 

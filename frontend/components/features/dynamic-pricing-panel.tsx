@@ -18,8 +18,10 @@ import {
   MoveHorizontal,
   RefreshCw,
   Search,
+  ShieldCheck,
   Shirt,
   SlidersHorizontal,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,6 +44,15 @@ import {
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["Thời trang", "Mỹ phẩm", "Phụ kiện"] as const;
+
+/** Commission rates mirror backend/app/data/restock_market.json — the backend
+ *  recomputes from that file, so these labels are display only. */
+const CHANNELS = [
+  { id: "shopee", label: "Shopee", fee: "5%" },
+  { id: "lazada", label: "Lazada", fee: "4%" },
+  { id: "tiktok", label: "TikTok Shop", fee: "5%" },
+  { id: "own", label: "Cửa hàng riêng", fee: "2%" },
+] as const;
 
 type Category = (typeof CATEGORIES)[number];
 
@@ -66,6 +77,9 @@ type PricingQuery = {
   name: string;
   category: Category;
   currentPrice?: number;
+  unitCost?: number;
+  minMarginPct: number;
+  channel: string;
 };
 
 const VND = new Intl.NumberFormat("vi-VN", {
@@ -114,6 +128,9 @@ export function DynamicPricingPanel() {
   const [name, setName] = useState("Serum Vitamin C 15%");
   const [category, setCategory] = useState<Category>("Mỹ phẩm");
   const [price, setPrice] = useState("450000");
+  const [cost, setCost] = useState("");
+  const [margin, setMargin] = useState(30);
+  const [channel, setChannel] = useState<string>("shopee");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PricingResult | null>(null);
   const [submitted, setSubmitted] = useState<PricingQuery | null>(null);
@@ -123,6 +140,8 @@ export function DynamicPricingPanel() {
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const nameId = useId();
   const priceId = useId();
+  const costId = useId();
+  const marginId = useId();
 
   useEffect(() => {
     let active = true;
@@ -156,11 +175,16 @@ export function DynamicPricingPanel() {
   }
 
   const currentPrice = parsePrice(price);
+  const unitCost = parsePrice(cost);
   const isDirty = Boolean(
     result && submitted && (
       submitted.name !== name.trim()
       || submitted.category !== category
       || submitted.currentPrice !== currentPrice
+      // The cost side changes the floor, so it has to mark the result stale too.
+      || submitted.unitCost !== unitCost
+      || submitted.minMarginPct !== margin
+      || submitted.channel !== channel
     ),
   );
 
@@ -177,10 +201,15 @@ export function DynamicPricingPanel() {
     setBusy(true);
     setError(null);
     try {
-      const response = await recommendPrice(productName, category, currentPrice);
+      const response = await recommendPrice(productName, category, currentPrice, {
+        unitCost, minMarginPct: margin, channel,
+      });
       if (response.ok) {
         setResult(response.data);
-        setSubmitted({ name: productName, category, currentPrice });
+        setSubmitted({
+          name: productName, category, currentPrice,
+          unitCost, minMarginPct: margin, channel,
+        });
         return;
       }
 
@@ -310,6 +339,77 @@ export function DynamicPricingPanel() {
               <p id={`${priceId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
                 Dùng để tính mức tăng hoặc giảm so với giá đang bán.
               </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-surface-2/40 p-4">
+              <label htmlFor={costId} className="flex items-center gap-2 text-sm font-medium text-text">
+                <Wallet className="h-4 w-4 text-warning" aria-hidden="true" />
+                <span>Giá vốn <span className="font-normal text-text-muted">(không bắt buộc)</span></span>
+              </label>
+              <div className="relative mt-2">
+                <Input
+                  id={costId}
+                  value={cost}
+                  onChange={(event) => setCost(event.target.value.replace(/\D/g, ""))}
+                  placeholder="80000"
+                  inputMode="numeric"
+                  className="rounded-lg pr-14 tnum"
+                  aria-describedby={`${costId}-hint`}
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-text-dim">
+                  VND
+                </span>
+              </div>
+              <p id={`${costId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
+                Nhập giá vốn để hệ thống không đề xuất mức giá làm bạn lỗ.
+              </p>
+
+              {cost && (
+                <div className="mt-4 space-y-4 border-t border-border pt-4">
+                  <div>
+                    <label htmlFor={marginId} className="flex items-center justify-between text-sm font-medium text-text">
+                      <span>Biên lợi nhuận mong muốn</span>
+                      <span className="tnum text-warning">{margin}%</span>
+                    </label>
+                    <input
+                      id={marginId}
+                      type="range"
+                      min={5}
+                      max={70}
+                      step={5}
+                      value={margin}
+                      onChange={(event) => setMargin(Number(event.target.value))}
+                      className="mt-2 w-full accent-warning"
+                    />
+                    <p className="mt-1.5 text-xs leading-5 text-text-muted">
+                      Tính trên giá bán: bán {VND.format(100000)} với biên {margin}% thì bạn giữ lại{" "}
+                      {VND.format(Math.round(100000 * margin / 100))}.
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-sm font-medium text-text">Kênh bán</span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {CHANNELS.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setChannel(option.id)}
+                          className={cn(
+                            "rounded-lg border px-3 py-1.5 text-xs transition-colors",
+                            channel === option.id
+                              ? "border-warning bg-warning/10 text-warning"
+                              : "border-border text-text-muted hover:bg-surface-2",
+                          )}
+                        >
+                          {option.label}
+                          <span className="ml-1 text-text-dim">{option.fee}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && !name.trim() && (
@@ -492,6 +592,46 @@ export function DynamicPricingPanel() {
                     </dd>
                   </div>
                 </dl>
+
+                {result.price_floor !== null && (
+                  <div
+                    className={cn(
+                      "rounded-lg border px-5 py-4",
+                      result.floor_above_market
+                        ? "border-danger/30 bg-danger/[0.05]"
+                        : "border-border bg-surface-2/40",
+                    )}
+                  >
+                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                      <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Giá sàn an toàn
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="tnum text-lg font-semibold text-text">
+                        {VND.format(result.price_floor)}
+                      </span>
+                      {result.margin_pct_at_recommended !== null && (
+                        <span className="text-xs text-text-muted">
+                          Biên tại giá đề xuất:{" "}
+                          <span className="tnum font-medium text-success">
+                            {result.margin_pct_at_recommended}%
+                          </span>
+                        </span>
+                      )}
+                      {result.channel_name && (
+                        <span className="text-xs text-text-dim">
+                          đã trừ phí {result.channel_name} {result.channel_commission_pct}%
+                        </span>
+                      )}
+                    </div>
+                    {result.floor_above_market && (
+                      <p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-danger">
+                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        Trung vị thị trường thấp hơn giá vốn của bạn — bán theo thị trường sẽ lỗ.
+                        Cân nhắc giảm giá nhập hoặc chọn sản phẩm khác thay vì hạ giá.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="rounded-lg border border-warning/20 bg-warning/[0.035] px-5 py-4">
                   <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-warning">

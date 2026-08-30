@@ -66,11 +66,13 @@ def _season_profiles() -> dict[str, dict]:
     return out
 
 
-def _channel_config() -> dict:
+def channel_config() -> dict:
     """Channel definitions, cases and measured platform presence.
 
     Sourced from the snapshot rather than redeclared here, so the offline layer
     in restock_planner/channels.py stays the single place they are defined.
+    Public because pricing reads the same commission rates: a fee duplicated
+    into a second module is a fee that will drift.
     """
     ch = _snapshot().get("channels") or {}
     return {
@@ -314,7 +316,7 @@ def _allocate(products, budget, month, season, competition, horizon,
     the demand each one generates; a channel expected to sell nothing is
     credited nothing and therefore asks for nothing.
     """
-    chan_cfg = _channel_config()
+    chan_cfg = channel_config()
     definitions = chan_cfg["definitions"]
     cases = chan_cfg["cases"]
     active_cases = dict(chan_cfg["default_case"])
@@ -477,7 +479,7 @@ def _allocate(products, budget, month, season, competition, horizon,
 def _channel_results(plan: dict, month: int, season: dict, competition: dict,
                      channel_cases=None, channel_fees=None, measured=None) -> list[dict]:
     """Roll the allocation up per channel, and say what to do about each."""
-    cfg = _channel_config()
+    cfg = channel_config()
     definitions, cases = cfg["definitions"], cfg["cases"]
     active = dict(cfg["default_case"])
     for cid, case_id in (channel_cases or {}).items():
@@ -696,7 +698,7 @@ async def build_plan(
         )},
         "outlook": outlook,
         "channels": channel_rows,
-        "channel_market_fetched_at": _channel_config().get("market_fetched_at"),
+        "channel_market_fetched_at": channel_config().get("market_fetched_at"),
         "competition": list(competition.values()),
         "brands": sorted(brands, key=lambda b: -b["pressure"]),
         "summary": _summary(plan, month, outlook, scenario),

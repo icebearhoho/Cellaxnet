@@ -51,6 +51,15 @@ class PricingRequest(BaseModel):
     product_name: str = Field(min_length=1, max_length=200)
     category: Literal["Thời trang", "Mỹ phẩm", "Phụ kiện"]
     current_price: int | None = Field(default=None, ge=0)
+    #: Landed cost per unit. Optional — with it the recommendation is held
+    #: above a price that still earns `min_margin_pct` after the channel's
+    #: commission, so following the market can never quietly sell at a loss.
+    unit_cost: int | None = Field(default=None, ge=0)
+    #: Margin on *revenue* ((price - cost) / price), the same basis Market
+    #: Intelligence uses. Not markup on cost — at 30% those differ by a third.
+    min_margin_pct: float = Field(default=20.0, ge=0, le=90)
+    #: Selling channel, for its commission. Unknown ids fall back to no fee.
+    channel: str | None = Field(default=None, max_length=32)
 
 
 class PricingResponse(BaseModel):
@@ -60,6 +69,18 @@ class PricingResponse(BaseModel):
     category_median: int
     sample_size: int
     rationale: str
+    #: Lowest price that still clears `min_margin_pct` after commission, or
+    #: None when no cost was supplied. The recommendation never sits below it.
+    price_floor: int | None = None
+    #: Margin on revenue actually achieved at `recommended_price`, after
+    #: commission — the number to check before accepting the suggestion.
+    margin_pct_at_recommended: float | None = None
+    #: Commission applied, so the floor can be traced back to a rate.
+    channel_name: str | None = None
+    channel_commission_pct: float | None = None
+    #: True when the market median sits below the floor: matching the market
+    #: would lose money, so the floor is quoted instead.
+    floor_above_market: bool = False
     #: Defaulted so an older client that ignores these still parses the body.
     data_source: PriceSource = "demo"
     #: How many distinct shops the observed sample spans; None for "demo".

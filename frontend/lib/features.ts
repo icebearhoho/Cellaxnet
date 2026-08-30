@@ -160,6 +160,13 @@ export type PriceSource = "demo" | "btc_live" | "btc_snapshot";
 export type PricingResult = {
   recommended_price: number; low: number; high: number;
   category_median: number; sample_size: number; rationale: string;
+  /** Lowest price that still clears the margin after commission; null without a cost. */
+  price_floor: number | null;
+  margin_pct_at_recommended: number | null;
+  channel_name: string | null;
+  channel_commission_pct: number | null;
+  /** The market median sits below the floor — matching it would lose money. */
+  floor_above_market: boolean;
   data_source: PriceSource;
   /** Distinct shops behind an observed sample; null for the demo catalogue. */
   shop_count: number | null;
@@ -169,8 +176,15 @@ export type PricingResponse =
   | { ok: true; data: PricingResult }
   | { ok: false; message: string; status?: number };
 
+/** Optional cost side of a pricing request; without it no floor is computed. */
+export type PricingCost = {
+  unitCost?: number;
+  minMarginPct?: number;
+  channel?: string;
+};
+
 export async function recommendPrice(
-  productName: string, category: string, currentPrice?: number,
+  productName: string, category: string, currentPrice?: number, cost?: PricingCost,
 ): Promise<PricingResponse> {
   if (DEMO) {
     return { ok: false, message: "Chế độ demo đang bật nên chưa thể gọi dịch vụ định giá." };
@@ -178,6 +192,10 @@ export async function recommendPrice(
   try {
     const response = await api.post<PricingResult>("/dynamic-pricing/", {
       product_name: productName, category, current_price: currentPrice ?? null,
+      unit_cost: cost?.unitCost ?? null,
+      // Only sent alongside a cost — the backend default applies otherwise.
+      ...(cost?.unitCost ? { min_margin_pct: cost.minMarginPct ?? 20 } : {}),
+      channel: cost?.channel ?? null,
     });
     return { ok: true, data: response.data as PricingResult };
   } catch (error) {
