@@ -8,6 +8,10 @@ os.environ["AREA303_DEBUG"] = "false"
 os.environ["JWT_SECRET"] = "test-secret"
 os.environ["DEMO_MODE"] = "true"
 os.environ["LLM_PROVIDER"] = "mock"
+# The organisers' dataset lives on someone else's RDS. A developer with it in
+# .env must not have unit tests reach across the network, so the suite runs
+# against the demo catalogue unless a test opts in explicitly.
+os.environ["BTC_DATABASE_URL"] = ""
 os.environ.setdefault("POSTGRES_HOST", "localhost")
 os.environ.setdefault("REDIS_HOST", "localhost")
 

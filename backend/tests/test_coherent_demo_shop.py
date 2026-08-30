@@ -106,13 +106,28 @@ def test_storefront_rating_is_the_same_review_average() -> None:
     assert view.product.reviews == len(source["reviews_list"])
 
 
-def test_dynamic_pricing_uses_the_storefront_category_catalog() -> None:
+@pytest.mark.asyncio
+async def test_dynamic_pricing_falls_back_to_the_storefront_catalog(monkeypatch) -> None:
+    """With no market reference available, pricing reads the demo catalogue.
+
+    The reference is stubbed out rather than left to the environment: a
+    developer with BTC_DATABASE_URL set in .env would otherwise hit the real
+    database here, making the test both slow and dependent on someone else's
+    uptime.
+    """
+    async def _no_reference(_category: str):
+        return None
+
+    monkeypatch.setattr("app.services.btc_market.price_reference", _no_reference)
+
     category = "Mỹ phẩm"
-    result = insights.recommend_price(
+    result = await insights.recommend_price(
         PricingRequest(product_name="Test", category=category, current_price=300_000)
     )
 
+    assert result.data_source == "demo"
     assert result.sample_size == len(store.products_by_category(category))
+    assert result.shop_count is None
 
 
 @pytest.mark.asyncio

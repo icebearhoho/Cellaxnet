@@ -40,6 +40,13 @@ class FakeReviewResponse(BaseModel):
 
 
 # --- #02 Dynamic Pricing ---------------------------------------------------
+#: Where the percentiles came from. "demo" is the synthetic storefront
+#: catalogue; the others are the organisers' observed Shopee dataset, read live
+#: or from its committed snapshot. The UI labels the two differently — an
+#: observed median must never be presented as a simulated one, or the reverse.
+PriceSource = Literal["demo", "btc_live", "btc_snapshot"]
+
+
 class PricingRequest(BaseModel):
     product_name: str = Field(min_length=1, max_length=200)
     category: Literal["Thời trang", "Mỹ phẩm", "Phụ kiện"]
@@ -53,6 +60,12 @@ class PricingResponse(BaseModel):
     category_median: int
     sample_size: int
     rationale: str
+    #: Defaulted so an older client that ignores these still parses the body.
+    data_source: PriceSource = "demo"
+    #: How many distinct shops the observed sample spans; None for "demo".
+    #: A handful of shops is a reference, not a market-wide price, and the UI
+    #: says so rather than overstating the coverage.
+    shop_count: int | None = None
 
 
 # --- #04 Churn Prediction ---------------------------------------------------

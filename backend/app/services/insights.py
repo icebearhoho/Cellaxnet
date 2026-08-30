@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from dataclasses import dataclass
 from typing import Literal, cast
 
 from app.core.config import settings
@@ -25,6 +26,7 @@ from app.schemas.insights import (
     FakeReviewResponse,
     InventoryAlertRequest,
     InventoryAlertResponse,
+    PriceSource,
     PricingRequest,
     PricingResponse,
     RegretRequest,
@@ -34,6 +36,7 @@ from app.schemas.insights import (
     SentimentRequest,
     SentimentResponse,
 )
+from app.services import btc_market
 from app.services import commerce_store as store
 from app.services.genai.base import LlmMessage
 from app.services.genai.factory import get_llm_client
@@ -231,7 +234,20 @@ async def detect_fake(req: FakeReviewRequest) -> FakeReviewResponse:
 # #02 Dynamic Pricing — comps-median baseline (same idea as
 # dynamic_pricing/src/02_recommend.py, using the demo catalog as comps).
 # ---------------------------------------------------------------------------
-def _category_price_stats(category: str) -> tuple[list[int], int, int, int]:
+@dataclass(frozen=True)
+class _PriceStats:
+    """Percentiles plus where they came from, so the caller can label them."""
+
+    median: int
+    p25: int
+    p75: int
+    sample_size: int
+    source: PriceSource
+    shop_count: int | None = None
+
+
+def _category_price_stats(category: str) -> _PriceStats:
+    """Percentiles over the demo catalogue — the always-available baseline."""
     prices = sorted(
         item["price_vnd"]
         for item in store.all_products()
@@ -240,34 +256,64 @@ def _category_price_stats(category: str) -> tuple[list[int], int, int, int]:
     if not prices:
         prices = sorted(item["price_vnd"] for item in store.all_products())
     n = len(prices)
-    median = prices[n // 2]
-    p25 = prices[max(0, n // 4)]
-    p75 = prices[min(n - 1, (3 * n) // 4)]
-    return prices, median, p25, p75
+    return _PriceStats(
+        median=prices[n // 2],
+        p25=prices[max(0, n // 4)],
+        p75=prices[min(n - 1, (3 * n) // 4)],
+        sample_size=n,
+        source="demo",
+    )
 
 
-def recommend_price(req: PricingRequest) -> PricingResponse:
-    prices, median, p25, p75 = _category_price_stats(req.category)
+async def _price_stats(category: str) -> _PriceStats:
+    """Observed market percentiles when the dataset covers `category`.
+
+    The BTC dataset carries no fashion or accessory listings, so those keep the
+    demo catalogue rather than borrowing an unrelated median — a wrong
+    reference is worse than an openly synthetic one.
+    """
+    ref = await btc_market.price_reference(category)
+    if ref is None:
+        return _category_price_stats(category)
+    return _PriceStats(
+        median=ref.median, p25=ref.p25, p75=ref.p75,
+        sample_size=ref.sample_size, source=ref.source, shop_count=ref.shop_count,
+    )
+
+
+async def recommend_price(req: PricingRequest) -> PricingResponse:
+    stats = await _price_stats(req.category)
+    median, p25, p75 = stats.median, stats.p25, stats.p75
+
+    if stats.source == "demo":
+        basis = f"trung vị danh mục {req.category} trên {stats.sample_size} sản phẩm mô phỏng"
+    else:
+        shops = f" của {stats.shop_count} nhà bán" if stats.shop_count else ""
+        basis = (
+            f"trung vị {stats.median:,}₫ từ {stats.sample_size} sản phẩm {req.category}"
+            f"{shops} quan sát được trên Shopee (T7/2026)"
+        )
 
     if req.current_price is None:
         recommended = median
-        rationale = f"No current price given — using the {req.category} category median from {len(prices)} comparable products."
+        rationale = f"Chưa có giá hiện tại — lấy {basis}."
     else:
         cur = req.current_price
         if cur > median * 1.3:
             recommended = round((cur + median * 1.1) / 2)
-            rationale = f"{cur:,}₫ is well above the {req.category} median ({median:,}₫) — nudging down to stay competitive."
+            rationale = f"{cur:,}₫ cao hơn nhiều so với {basis} — đề xuất giảm để cạnh tranh hơn."
         elif cur < median * 0.7:
             recommended = round((cur + median * 0.9) / 2)
-            rationale = f"{cur:,}₫ is well below the {req.category} median ({median:,}₫) — you may be underpricing; nudging up."
+            rationale = f"{cur:,}₫ thấp hơn nhiều so với {basis} — có thể đang bán dưới giá, đề xuất tăng."
         else:
             recommended = round((cur + median) / 2)
-            rationale = f"{cur:,}₫ is already close to the {req.category} median ({median:,}₫) — minor optimization only."
+            rationale = f"{cur:,}₫ đã sát {basis} — chỉ cần tinh chỉnh nhẹ."
 
     return PricingResponse(
         recommended_price=int(recommended), low=int(min(p25, recommended)),
         high=int(max(p75, recommended)), category_median=int(median),
-        sample_size=len(prices), rationale=rationale,
+        sample_size=stats.sample_size, rationale=rationale,
+        data_source=stats.source, shop_count=stats.shop_count,
     )
 
 

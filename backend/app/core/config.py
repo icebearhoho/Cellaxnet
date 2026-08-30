@@ -44,6 +44,21 @@ class Settings(BaseSettings):
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 20
 
+    # --- BTC Shopee market data (read-only, external) ---
+    # The competition organisers host an observed Shopee dataset. It is a
+    # market *reference*, never Cellaxnet's own store: read-only, its own
+    # engine, and every consumer must work when it is unset or unreachable.
+    BTC_DATABASE_URL: str | None = None
+    BTC_SCHEMA: str = "data_shopee"
+    #: Shopee stores a sentinel price (999,999,999) on some rows; anything
+    #: outside this window is treated as missing rather than as a real price.
+    BTC_PRICE_MIN_VND: int = 1_000
+    BTC_PRICE_MAX_VND: int = 100_000_000
+    #: Below this many products a percentile says more about the sample than
+    #: about the market, so the caller falls back instead.
+    BTC_MIN_SAMPLE: int = 20
+    BTC_QUERY_TIMEOUT_S: float = 8.0
+
     # --- Redis ---
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379

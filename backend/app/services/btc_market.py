@@ -1,0 +1,261 @@
+"""Price references read from the organisers' observed Shopee dataset.
+
+This is *external market data*, not Cellaxnet's own catalogue, so the module
+keeps three rules:
+
+* **Read-only, own engine.** A separate pool on the BTC database. Nothing here
+  writes, and a stall there must not consume the app's connections.
+* **Optional.** With ``BTC_DATABASE_URL`` unset every function returns ``None``
+  and callers keep their previous behaviour. The feature degrades, never fails.
+* **Honest about coverage.** The accessible dataset is a handful of shops
+  observed over ~3 weeks of July 2026, so a percentile taken from it is a
+  reference from observed listings — not the Shopee-wide market price. Callers
+  render it with that wording, and :class:`PriceReference` carries the shop
+  count so the UI can say so.
+
+Only the app categories that the dataset can actually support are mapped.
+``_CATEGORY_GROUPS`` holds shop-defined collection names, and a category with
+no entry (fashion, accessories — absent from the accessible rows) resolves to
+``None`` so the caller falls back rather than borrowing an unrelated median.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Literal
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.pool import NullPool
+
+from app.core.config import settings
+from app.core.logging import get_logger
+
+log = get_logger("app.services.btc_market")
+
+#: The two observed origins. Kept narrower than `PriceSource` (which also has
+#: "demo") because this module never produces a synthetic figure.
+ObservedSource = Literal["btc_live", "btc_snapshot"]
+
+#: Shop-level collections that hold cosmetics listings. `categories` mixes real
+#: product groupings ("SKINCARE") with merchandising tabs ("Giảm giá", "BEST
+#: SELLING"), and only the former describe what a product *is*, so the tabs are
+#: deliberately absent — a "discounted items" median prices a promotion, not a
+#: product class.
+_CATEGORY_GROUPS: dict[str, tuple[str, ...]] = {
+    "Mỹ phẩm": (
+        "SKINCARE",
+        "SHOP BY NEEDS",
+        "MAKE UP",
+        "Facial Cleanser",
+        "Moisturizer",
+        "Skin Care",
+        "LET IT GLOW",
+        "LVJ BODY CARE SERIES",
+        "LVJ HAIR CARE SERIES",
+        "Anti-jerawat",
+        "Mencerahkan kulit",
+        "🌸Skincare Bundle",
+    ),
+    # "Thời trang" and "Phụ kiện" are intentionally unmapped: the accessible
+    # rows carry no clothing or accessory listings, and substituting a grocery
+    # or cosmetics median would be worse than the demo catalogue it replaces.
+}
+
+_SNAPSHOT_PATH = Path(__file__).resolve().parents[1] / "data" / "btc_price_reference.json"
+
+# One product may sit in several collections, so the inner DISTINCT collapses
+# it to a single row before percentiles run — otherwise a heavily-tagged
+# product would be counted several times and drag the median toward itself.
+_PERCENTILE_SQL = """
+SELECT
+    COUNT(*)                                              AS sample_size,
+    COUNT(DISTINCT shop_id)                               AS shop_count,
+    MIN(price)                                            AS min_price,
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY price)   AS p25,
+    PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY price)   AS median,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY price)   AS p75,
+    MAX(price)                                            AS max_price
+FROM (
+    SELECT DISTINCT p.shop_id, p.item_id, p.price
+    FROM {schema}.products p
+    JOIN {schema}.product_categories pc
+          ON  pc.country_code = p.country_code
+          AND pc.shop_id      = p.shop_id
+          AND pc.item_id      = p.item_id
+    JOIN {schema}.categories c
+          ON  c.country_code = pc.country_code
+          AND c.shop_id      = pc.shop_id
+          AND c.category_id  = pc.category_id
+    WHERE p.price BETWEEN :price_min AND :price_max
+      AND c.display_name = ANY(:groups)
+) t
+"""
+
+
+@dataclass(frozen=True)
+class PriceReference:
+    """Observed price percentiles for one app category."""
+
+    category: str
+    sample_size: int
+    shop_count: int
+    min_price: int
+    p25: int
+    median: int
+    p75: int
+    max_price: int
+    source: ObservedSource
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "category": self.category,
+            "sample_size": self.sample_size,
+            "shop_count": self.shop_count,
+            "min_price": self.min_price,
+            "p25": self.p25,
+            "median": self.median,
+            "p75": self.p75,
+            "max_price": self.max_price,
+            "source": self.source,
+        }
+
+
+def supported_categories() -> tuple[str, ...]:
+    """App categories the dataset can price. Others must fall back."""
+    return tuple(_CATEGORY_GROUPS)
+
+
+# --------------------------------------------------------------------------- #
+# Live engine — built lazily so an unset/broken URL costs nothing at import.
+# --------------------------------------------------------------------------- #
+_engine: AsyncEngine | None = None
+_engine_failed = False
+
+
+def _get_engine() -> AsyncEngine | None:
+    global _engine, _engine_failed
+    if _engine_failed or not settings.BTC_DATABASE_URL:
+        return None
+    if _engine is None:
+        try:
+            _engine = create_async_engine(
+                settings.BTC_DATABASE_URL,
+                # Read-only reference data queried a handful of times per
+                # process. A pool would hold idle connections to someone
+                # else's database for no gain.
+                poolclass=NullPool,
+                pool_pre_ping=True,
+                future=True,
+            )
+        except Exception as exc:  # noqa: BLE001 — bad URL must not stop the app
+            _engine_failed = True
+            log.warning("btc.engine_failed", error=str(exc))
+            return None
+    return _engine
+
+
+async def close_btc_engine() -> None:
+    """Dispose the pool on shutdown. Safe when the engine was never built."""
+    global _engine
+    if _engine is not None:
+        await _engine.dispose()
+        _engine = None
+
+
+def _row_to_reference(category: str, row: Any, source: ObservedSource) -> PriceReference | None:
+    if row is None or row.sample_size is None or row.sample_size < settings.BTC_MIN_SAMPLE:
+        return None
+    return PriceReference(
+        category=category,
+        sample_size=int(row.sample_size),
+        shop_count=int(row.shop_count or 0),
+        min_price=int(row.min_price),
+        p25=int(round(float(row.p25))),
+        median=int(round(float(row.median))),
+        p75=int(round(float(row.p75))),
+        max_price=int(row.max_price),
+        source=source,
+    )
+
+
+async def _query_live(category: str) -> PriceReference | None:
+    engine = _get_engine()
+    groups = _CATEGORY_GROUPS.get(category)
+    if engine is None or not groups:
+        return None
+
+    sql = text(_PERCENTILE_SQL.format(schema=settings.BTC_SCHEMA))
+    try:
+        async with engine.connect() as conn:
+            result = await asyncio.wait_for(
+                conn.execute(
+                    sql,
+                    {
+                        "groups": list(groups),
+                        "price_min": settings.BTC_PRICE_MIN_VND,
+                        "price_max": settings.BTC_PRICE_MAX_VND,
+                    },
+                ),
+                timeout=settings.BTC_QUERY_TIMEOUT_S,
+            )
+            return _row_to_reference(category, result.first(), "btc_live")
+    except TimeoutError:
+        log.warning("btc.query_timeout", category=category)
+    except Exception as exc:  # noqa: BLE001 — external DB, best-effort by design
+        log.warning("btc.query_failed", category=category, error=str(exc))
+    return None
+
+
+# --------------------------------------------------------------------------- #
+# Snapshot fallback — written by scripts/refresh_btc_reference.py from the same
+# query, so the demo still shows observed figures when the RDS is unreachable.
+# --------------------------------------------------------------------------- #
+_snapshot: dict[str, PriceReference] | None = None
+
+
+def _load_snapshot() -> dict[str, PriceReference]:
+    global _snapshot
+    if _snapshot is not None:
+        return _snapshot
+    _snapshot = {}
+    if _SNAPSHOT_PATH.exists():
+        try:
+            raw = json.loads(_SNAPSHOT_PATH.read_text(encoding="utf-8"))
+            for category, entry in raw.get("categories", {}).items():
+                if int(entry["sample_size"]) < settings.BTC_MIN_SAMPLE:
+                    continue
+                _snapshot[category] = PriceReference(
+                    category=category,
+                    sample_size=int(entry["sample_size"]),
+                    shop_count=int(entry["shop_count"]),
+                    min_price=int(entry["min_price"]),
+                    p25=int(entry["p25"]),
+                    median=int(entry["median"]),
+                    p75=int(entry["p75"]),
+                    max_price=int(entry["max_price"]),
+                    source="btc_snapshot",
+                )
+        except (OSError, ValueError, KeyError) as exc:
+            log.warning("btc.snapshot_unreadable", error=str(exc))
+    return _snapshot
+
+
+async def price_reference(category: str) -> PriceReference | None:
+    """Observed percentiles for `category`, or None when unavailable.
+
+    Live query first so a refreshed dataset is picked up without a redeploy;
+    the snapshot covers an unreachable database. Returning None is a normal
+    outcome — for an unmapped category it is the *only* correct one.
+    """
+    if category not in _CATEGORY_GROUPS:
+        # Not a shortcut: an unmapped category has no honest reference at all,
+        # so neither the live query nor the snapshot should be consulted.
+        return None
+    live = await _query_live(category)
+    if live is not None:
+        return live
+    return _load_snapshot().get(category)

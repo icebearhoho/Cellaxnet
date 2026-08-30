@@ -153,9 +153,16 @@ export async function predictSegmentation(
 }
 
 // --- #02 Dynamic Pricing ----------------------------------------------------
+/** Where the percentiles came from — the panel labels observed and simulated
+ *  figures differently, so a seller always knows which one they are acting on. */
+export type PriceSource = "demo" | "btc_live" | "btc_snapshot";
+
 export type PricingResult = {
   recommended_price: number; low: number; high: number;
   category_median: number; sample_size: number; rationale: string;
+  data_source: PriceSource;
+  /** Distinct shops behind an observed sample; null for the demo catalogue. */
+  shop_count: number | null;
 };
 
 export type PricingResponse =

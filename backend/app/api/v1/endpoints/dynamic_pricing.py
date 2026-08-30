@@ -13,5 +13,5 @@ router = APIRouter()
 
 @router.post("/", response_model=ApiResponse[dict])
 async def recommend(req: PricingRequest) -> ApiResponse[dict]:
-    data = insights.recommend_price(req)
+    data = await insights.recommend_price(req)
     return ApiResponse[dict](success=True, data=data.model_dump(), meta=PageMeta(), error=None)

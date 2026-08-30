@@ -17,6 +17,7 @@ from app.core.rate_limit import RateLimitMiddleware
 from app.db.redis import close_redis
 from app.db.session import close_database
 from app.services import segmentation
+from app.services.btc_market import close_btc_engine
 from app.services.genai.factory import close_llm_client
 
 log = get_logger("app.main")
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
     yield
     await close_llm_client()
     await close_redis()
+    await close_btc_engine()
     await close_database()
     log.info("shutdown")
 

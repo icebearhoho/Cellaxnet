@@ -9,7 +9,9 @@ import {
   Check,
   ChevronsUpDown,
   CircleDollarSign,
+  Database,
   Droplets,
+  FlaskConical,
   Gem,
   Lightbulb,
   Loader2,
@@ -33,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import {
   getStoreProducts,
   recommendPrice,
+  type PriceSource,
   type PricingResult,
   type StoreProduct,
 } from "@/lib/features";
@@ -75,6 +78,31 @@ function parsePrice(value: string): number | undefined {
   if (!value.trim()) return undefined;
   const parsed = Number(value.replace(/\D/g, ""));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+/** Names the data behind the median.
+ *
+ *  The organisers' dataset covers cosmetics but no fashion or accessories, so
+ *  the panel mixes observed and simulated figures. Saying which is which is
+ *  the honest option — and a few observed shops are a reference, not the
+ *  Shopee-wide market price, so the badge reports the shop count too.
+ */
+function SourceBadge({ source, shopCount }: { source: PriceSource; shopCount: number | null }) {
+  if (source === "demo") {
+    return (
+      <span className="mt-1.5 flex w-fit items-center gap-1 rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-dim">
+        <FlaskConical className="h-3 w-3" aria-hidden="true" />
+        Dữ liệu mô phỏng
+      </span>
+    );
+  }
+  const shops = shopCount ? ` · ${shopCount} nhà bán` : "";
+  return (
+    <span className="mt-1.5 flex w-fit items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[11px] font-medium text-success">
+      <Database className="h-3 w-3" aria-hidden="true" />
+      Shopee T7/2026{shops}
+    </span>
+  );
 }
 
 function markerPosition(value: number, low: number, high: number): number {
@@ -446,6 +474,10 @@ export function DynamicPricingPanel() {
                       <span className="tnum ml-1.5 text-xs text-text-dim">
                         /{result.sample_size} SP
                       </span>
+                      <SourceBadge
+                        source={result.data_source}
+                        shopCount={result.shop_count}
+                      />
                     </dd>
                   </div>
                   <div className="rounded-lg border border-warning/20 bg-warning/[0.035] p-4">

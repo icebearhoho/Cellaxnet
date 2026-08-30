@@ -134,26 +134,6 @@ async def test_tenant_safe_tools_admit_seller_but_reject_buyer(path, buyer_heade
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "path",
-    ["/api/v1/content-generator/", "/api/v1/seller-coach/"],
-)
-async def test_tenant_safe_tools_admit_seller_but_reject_buyer(path, buyer_headers):
-    seller_token = create_access_token(
-        "9",
-        extra={"role": "seller", "email": "seller@test.dev", "name": "Seller"},
-    )
-    seller_headers = {"Authorization": f"Bearer {seller_token}"}
-    async with _client() as ac:
-        buyer = await ac.post(path, headers=buyer_headers, json={})
-        seller = await ac.post(path, headers=seller_headers, json={})
-
-    assert buyer.status_code == 403
-    # Invalid input may be 422; the point is that the seller passed the role gate.
-    assert seller.status_code not in (401, 403)
-
-
-@pytest.mark.asyncio
 async def test_buyer_flow_stays_public():
     """No token anywhere — this is what an anonymous shopper does."""
     async with _client() as ac:

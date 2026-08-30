@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-08-30T09:18:55+00:00",
+  "schema": "data_shopee",
+  "price_window_vnd": [
+    1000,
+    100000000
+  ],
+  "categories": {
+    "Mỹ phẩm": {
+      "sample_size": 141,
+      "shop_count": 4,
+      "min_price": 29000,
+      "p25": 44900,
+      "median": 67900,
+      "p75": 98300,
+      "max_price": 295400
+    }
+  }
+}
