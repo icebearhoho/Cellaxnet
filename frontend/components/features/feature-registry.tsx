@@ -22,10 +22,18 @@ import { CopilotPanel } from "./copilot-panel";
 import { DailyBriefingPanel } from "./daily-briefing-panel";
 import { OrdersPanel } from "./orders-panel";
 import { AutopilotPanel } from "./autopilot-panel";
+import { VirtualTryOnPanel } from "./virtual-tryon-panel";
+import { VoucherBoosterPanel } from "./voucher-booster-panel";
+import { RestockPlannerPanel } from "./restock-planner-panel";
+import { MarketplacePanel } from "./marketplace-panel";
 
 /** Maps a feature slug to its live panel. Keep in sync with IMPLEMENTED in lib/nav. */
 const PANELS: Record<string, ComponentType> = {
   autopilot: AutopilotPanel,
+  "voucher-booster": VoucherBoosterPanel,
+  "restock-planner": RestockPlannerPanel,
+  marketplace: MarketplacePanel,
+  "virtual-tryon": VirtualTryOnPanel,
   copilot: CopilotPanel,
   "daily-briefing": DailyBriefingPanel,
   orders: OrdersPanel,

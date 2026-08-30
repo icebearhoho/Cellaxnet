@@ -71,7 +71,7 @@ $backendUrl = "http://127.0.0.1:$BackendPort"
 & (Join-Path $PSScriptRoot "start-area303-db.ps1") -Port $DatabasePort
 if ($LASTEXITCODE -ne 0) { throw "AREA-303 database startup failed." }
 
-$env:DEBUG = "false"
+$env:AREA303_DEBUG = "false"
 $env:POSTGRES_HOST = "127.0.0.1"
 $env:POSTGRES_PORT = "$DatabasePort"
 Push-Location $backendDir

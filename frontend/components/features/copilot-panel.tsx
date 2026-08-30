@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Send, Bot, User } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { VoiceMicButton } from "@/components/genai/voice-mic-button";
@@ -97,7 +99,11 @@ export function CopilotPanel() {
                   </span>
                   <div className="min-w-0 max-w-[85%] space-y-2.5">
                     <div className="rounded-lg rounded-tl-sm border border-border bg-bg-alt px-3.5 py-2.5">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-text">{m.result.answer}</p>
+                      <div className="markdown-response text-sm leading-relaxed text-text">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {m.result.answer}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 </div>

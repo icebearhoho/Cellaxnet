@@ -6,10 +6,12 @@ derived from the product id so the catalog looks real and is stable across runs.
 
 from __future__ import annotations
 
+import time
 from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.schemas.storefront import (
     ReviewItem,
@@ -23,15 +25,32 @@ from app.services.genai.demo_data import image_urls_for_type
 
 log = get_logger("app.services.storefront")
 
+# The catalogue is intentionally able to run from bundled demo data when the
+# database is unavailable.  Avoid paying the database connect timeout for every
+# best-effort stock/review query while it is known to be down.
+_DB_DOWN_UNTIL: float = 0.0
+_DB_DOWN_COOLDOWN = 30.0
+
+
+def _database_available() -> bool:
+    return settings.APP_ENV == "test" or time.monotonic() >= _DB_DOWN_UNTIL
+
+
+def _mark_database_unavailable() -> None:
+    global _DB_DOWN_UNTIL
+    if settings.APP_ENV != "test":
+        _DB_DOWN_UNTIL = time.monotonic() + _DB_DOWN_COOLDOWN
+
 
 async def _attach_stock(products: list[StoreProduct], db: AsyncSession) -> None:
     """Fill in live stock, in place. Fails open: on a DB error `stock` stays
     None and the UI treats availability as unknown rather than sold out."""
-    if not products:
+    if not products or not _database_available():
         return
     try:
         levels = await inventory_service.stock_map(db, [p.id for p in products])
     except Exception as exc:  # noqa: BLE001 — stock display is best-effort
+        _mark_database_unavailable()
         log.warning("storefront.stock_unavailable", error=str(exc))
         return
     for p in products:
@@ -97,9 +116,12 @@ async def get_product_with_reviews(pid: str, db: AsyncSession) -> StoreDetailRes
     if data.product is None:
         return data
     await _attach_stock([data.product, *data.similar], db)
+    if not _database_available():
+        return data
     try:
         real_rows = await review_service.list_published_reviews(db, pid)
     except Exception as exc:  # noqa: BLE001 — real reviews are best-effort
+        _mark_database_unavailable()
         log.warning("storefront.real_reviews_unavailable", product_id=pid, error=str(exc))
         return data
     if not real_rows:

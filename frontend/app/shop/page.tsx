@@ -55,9 +55,9 @@ export default function ShopHome() {
               <Link
                 key={item.slug}
                 href={item.href}
-                className="card-surface group flex flex-col rounded-lg border p-6 transition-all hover:-translate-y-0.5 hover:border-accent/40"
+                className="card-surface group flex flex-col rounded-lg border p-6 transition-all hover:rotate-[0.4deg] hover:-translate-y-1 hover:border-accent/50"
               >
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent">
+                <span className="doodle-sticker h-11 w-11">
                   <Icon className="h-5 w-5" />
                 </span>
                 <div className="mt-5 text-base font-bold">{item.label}</div>

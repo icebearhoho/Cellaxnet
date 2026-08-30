@@ -24,6 +24,17 @@ def test_candidates_are_grounded_in_shop_snapshot() -> None:
     assert all(option["impact"] for item in candidates for option in item["options"])
 
 
+def test_out_of_stock_product_never_recommends_a_price_increase() -> None:
+    inventory = next(
+        item for item in autopilot._candidates() if item["kind"] == "inventory"  # noqa: SLF001
+    )
+
+    if inventory["evidence"]["stock"] == 0:
+        option_ids = {option["id"] for option in inventory["options"]}
+        assert "raise-price-5" not in option_ids
+        assert option_ids == {"restock", "pause-campaigns"}
+
+
 def test_concise_keeps_model_copy_within_ui_limit() -> None:
     long_copy = "Rủi ro tồn kho cần xử lý ngay. " + ("Hành động hợp lý. " * 30)
     result = autopilot._concise(long_copy)  # noqa: SLF001

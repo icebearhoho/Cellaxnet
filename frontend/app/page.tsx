@@ -56,18 +56,18 @@ const STATS = [
 
 export default function LandingPage() {
   return (
-    <div className="relative overflow-hidden">
+    <div className="landing-motion relative overflow-hidden">
       {/* Ambient colour field + dot texture behind the hero. */}
       <div className="glow-field">
-        <div className="glow-blob left-[-12%] top-[-18%] h-[42rem] w-[42rem] bg-accent" />
-        <div className="glow-blob right-[-8%] top-[-12%] h-[34rem] w-[34rem] bg-accent-2" />
+        <div className="glow-blob glow-blob-one left-[-12%] top-[-18%] h-[42rem] w-[42rem] bg-accent" />
+        <div className="glow-blob glow-blob-two right-[-8%] top-[-12%] h-[34rem] w-[34rem] bg-accent-2" />
       </div>
       <div className="dot-grid pointer-events-none absolute inset-x-0 top-0 h-[46rem] opacity-60" />
 
       {/* Nav */}
-      <header className="relative z-10 mx-auto flex h-20 max-w-6xl items-center px-4 sm:px-6">
+      <header className="landing-reveal relative z-10 mx-auto flex h-20 max-w-6xl items-center px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-white">
+          <span className="doodle-sticker h-10 w-10 bg-accent text-white">
             <Sparkles className="h-4 w-4" />
           </span>
           <span className="text-lg font-bold tracking-tight">Cellaxnet</span>
@@ -84,22 +84,22 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-24 sm:pt-20">
-        <span className="float-chip mx-auto">
+        <span className="hero-chip float-chip mx-auto">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
           Nền tảng thương mại điện tử có AI
         </span>
 
-        <h1 className="mx-auto mt-7 max-w-3xl text-5xl font-extrabold sm:text-6xl">
+        <h1 className="hero-title mx-auto mt-7 max-w-3xl text-5xl font-extrabold sm:text-6xl">
           Bán hàng thông minh hơn,{" "}
           <span className="text-gradient">không phải nhiều việc hơn.</span>
         </h1>
 
-        <p className="mx-auto mt-6 max-w-xl text-base text-text-muted sm:text-lg">
+        <p className="hero-copy mx-auto mt-6 max-w-xl text-base text-text-muted sm:text-lg">
           Cellaxnet gom phân tích đánh giá, hành trình khách hàng, gợi ý giá và trợ lý
           vận hành vào một nơi — cho cả người mua và người bán.
         </p>
 
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+        <div className="hero-actions mt-9 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg">
             <Link href="/register">
               Bắt đầu miễn phí <ArrowRight className="h-4 w-4" />
@@ -111,7 +111,7 @@ export default function LandingPage() {
         </div>
 
         {/* Social proof + stats */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+        <div className="hero-proof mt-12 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
           <div className="flex items-center gap-2 text-sm text-text-muted">
             <span className="flex">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -122,15 +122,19 @@ export default function LandingPage() {
           </div>
           {STATS.map((s) => (
             <div key={s.label} className="text-sm text-text-muted">
-              <span className="mono text-xl font-bold text-text">{s.value}</span>{" "}
+              <span className="stat-pop mono text-xl font-bold text-text">{s.value}</span>{" "}
               {s.label}
             </div>
           ))}
         </div>
       </section>
 
+      <span aria-hidden="true" className="hero-doodle hero-doodle-star">✦</span>
+      <span aria-hidden="true" className="hero-doodle hero-doodle-loop">↝</span>
+      <span aria-hidden="true" className="hero-doodle hero-doodle-heart">♡</span>
+
       {/* App chooser */}
-      <section className="relative z-10 mx-auto max-w-4xl px-4 pb-20 sm:px-6">
+      <section className="landing-section-reveal relative z-10 mx-auto max-w-4xl px-4 pb-20 sm:px-6">
         <AppChooser />
       </section>
 
@@ -153,9 +157,9 @@ export default function LandingPage() {
               return (
                 <div
                   key={f.title}
-                  className="card-surface rounded-lg border p-6 transition-all hover:-translate-y-0.5"
+                  className="feature-doodle-card card-surface rounded-lg border p-6 transition-all hover:-translate-y-1"
                 >
-                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent/10 text-accent">
+                  <span className="doodle-sticker h-11 w-11">
                     <Icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-5 text-base font-bold">{f.title}</h3>
@@ -169,7 +173,7 @@ export default function LandingPage() {
 
       {/* Closing CTA */}
       <section className="relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="relative overflow-hidden rounded-lg bg-text px-8 py-14 text-center sm:px-14">
+        <div className="relative overflow-hidden rounded-lg border-2 border-text bg-text px-8 py-14 text-center shadow-[6px_7px_0_hsl(var(--accent)/0.28)] sm:px-14">
           <h2 className="text-3xl font-extrabold text-bg sm:text-4xl">
             Thử toàn bộ hệ thống ngay
           </h2>

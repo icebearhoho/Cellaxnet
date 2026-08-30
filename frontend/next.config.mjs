@@ -49,44 +49,17 @@ if (process.env.NODE_ENV === "production") {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // FastAPI mounts several collection endpoints at a trailing-slash route
-  // (for example /api/v1/risk-portfolio/), and the backend runs with
-  // redirect_slashes=False so a slash-less request 404s instead of bouncing
-  // the browser to the backend origin. Next normalises the trailing slash off
-  // every incoming pathname before matching, so the rewrite has to put it back.
+  // FastAPI uses trailing slashes for a number of router-root endpoints.
+  // Preserve them through the local rewrite so POST requests do not take a
+  // cross-origin 307 redirect and lose their Authorization header.
   skipTrailingSlashRedirect: true,
+  skipProxyUrlNormalize: true,
   async rewrites() {
     return [
-      // Collection routes: append the slash Next stripped during normalisation.
-      // A `:path*` source never sees the trailing slash, so matching on one
-      // (`/api/v1/:path*/`) is dead weight — these segments carry it instead.
-      // Covers risk-portfolio, churn, regret, return-prediction, pricing, etc.
-      ...[
-        "workspaces",
-        "recsys",
-        "content-generator",
-        "review-sentiment",
-        "fake-review",
-        "seller-coach",
-        "segmentation",
-        "dynamic-pricing",
-        "churn",
-        "journey",
-        "return-prediction",
-        "regret",
-        "risk-portfolio",
-        "inventory-alert",
-        "supply-chain",
-        "product-knowledge",
-        "market-intelligence",
-        "creator-performance",
-        "decision-intelligence",
-        "flash-sale",
-      ].map((segment) => ({
-        source: `/api/v1/${segment}`,
-        destination: `${backendInternalUrl}/api/v1/${segment}/`,
-      })),
-      // Everything else passes through untouched.
+      {
+        source: "/api/v1/:path*/",
+        destination: `${backendInternalUrl}/api/v1/:path*/`,
+      },
       {
         source: "/api/v1/:path*",
         destination: `${backendInternalUrl}/api/v1/:path*`,

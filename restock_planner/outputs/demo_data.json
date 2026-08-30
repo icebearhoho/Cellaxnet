@@ -1,0 +1,465 @@
+{
+ "meta": {
+  "generated_at": "2026-08-07T14:50:13",
+  "trends_fetched_at": "2026-08-02T10:44:00",
+  "brand_sale_fetched_at": "2026-08-02T10:45:04",
+  "trends_window": "today 5-y",
+  "geo": "VN",
+  "source": "SerpApi — Google Trends (TIMESERIES) + Google Shopping",
+  "categories": [
+   "Thời trang",
+   "Mỹ phẩm",
+   "Phụ kiện"
+  ],
+  "weeks_of_history": 262,
+  "brands_checked": 13
+ },
+ "season": {
+  "Thời trang": {
+   "seasonal_index": {
+    "1": 1.188,
+    "2": 0.964,
+    "3": 0.939,
+    "4": 0.904,
+    "5": 0.908,
+    "6": 0.839,
+    "7": 0.861,
+    "8": 0.785,
+    "9": 0.84,
+    "10": 1.092,
+    "11": 1.406,
+    "12": 1.286
+   },
+   "peak_month": 11,
+   "low_month": 8,
+   "momentum": -5.3,
+   "direction": "falling",
+   "keywords": [
+    "thời trang",
+    "áo khoác",
+    "váy"
+   ],
+   "weeks_of_history": 262
+  },
+  "Mỹ phẩm": {
+   "seasonal_index": {
+    "1": 0.956,
+    "2": 1.019,
+    "3": 1.032,
+    "4": 0.993,
+    "5": 0.986,
+    "6": 0.945,
+    "7": 0.997,
+    "8": 0.998,
+    "9": 0.972,
+    "10": 1.078,
+    "11": 1.024,
+    "12": 0.996
+   },
+   "peak_month": 10,
+   "low_month": 6,
+   "momentum": -3.3,
+   "direction": "stable",
+   "keywords": [
+    "mỹ phẩm",
+    "kem chống nắng",
+    "son môi"
+   ],
+   "weeks_of_history": 262
+  },
+  "Phụ kiện": {
+   "seasonal_index": {
+    "1": 0.969,
+    "2": 1.087,
+    "3": 1.101,
+    "4": 1.06,
+    "5": 1.039,
+    "6": 0.968,
+    "7": 1.006,
+    "8": 0.918,
+    "9": 0.901,
+    "10": 1.025,
+    "11": 0.97,
+    "12": 0.957
+   },
+   "peak_month": 3,
+   "low_month": 9,
+   "momentum": -2.2,
+   "direction": "stable",
+   "keywords": [
+    "túi xách",
+    "đồng hồ",
+    "kính mát"
+   ],
+   "weeks_of_history": 262
+  }
+ },
+ "competition": {
+  "Thời trang": {
+   "pressure": 0.0187,
+   "demand_multiplier": 0.991,
+   "level": "low",
+   "note": "Big brand không sale đáng kể — nhập bình thường",
+   "brands_on_sale": 3,
+   "brands_checked": 5,
+   "avg_discount": 0.242,
+   "leader": {
+    "brand": "Coolmate",
+    "sale_ratio": 0.25,
+    "avg_discount": 0.1556
+   },
+   "detail": [
+    {
+     "brand": "Coolmate",
+     "category": "Thời trang",
+     "offers_seen": 40,
+     "offers_on_sale": 10,
+     "sale_ratio": 0.25,
+     "avg_discount": 0.1556,
+     "pressure": 0.0389
+    },
+    {
+     "brand": "Uniqlo",
+     "category": "Thời trang",
+     "offers_seen": 40,
+     "offers_on_sale": 6,
+     "sale_ratio": 0.15,
+     "avg_discount": 0.2564,
+     "pressure": 0.0385
+    },
+    {
+     "brand": "YODY",
+     "category": "Thời trang",
+     "offers_seen": 40,
+     "offers_on_sale": 2,
+     "sale_ratio": 0.05,
+     "avg_discount": 0.3139,
+     "pressure": 0.0157
+    },
+    {
+     "brand": "Zara",
+     "category": "Thời trang",
+     "offers_seen": 40,
+     "offers_on_sale": 0,
+     "sale_ratio": 0.0,
+     "avg_discount": 0.0,
+     "pressure": 0.0
+    },
+    {
+     "brand": "H&M",
+     "category": "Thời trang",
+     "offers_seen": 39,
+     "offers_on_sale": 0,
+     "sale_ratio": 0.0,
+     "avg_discount": 0.0,
+     "pressure": 0.0
+    }
+   ]
+  },
+  "Mỹ phẩm": {
+   "pressure": 0.028,
+   "demand_multiplier": 0.986,
+   "level": "low",
+   "note": "Big brand không sale đáng kể — nhập bình thường",
+   "brands_on_sale": 5,
+   "brands_checked": 5,
+   "avg_discount": 0.2527,
+   "leader": {
+    "brand": "Laneige",
+    "sale_ratio": 0.225,
+    "avg_discount": 0.2637
+   },
+   "detail": [
+    {
+     "brand": "Laneige",
+     "category": "Mỹ phẩm",
+     "offers_seen": 40,
+     "offers_on_sale": 9,
+     "sale_ratio": 0.225,
+     "avg_discount": 0.2637,
+     "pressure": 0.0593
+    },
+    {
+     "brand": "Innisfree",
+     "category": "Mỹ phẩm",
+     "offers_seen": 40,
+     "offers_on_sale": 5,
+     "sale_ratio": 0.125,
+     "avg_discount": 0.2079,
+     "pressure": 0.026
+    },
+    {
+     "brand": "The Ordinary",
+     "category": "Mỹ phẩm",
+     "offers_seen": 40,
+     "offers_on_sale": 2,
+     "sale_ratio": 0.05,
+     "avg_discount": 0.3849,
+     "pressure": 0.0192
+    },
+    {
+     "brand": "Cocoon",
+     "category": "Mỹ phẩm",
+     "offers_seen": 40,
+     "offers_on_sale": 4,
+     "sale_ratio": 0.1,
+     "avg_discount": 0.1783,
+     "pressure": 0.0178
+    },
+    {
+     "brand": "Bourjois",
+     "category": "Mỹ phẩm",
+     "offers_seen": 31,
+     "offers_on_sale": 2,
+     "sale_ratio": 0.0645,
+     "avg_discount": 0.2285,
+     "pressure": 0.0147
+    }
+   ]
+  },
+  "Phụ kiện": {
+   "pressure": 0.0029,
+   "demand_multiplier": 0.999,
+   "level": "low",
+   "note": "Big brand không sale đáng kể — nhập bình thường",
+   "brands_on_sale": 1,
+   "brands_checked": 3,
+   "avg_discount": 0.1485,
+   "leader": {
+    "brand": "Casio",
+    "sale_ratio": 0.05,
+    "avg_discount": 0.1485
+   },
+   "detail": [
+    {
+     "brand": "Casio",
+     "category": "Phụ kiện",
+     "offers_seen": 40,
+     "offers_on_sale": 2,
+     "sale_ratio": 0.05,
+     "avg_discount": 0.1485,
+     "pressure": 0.0074
+    },
+    {
+     "brand": "Charles Keith",
+     "category": "Phụ kiện",
+     "offers_seen": 40,
+     "offers_on_sale": 0,
+     "sale_ratio": 0.0,
+     "avg_discount": 0.0,
+     "pressure": 0.0
+    },
+    {
+     "brand": "Vascara",
+     "category": "Phụ kiện",
+     "offers_seen": 23,
+     "offers_on_sale": 0,
+     "sale_ratio": 0.0,
+     "avg_discount": 0.0,
+     "pressure": 0.0
+    }
+   ]
+  }
+ },
+ "channels": {
+  "definitions": {
+   "shopee": {
+    "name": "Shopee",
+    "kind": "marketplace",
+    "commission_pct": 5.0,
+    "source_match": [
+     "shopee"
+    ],
+    "note": "Sàn lớn nhất VN, cạnh tranh giá gay gắt"
+   },
+   "lazada": {
+    "name": "Lazada",
+    "kind": "marketplace",
+    "commission_pct": 4.0,
+    "source_match": [
+     "lazada"
+    ],
+    "note": "Sàn lớn, thiên về hàng chính hãng"
+   },
+   "tiktok": {
+    "name": "TikTok Shop",
+    "kind": "marketplace",
+    "commission_pct": 5.0,
+    "source_match": [
+     "tiktok"
+    ],
+    "note": "Bán theo trend/livestream, biến động mạnh"
+   },
+   "own": {
+    "name": "Cửa hàng riêng",
+    "kind": "own",
+    "commission_pct": 2.0,
+    "source_match": [],
+    "note": "Storefront của hệ thống — không mất phí sàn, nhưng phải tự kéo khách"
+   }
+  },
+  "cases": {
+   "hot": {
+    "label": "Bán chạy, nhiều đơn",
+    "volume": 2.0,
+    "season": 1.0,
+    "trend": 0.8,
+    "desc": "Kênh chủ lực — đơn đều và nhiều, ít bị đối thủ hút mất khách"
+   },
+   "slow": {
+    "label": "Bán ít, ít đơn",
+    "volume": 0.35,
+    "season": 0.8,
+    "trend": 1.2,
+    "desc": "Kênh yếu — đơn nhỏ giọt, dễ mất khách khi đối thủ sale"
+   },
+   "seasonal": {
+    "label": "Theo mùa & trend",
+    "volume": 1.0,
+    "season": 2.5,
+    "trend": 2.0,
+    "desc": "Kênh bùng nổ đúng mùa rồi nguội hẳn — nhạy cả mùa vụ lẫn sale đối thủ"
+   },
+   "dead": {
+    "label": "Không bán được hàng",
+    "volume": 0.0,
+    "season": 1.0,
+    "trend": 1.0,
+    "desc": "Kênh chưa ra đơn — nhập thêm chỉ làm đọng vốn, cần sửa kênh trước"
+   }
+  },
+  "default_case": {
+   "shopee": "hot",
+   "lazada": "slow",
+   "tiktok": "seasonal",
+   "own": "dead"
+  },
+  "order": [
+   "shopee",
+   "lazada",
+   "tiktok",
+   "own"
+  ],
+  "case_order": [
+   "hot",
+   "slow",
+   "seasonal",
+   "dead"
+  ],
+  "market": {
+   "Thời trang": {
+    "total_listings": 120,
+    "channels": {
+     "other": {
+      "listings": 114,
+      "share_pct": 95.0,
+      "median_price_vnd": 542150,
+      "on_sale": 22,
+      "avg_discount": 0.3626,
+      "merchants": [
+       "188.com.vn",
+       "ACFC Vietnam",
+       "Bovest.vn",
+       "Canifa",
+       "Cardina",
+       "Công ty Cổ phần thời trang MM Outfit"
+      ]
+     },
+     "shopee": {
+      "listings": 6,
+      "share_pct": 5.0,
+      "median_price_vnd": 298250,
+      "on_sale": 2,
+      "avg_discount": 0.3879,
+      "merchants": [
+       "Shopee"
+      ]
+     }
+    }
+   },
+   "Mỹ phẩm": {
+    "total_listings": 120,
+    "channels": {
+     "shopee": {
+      "listings": 41,
+      "share_pct": 34.2,
+      "median_price_vnd": 150000,
+      "on_sale": 1,
+      "avg_discount": 0.0639,
+      "merchants": [
+       "Shopee",
+       "shopee.vn"
+      ]
+     },
+     "other": {
+      "listings": 76,
+      "share_pct": 63.3,
+      "median_price_vnd": 281250,
+      "on_sale": 10,
+      "avg_discount": 0.2556,
+      "merchants": [
+       "AB Beauty World",
+       "ASH Vietnam",
+       "Beaumax Skincare",
+       "Chatuchak.VN",
+       "Chiaki.vn",
+       "Cty In Ấn Quảng Cáo Thương Hiệu"
+      ]
+     },
+     "lazada": {
+      "listings": 3,
+      "share_pct": 2.5,
+      "median_price_vnd": 59000,
+      "on_sale": 0,
+      "avg_discount": 0.0,
+      "merchants": [
+       "Lazada Vietnam"
+      ]
+     }
+    }
+   },
+   "Phụ kiện": {
+    "total_listings": 80,
+    "channels": {
+     "other": {
+      "listings": 70,
+      "share_pct": 87.5,
+      "median_price_vnd": 2466600,
+      "on_sale": 7,
+      "avg_discount": 0.2032,
+      "merchants": [
+       "24kara Watches",
+       "3sports.vn",
+       "ACFC Vietnam",
+       "Aldo VN",
+       "Chapi.vn",
+       "Clever Hippo"
+      ]
+     },
+     "shopee": {
+      "listings": 9,
+      "share_pct": 11.2,
+      "median_price_vnd": 170050,
+      "on_sale": 0,
+      "avg_discount": 0.0,
+      "merchants": [
+       "Shopee",
+       "shopee.vn"
+      ]
+     },
+     "lazada": {
+      "listings": 1,
+      "share_pct": 1.2,
+      "median_price_vnd": 2243000,
+      "on_sale": 0,
+      "avg_discount": 0.0,
+      "merchants": [
+       "Lazada Vietnam"
+      ]
+     }
+    }
+   }
+  },
+  "market_fetched_at": "2026-08-07T14:49:36"
+ }
+}

@@ -22,6 +22,7 @@ from app.api.deps import require_admin, require_seller_workspace_or_admin
 from app.api.v1.endpoints import (
     auth,
     autopilot,
+    channel_link,
     churn,
     content_generator,
     copilot,
@@ -38,9 +39,11 @@ from app.api.v1.endpoints import (
     knowledge,
     kpis,
     market,
+    marketplace,
     personal_shopper,
     recsys,
     regret,
+    restock,
     return_prediction,
     review_sentiment,
     risk_portfolio,
@@ -49,6 +52,7 @@ from app.api.v1.endpoints import (
     storefront,
     supply_chain,
     users,
+    voucher_booster,
     workspaces,
 )
 
@@ -63,6 +67,22 @@ api_router.include_router(health.router, tags=["health"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(workspaces.router, prefix="/workspaces", tags=["workspaces"])
 api_router.include_router(autopilot.router, prefix="/autopilot", tags=["seller-autopilot"])
+api_router.include_router(voucher_booster.router, prefix="/voucher-booster", tags=["voucher-booster"])
+
+# Marketplace connectors from Cellaxnet main are retained behind the admin
+# boundary until their legacy tables are migrated to workspace ownership.
+api_router.include_router(
+    restock.router, prefix="/restock-planner", tags=["restock-planner"],
+    dependencies=_ADMIN_ONLY,
+)
+api_router.include_router(
+    channel_link.router, prefix="/channel-link", tags=["channel-link"],
+    dependencies=_ADMIN_ONLY,
+)
+api_router.include_router(
+    marketplace.router, prefix="/marketplace", tags=["marketplace"],
+    dependencies=_ADMIN_ONLY,
+)
 
 # --- Public: buyer-facing GenAI features (/shop/personal-shopper, /shop/recsys) ---
 api_router.include_router(
@@ -130,7 +150,7 @@ api_router.include_router(
     dynamic_pricing.router,
     prefix="/dynamic-pricing",
     tags=["02-dynamic-pricing"],
-    dependencies=_SELLER_OR_ADMIN,
+    dependencies=_ADMIN_ONLY,
 )
 api_router.include_router(
     churn.router, prefix="/churn", tags=["04-churn"], dependencies=_ADMIN_ONLY

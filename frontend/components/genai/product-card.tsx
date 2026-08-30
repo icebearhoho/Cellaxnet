@@ -160,7 +160,9 @@ export function ProductCard({
         <span className="inline-flex items-center gap-1">
           <Star className="h-3 w-3 fill-warning stroke-warning" />
           <span className="mono text-text">{product.rating.toFixed(1)}</span>
-          <span className="mono text-text-dim">({product.reviews.toLocaleString()})</span>
+          <span className="mono text-text-dim">
+            ({product.reviews.toLocaleString("vi-VN")})
+          </span>
         </span>
         <Badge variant={platformVariant[product.platform]}>{product.platform}</Badge>
       </div>

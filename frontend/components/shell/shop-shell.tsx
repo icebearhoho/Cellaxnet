@@ -28,10 +28,10 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <header className="sticky top-0 z-30 border-b border-border bg-bg/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b-2 border-border-strong/35 bg-bg/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-accent text-white">
+            <span className="doodle-sticker h-9 w-9 bg-accent text-white">
               <Sparkles className="h-4 w-4" />
             </span>
             <span className="text-lg font-bold tracking-tight">Cellaxnet</span>
@@ -45,10 +45,10 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                   key={item.slug}
                   href={item.href}
                   className={cn(
-                    "rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
+                    "rounded-md border-b-2 px-3.5 py-2 text-sm font-medium transition-colors",
                     active
-                      ? "bg-accent/10 text-accent"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text",
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-transparent text-text-muted hover:bg-surface-2 hover:text-text",
                   )}
                 >
                   {item.label}

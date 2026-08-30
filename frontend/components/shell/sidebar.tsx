@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowLeftRight } from "lucide-react";
+import { Menu, X, Store, ShoppingCart, ArrowLeftRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { navForApp, NAV_SECTIONS, SELLER_SELF_SERVICE_SLUGS, type AppKind } from "@/lib/nav";
@@ -23,8 +22,9 @@ export function Sidebar() {
     (item) => app !== "seller" || isAdmin || SELLER_SELF_SERVICE_SLUGS.has(item.slug),
   );
   const brand = app === "seller"
-    ? { label: "Người bán", other: "/shop", otherLabel: "Cửa hàng" }
-    : { label: "Cửa hàng", other: "/seller", otherLabel: "Người bán" };
+    ? { label: "Người bán", icon: Store, other: "/shop", otherLabel: "Cửa hàng" }
+    : { label: "Cửa hàng", icon: ShoppingCart, other: "/seller", otherLabel: "Người bán" };
+  const BrandIcon = brand.icon;
   const home = app === "seller" && user?.role !== "admin" ? "/seller/workspace" : app === "seller" ? "/seller" : "/shop";
 
   const isActive = (href: string) =>
@@ -34,7 +34,7 @@ export function Sidebar() {
     <>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed left-4 top-3 z-50 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text lg:hidden"
+        className="card-surface fixed left-4 top-3 z-50 inline-flex h-9 w-9 rotate-[-2deg] items-center justify-center rounded-lg border bg-surface text-text lg:hidden"
         aria-label="Toggle navigation"
       >
         {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -46,21 +46,15 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          // Cùng nền mờ với thanh trên, để hai mảng chrome đọc ra một hệ.
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface/70 backdrop-blur-xl transition-transform lg:translate-x-0",
+          "card-surface fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-surface/95 transition-transform lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {/* Brand — logo đã tự mang nền tím bo góc nên không bọc thêm khung nền. */}
+        {/* Brand */}
         <Link href={home} className="flex h-16 items-center gap-2.5 border-b border-border px-5">
-          <Image
-            src="/logo/logo.svg"
-            alt=""
-            width={32}
-            height={32}
-            className="h-8 w-8 shrink-0 rounded-xl"
-            priority
-          />
+          <div className="doodle-sticker h-9 w-9">
+            <BrandIcon className="h-4 w-4 text-accent" />
+          </div>
           <div className="flex flex-col leading-none">
             <span className="text-sm font-semibold">{brand.label}</span>
             <span className="mono text-2xs text-text-dim">AREA-303</span>
@@ -86,10 +80,10 @@ export function Sidebar() {
                         <Link
                           href={item.href}
                           className={cn(
-                            "group flex h-10 items-center gap-2.5 rounded-xl px-3 text-sm transition-colors",
+                            "group flex h-10 items-center gap-2.5 rounded-md border-[1.5px] border-transparent px-3 text-sm font-medium transition-all",
                             active
-                              ? "bg-accent/12 text-accent"
-                              : "text-text-muted hover:bg-surface-2 hover:text-text",
+                              ? "rotate-[-0.5deg] border-accent/40 bg-accent/12 text-accent shadow-[2px_2px_0_hsl(var(--accent)/0.14)]"
+                              : "text-text-muted hover:border-border hover:bg-surface-2 hover:text-text",
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" />

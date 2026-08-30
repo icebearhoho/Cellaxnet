@@ -23,7 +23,16 @@ def _convert_messages(messages: list[LlmMessage]) -> list[dict]:
 
 class OpenAIClient(LlmClient):
     def __init__(self, *, api_key: str | None = None, model: str | None = None) -> None:
-        self._api_key = api_key or settings.OPENAI_API_KEY
+        base_url = settings.OPENAI_BASE_URL.rstrip("/")
+        # Ollama Cloud exposes an OpenAI-compatible endpoint, but authenticates
+        # with the Ollama key.  Keeping an older OPENAI_API_KEY in .env must not
+        # make requests to ollama.com fail with a misleading 401.
+        provider_key = (
+            settings.OLLAMA_API_KEY
+            if "ollama.com" in base_url.lower()
+            else settings.OPENAI_API_KEY
+        )
+        self._api_key = api_key or provider_key
         self.model = model or settings.OPENAI_MODEL
         if not self._api_key:
             raise UpstreamUnavailableError(
@@ -35,7 +44,7 @@ class OpenAIClient(LlmClient):
         # to Groq / OpenRouter / any /v1/chat/completions endpoint (open-source
         # models via a free API). Default stays OpenAI.
         self._http = httpx.AsyncClient(
-            base_url=settings.OPENAI_BASE_URL.rstrip("/"),
+            base_url=base_url,
             timeout=httpx.Timeout(settings.LLM_REQUEST_TIMEOUT_SECONDS, connect=8.0),
             headers={
                 "Authorization": f"Bearer {self._api_key}",

@@ -12,7 +12,7 @@ from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
-from app.core.middleware import RequestContextMiddleware
+from app.core.middleware import CanonicalApiPathMiddleware, RequestContextMiddleware
 from app.core.rate_limit import RateLimitMiddleware
 from app.db.redis import close_redis
 from app.db.session import close_database
@@ -82,6 +82,19 @@ def create_app() -> FastAPI:
             "meta": None,
             "error": None,
         }
+
+    # Accept both forms for router-root endpoints without FastAPI's external
+    # 307 redirect. FastAPI expands included routers lazily, so OpenAPI is the
+    # reliable source of the final canonical path set at app construction.
+    canonical_slash_paths = frozenset(
+        path
+        for path in app.openapi()["paths"]
+        if path.startswith(settings.API_V1_PREFIX) and path.endswith("/")
+    )
+    app.add_middleware(
+        CanonicalApiPathMiddleware,
+        slash_paths=canonical_slash_paths,
+    )
 
     return app
 

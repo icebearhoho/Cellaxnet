@@ -24,6 +24,68 @@ def _candidates() -> list[dict]:
     runway = round(low["stock"] / max(low["daily_sales"], 0.1), 1)
     lost = round(low["daily_sales"] * low["price_vnd"] * 14)
 
+    if low["stock_status"] == "out":
+        inventory_title = f"{low['name']} đã hết hàng"
+        inventory_fallback = (
+            "Tồn kho đã về 0. Ưu tiên bổ sung hàng hoặc tạm dừng khuyến mãi; "
+            "không tăng giá một sản phẩm hiện không thể bán."
+        )
+        inventory_options = [
+            {
+                "id": "restock",
+                "label": "Tạo nhiệm vụ nhập thêm hàng",
+                "risk": "low",
+                "impact": {
+                    "revenue_protected_vnd": lost,
+                    "runway_days": runway + 30,
+                },
+            },
+            {
+                "id": "pause-campaigns",
+                "label": "Tạm dừng khuyến mãi và quảng cáo",
+                "risk": "low",
+                "impact": {
+                    "wasted_spend_avoided_vnd": round(lost * 0.08),
+                    "campaigns_to_review": 1,
+                },
+            },
+        ]
+    else:
+        inventory_title = f"{low['name']} có nguy cơ hết hàng"
+        inventory_fallback = (
+            f"Tồn kho chỉ đủ khoảng {runway} ngày; nếu không xử lý, doanh thu "
+            "14 ngày có thể bị ảnh hưởng."
+        )
+        inventory_options = [
+            {
+                "id": "restock",
+                "label": "Tạo nhiệm vụ nhập thêm hàng",
+                "risk": "low",
+                "impact": {
+                    "revenue_protected_vnd": lost,
+                    "runway_days": runway + 30,
+                },
+            },
+            {
+                "id": "raise-price-5",
+                "label": "Lập bản nháp tăng giá 5%",
+                "risk": "medium",
+                "impact": {
+                    "revenue_protected_vnd": round(lost * 0.55),
+                    "runway_days": round(runway * 1.18, 1),
+                },
+            },
+            {
+                "id": "slow-campaign",
+                "label": "Lập nhiệm vụ giảm campaign 20%",
+                "risk": "medium",
+                "impact": {
+                    "revenue_protected_vnd": round(lost * 0.4),
+                    "runway_days": round(runway * 1.25, 1),
+                },
+            },
+        ]
+
     negatives = sum(
         r["rating"] <= 3
         for p in products
@@ -37,24 +99,17 @@ def _candidates() -> list[dict]:
     risk_ltv = sum(c.get("lifetime_value_vnd", 0) for c in at_risk)
     return [
         {
-            "fingerprint": f"inventory:{low['id']}", "kind": "inventory",
+            "fingerprint": f"inventory:v2:{low['id']}:{low['stock_status']}", "kind": "inventory",
             "severity": "critical" if runway <= 7 else "warning",
-            "title": f"{low['name']} có nguy cơ hết hàng",
+            "title": inventory_title,
             "evidence": {"product_id": low["id"], "product_name": low["name"],
                          "stock": low["stock"], "daily_sales": low["daily_sales"],
                          "runway_days": runway, "revenue_at_risk_vnd": lost},
-            "fallback": f"Tồn kho chỉ đủ khoảng {runway} ngày; nếu không xử lý, doanh thu 14 ngày có thể bị ảnh hưởng.",
-            "options": [
-                {"id": "restock", "label": "Tạo nhiệm vụ nhập thêm hàng", "risk": "low",
-                 "impact": {"revenue_protected_vnd": lost, "runway_days": runway + 30}},
-                {"id": "raise-price-5", "label": "Lập bản nháp tăng giá 5%", "risk": "medium",
-                 "impact": {"revenue_protected_vnd": round(lost * 0.55), "runway_days": round(runway * 1.18, 1)}},
-                {"id": "slow-campaign", "label": "Lập nhiệm vụ giảm campaign 20%", "risk": "medium",
-                 "impact": {"revenue_protected_vnd": round(lost * 0.4), "runway_days": round(runway * 1.25, 1)}},
-            ],
+            "fallback": inventory_fallback,
+            "options": inventory_options,
         },
         {
-            "fingerprint": "reviews:negative-30d", "kind": "reviews", "severity": "warning",
+            "fingerprint": "reviews:negative-30d:v2", "kind": "reviews", "severity": "warning",
             "title": f"{negatives} review thấp cần xử lý",
             "evidence": {"negative_reviews_30d": negatives, "products_reviewed": len(products)},
             "fallback": f"Có {negatives} đánh giá từ 3 sao trở xuống trong 30 ngày; nên xử lý chủ đề lặp lại trước khi ảnh hưởng chuyển đổi.",
@@ -66,15 +121,15 @@ def _candidates() -> list[dict]:
             ],
         },
         {
-            "fingerprint": "customers:winback", "kind": "customer_risk", "severity": "info",
+            "fingerprint": "customers:winback:v2", "kind": "customer_risk", "severity": "info",
             "title": f"{len(at_risk)} khách nên được win-back",
             "evidence": {"customers_at_risk": len(at_risk), "ltv_at_risk_vnd": risk_ltv},
             "fallback": f"Nhóm {len(at_risk)} khách có recency cao hoặc bỏ giỏ nhiều đang mang {risk_ltv:,}₫ LTV lịch sử.",
             "options": [
-                {"id": "winback-segment", "label": "Tạo phân khúc win-back", "risk": "low",
-                 "impact": {"customers_targeted": len(at_risk), "expected_reactivation_pct": 8}},
                 {"id": "voucher-draft", "label": "Lập voucher 8% chờ duyệt", "risk": "medium",
                  "impact": {"customers_targeted": len(at_risk), "expected_reactivation_pct": 12}},
+                {"id": "winback-segment", "label": "Tạo phân khúc win-back", "risk": "low",
+                 "impact": {"customers_targeted": len(at_risk), "expected_reactivation_pct": 8}},
             ],
         },
     ]
@@ -93,7 +148,8 @@ async def _ollama_explain(candidates: list[dict]) -> tuple[dict[str, str], bool,
     prompt = (
         "Bạn là cố vấn vận hành TMĐT cho seller Việt Nam. Chỉ dùng số trong evidence, "
         "không bịa dữ kiện. Với mỗi item, viết explanation thuyết phục nhưng tối đa 2 câu "
-        "và 240 ký tự, nêu rủi ro rồi hành động hợp lý. Trả JSON đúng dạng "
+        "và 240 ký tự, nêu rủi ro rồi giải thích đúng phương án đầu tiên trong options "
+        "(đó là hành động được đề xuất). Trả JSON đúng dạng "
         '{"items":[{"fingerprint":"...","explanation":"..."}]}.\nDATA=' +
         json.dumps(evidence, ensure_ascii=False)
     )

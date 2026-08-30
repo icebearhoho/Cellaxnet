@@ -24,6 +24,9 @@ import {
   Network,
   Receipt,
   Store,
+  BadgePercent,
+  Link2,
+  PackagePlus,
   type LucideIcon,
 } from "lucide-react";
 
@@ -48,7 +51,8 @@ export type NavItem = {
     | "Time Series"
     | "Computer Vision"
     | "Generative AI"
-    | "Behavioral AI";
+    | "Behavioral AI"
+    | "Integration";
   owner: "TL" | "DA" | "FS" | "D1" | "D2";
 };
 
@@ -64,7 +68,8 @@ export const NAV_ITEMS: NavItem[] = [
 
   // --- SELLER (seller portal) ---
   { id: "AI", slug: "copilot",          label: "Trợ lý vận hành",    href: "/seller/copilot",          icon: Bot,             app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
-  { id: "AP", slug: "autopilot",        label: "Seller Autopilot",  href: "/seller/autopilot",        icon: Sparkles,        app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
+  { id: "AP", slug: "autopilot",        label: "Digital Twin",      href: "/seller/autopilot",        icon: Sparkles,        app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
+  { id: "VB", slug: "voucher-booster",  label: "Voucher Booster",   href: "/seller/voucher-booster",  icon: BadgePercent,    app: "seller", section: "commerce",     category: "Generative AI",   owner: "TL" },
   { id: "BR", slug: "daily-briefing",   label: "Hôm nay cần làm gì",  href: "/seller/daily-briefing",   icon: ClipboardCheck,  app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
   { id: "01", slug: "review-intelligence", label: "Đánh giá khách hàng", href: "/seller/review-intelligence", icon: Star, app: "seller", section: "intelligence", category: "NLP", owner: "DA" },
   { id: "OD", slug: "orders",           label: "Đơn hàng",           href: "/seller/orders",           icon: Receipt,       app: "seller", section: "commerce",     category: "Behavioral AI",   owner: "TL" },
@@ -77,6 +82,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "17", slug: "seller-coach",     label: "Cải thiện cửa hàng", href: "/seller/seller-coach",     icon: GraduationCap, app: "seller", section: "creator",      category: "Generative AI",   owner: "FS" },
   { id: "08", slug: "sentiment-alert",  label: "Cảnh báo nhu cầu",    href: "/seller/sentiment-alert",  icon: MessageSquare, app: "seller", section: "creator",      category: "NLP",              owner: "D1" },
   { id: "16", slug: "supply-chain",     label: "Rủi ro vận chuyển",       href: "/seller/supply-chain",     icon: Truck,         app: "seller", section: "operations",   category: "Time Series",     owner: "TL" },
+  { id: "23", slug: "restock-planner",  label: "Kế hoạch nhập hàng",      href: "/seller/restock-planner",  icon: PackagePlus,   app: "seller", section: "operations",   category: "Time Series",     owner: "D1" },
+  { id: "24", slug: "marketplace",      label: "Kết nối bán hàng",        href: "/seller/marketplace",      icon: Link2,          app: "seller", section: "operations",   category: "Integration",     owner: "D1" },
   { id: "18", slug: "product-knowledge",    label: "Biến động sản phẩm",   href: "/seller/product-knowledge",    icon: Brain,     app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
   { id: "19", slug: "market-intelligence",  label: "So sánh đối thủ", href: "/seller/market-intelligence",  icon: Swords,    app: "seller", section: "intelligence", category: "Generative AI", owner: "TL" },
   { id: "20", slug: "creator-performance",  label: "Hiệu quả nhà sáng tạo", href: "/seller/creator-performance",  icon: Users,     app: "seller", section: "creator",      category: "Generative AI", owner: "TL" },
@@ -90,6 +97,8 @@ export const NAV_ITEMS: NavItem[] = [
 /** Features that have a live, wired panel (vs. a placeholder). */
 export const IMPLEMENTED = new Set<string>([
   "autopilot",
+  "voucher-booster",
+  "virtual-tryon",
   "personal-shopper", "recsys", "content-generator", "seller-coach",
   "orders",
   "review-intelligence", "dynamic-pricing", "customer-risk", "customer-journey",
@@ -97,6 +106,7 @@ export const IMPLEMENTED = new Set<string>([
   "emotion-sale", "segmentation",
   "product-knowledge", "market-intelligence", "creator-performance", "decision-intelligence",
   "product-graph",
+  "restock-planner", "marketplace",
   "copilot", "daily-briefing",
 ]);
 
@@ -106,10 +116,15 @@ export const READY_NAV_ITEMS = NAV_ITEMS.filter(
 );
 
 /** Tenant-safe tools available to a normal seller before legacy APIs are scoped. */
-export const SELLER_SELF_SERVICE_SLUGS = new Set(["content-generator", "seller-coach", "autopilot"]);
+export const SELLER_SELF_SERVICE_SLUGS = new Set(["autopilot", "voucher-booster", "orders", "copilot"]);
+
+/** Analytical modules feed Digital Twin; they are no longer equal-level destinations. */
+const SELLER_PRODUCT_SLUGS = new Set(["autopilot", "voucher-booster", "orders", "copilot"]);
 
 export function navForApp(app: AppKind): NavItem[] {
-  return READY_NAV_ITEMS.filter((i) => i.app === app);
+  return READY_NAV_ITEMS.filter(
+    (item) => item.app === app && (app !== "seller" || SELLER_PRODUCT_SLUGS.has(item.slug)),
+  );
 }
 
 /**
@@ -131,7 +146,9 @@ export function canAccessApp(app: AppKind, role: string | null | undefined): boo
 }
 
 export const SUBTITLE: Record<string, string> = {
-  "autopilot": "LLM phát hiện cơ hội, giải thích bằng evidence, mô phỏng và chờ seller duyệt.",
+  "autopilot": "Digital Twin hợp nhất tín hiệu shop thành quyết định có thể mô phỏng, duyệt và theo dõi.",
+  "voucher-booster": "Mô phỏng, kiểm tra biên lợi nhuận và duyệt ưu đãi trước khi đưa lên Shopee hoặc TikTok Shop.",
+  "virtual-tryon": "Tải ảnh của bạn và thử trang phục bằng mô hình CatVTON.",
   "copilot": "Trợ lý vận hành cửa hàng.",
   "daily-briefing": "Việc ưu tiên theo tác động doanh thu",
   "personal-shopper": "Tìm sản phẩm theo nhu cầu và ngân sách.",
@@ -152,6 +169,8 @@ export const SUBTITLE: Record<string, string> = {
   "decision-intelligence": "Học từ quyết định quá khứ để rút ra hành động nên lặp lại và thời điểm chạy ads tốt nhất.",
   "product-graph": "Quan hệ SKU/brand + sản phẩm tương tự",
   "orders": "Đơn hàng thật do khách đặt — xác nhận, giao hoặc hủy.",
+  "restock-planner": "Phân bổ ngân sách nhập hàng theo mùa vụ, nhu cầu và áp lực khuyến mãi trên thị trường.",
+  "marketplace": "Kết nối và theo dõi trạng thái đồng bộ dữ liệu từ các sàn bán hàng.",
 };
 
 export const NAV_SECTIONS: Array<{ id: NavItem["section"]; title: string }> = [

@@ -35,9 +35,8 @@ type TokenPayload = { access_token: string; token_type: string; user: AuthUser }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  // Seed from the cookie synchronously so the first paint already knows who
-  // the user is — no /auth/me round trip on every page load, and no flash of
-  // "logged out" chrome for a signed-in admin.
+  // The server cannot read document.cookie. Keep the initial render identical
+  // on the server and client, then hydrate the session after mount.
   const [user, setUser] = useState<AuthUser | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -52,15 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return nextUser;
   }, []);
 
-  // Drop an expired/garbage cookie left over from a previous session.
+  // Restore a valid browser session, or drop an expired/garbage cookie left
+  // over from a previous session.
   useEffect(() => {
     const token = readTokenCookie();
-    const claims = token ? decodeJwtPayload(token) : null;
-    if (token && !claimsValid(claims)) {
+    if (!token) return;
+    const claims = decodeJwtPayload(token);
+    if (claimsValid(claims)) {
+      setUser(claimsToUser(claims!));
+    } else {
       clearTokenCookie();
       setUser(null);
-    } else if (claims) {
-      setUser(claimsToUser(claims));
     }
   }, []);
 

@@ -4,7 +4,7 @@ import os
 
 # Force test config BEFORE importing app modules.
 os.environ["APP_ENV"] = "test"
-os.environ["DEBUG"] = "false"
+os.environ["AREA303_DEBUG"] = "false"
 os.environ["JWT_SECRET"] = "test-secret"
 os.environ["DEMO_MODE"] = "true"
 os.environ["LLM_PROVIDER"] = "mock"

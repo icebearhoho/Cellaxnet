@@ -15,40 +15,40 @@
 @layer base {
   :root {
     /* canvas */
-    --bg: 250 30% 98%;           /* #f8f8fd */
-    --bg-alt: 250 26% 96%;       /* #f2f2f9 */
-    --surface: 0 0% 100%;        /* white cards */
-    --surface-2: 250 24% 96%;
-    --surface-3: 250 18% 92%;
+    --bg: 44 48% 96%;
+    --bg-alt: 42 35% 92%;
+    --surface: 45 65% 99%;
+    --surface-2: 48 42% 94%;
+    --surface-3: 46 28% 88%;
 
     /* type — near-black, high contrast for big bold headlines */
-    --text: 250 22% 10%;         /* #14131f */
-    --text-muted: 250 8% 42%;    /* #666a73 */
-    --text-dim: 250 8% 60%;      /* #94969f */
+    --text: 227 35% 16%;
+    --text-muted: 225 13% 39%;
+    --text-dim: 225 10% 57%;
 
     /* lines */
-    --border: 250 16% 91%;       /* #e6e6ee */
-    --border-strong: 250 14% 80%;
+    --border: 226 20% 78%;
+    --border-strong: 227 27% 34%;
 
     /* accent — violet primary, electric blue secondary (gradient pair) */
-    --accent: 258 88% 58%;       /* #6d3ff0 */
-    --accent-hover: 258 88% 50%;
-    --accent-deep: 258 80% 40%;
-    --accent-2: 210 95% 55%;     /* #1b8ff5 */
-    --accent-2-hover: 210 95% 48%;
+    --accent: 252 68% 58%;
+    --accent-hover: 252 64% 50%;
+    --accent-deep: 252 58% 39%;
+    --accent-2: 171 54% 43%;
+    --accent-2-hover: 171 57% 35%;
 
     /* semantic — darkened for contrast on a light canvas */
-    --success: 150 60% 36%;
-    --warning: 35 90% 44%;
-    --danger: 356 70% 50%;
-    --info: 210 90% 50%;
+    --success: 153 48% 35%;
+    --warning: 31 82% 45%;
+    --danger: 4 65% 53%;
+    --info: 211 65% 49%;
 
     /* data viz series */
-    --series-1: 258 88% 58%;     /* violet */
-    --series-2: 210 95% 55%;     /* blue */
-    --series-3: 35 90% 52%;      /* amber */
-    --series-4: 330 75% 56%;     /* pink */
-    --series-5: 165 70% 40%;     /* teal */
+    --series-1: 252 68% 58%;
+    --series-2: 171 54% 43%;
+    --series-3: 31 82% 55%;
+    --series-4: 4 68% 64%;
+    --series-5: 205 66% 54%;
 
     --radius: 16px;
   }
@@ -63,6 +63,30 @@
     font-family: var(--font-sans, Inter), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      hsl(var(--text) / 0.055) 1px,
+      transparent 0
+    );
+    background-size: 24px 24px;
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-doodle), var(--font-sans), sans-serif;
+    letter-spacing: 0.005em !important;
+  }
+
+  h1 {
+    line-height: 0.98 !important;
   }
 
   /* tabular numerals everywhere a metric appears */
@@ -134,17 +158,14 @@
      chrome element changes together. */
   .card-surface {
     background-color: hsl(var(--surface));
-    border-color: hsl(var(--border));
-    box-shadow:
-      0 1px 2px hsl(250 22% 10% / 0.04),
-      0 8px 24px -8px hsl(250 22% 10% / 0.08);
+    border-color: hsl(var(--border-strong) / 0.48);
+    border-width: 1.5px;
+    box-shadow: 3px 4px 0 hsl(var(--text) / 0.10);
   }
 
   /* Generic soft elevation for one-off blocks that aren't Cards. */
   .shadow-soft {
-    box-shadow:
-      0 1px 2px hsl(250 22% 10% / 0.04),
-      0 10px 30px -10px hsl(250 22% 10% / 0.10);
+    box-shadow: 5px 6px 0 hsl(var(--text) / 0.11);
   }
 
   /* Ambient colour field behind hero sections — the violet/blue atmosphere
@@ -161,28 +182,263 @@
   .glow-blob {
     position: absolute;
     border-radius: 9999px;
-    filter: blur(90px);
-    opacity: 0.22;
+    filter: blur(42px);
+    opacity: 0.14;
+    transform: rotate(-7deg);
   }
 
   /* Faint dot grid — texture under hero/landing sections. */
   .dot-grid {
-    background-image: radial-gradient(hsl(var(--text) / 0.07) 1px, transparent 1px);
-    background-size: 22px 22px;
+    background-image:
+      radial-gradient(hsl(var(--text) / 0.10) 1px, transparent 1px),
+      linear-gradient(
+        105deg,
+        transparent 48%,
+        hsl(var(--accent) / 0.035) 49%,
+        hsl(var(--accent) / 0.035) 51%,
+        transparent 52%
+      );
+    background-size: 24px 24px, 120px 120px;
   }
 
   /* Gradient text for one emphasised word in a headline, or a hero metric. */
   .text-gradient {
-    background: linear-gradient(100deg, hsl(var(--accent)), hsl(var(--accent-2)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: hsl(var(--accent-deep));
+    background: linear-gradient(
+      transparent 68%,
+      hsl(var(--warning) / 0.30) 68%,
+      hsl(var(--warning) / 0.30) 91%,
+      transparent 91%
+    );
   }
 
   /* Floating micro-card — the little "+128% engagement" chips scattered
      around a SaaS hero mockup. */
   .float-chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-2 text-xs font-medium;
-    box-shadow: 0 8px 24px -8px hsl(250 22% 10% / 0.16);
+    @apply inline-flex items-center gap-2 rounded-md border bg-surface px-3 py-2 text-xs font-semibold;
+    border-color: hsl(var(--border-strong) / 0.55);
+    box-shadow: 2px 3px 0 hsl(var(--text) / 0.12);
+    transform: rotate(-1deg);
+  }
+
+  .doodle-sticker {
+    @apply inline-flex items-center justify-center border-2 border-text bg-accent/15 text-accent-deep;
+    border-radius: 48% 52% 45% 55% / 55% 43% 57% 45%;
+    box-shadow: 2px 2px 0 hsl(var(--text) / 0.16);
+    transform: rotate(-3deg);
+  }
+
+  .doodle-underline {
+    position: relative;
+  }
+
+  .doodle-underline::after {
+    content: "";
+    position: absolute;
+    left: 4%;
+    right: 2%;
+    bottom: -5px;
+    height: 6px;
+    border-top: 2px solid hsl(var(--accent));
+    border-radius: 50%;
+    transform: rotate(-1deg);
+  }
+
+  .markdown-response {
+    overflow-wrap: anywhere;
+  }
+  .markdown-response > :first-child { margin-top: 0; }
+  .markdown-response > :last-child { margin-bottom: 0; }
+  .markdown-response p { margin: .55rem 0; }
+  .markdown-response strong {
+    color: hsl(var(--text));
+    font-weight: 750;
+    background: linear-gradient(transparent 68%, hsl(var(--warning) / .28) 68%);
+  }
+  .markdown-response ul,
+  .markdown-response ol {
+    margin: .65rem 0;
+    padding-left: 1.3rem;
+  }
+  .markdown-response ul { list-style: none; }
+  .markdown-response ol { list-style: decimal; }
+  .markdown-response li { margin: .35rem 0; }
+  .markdown-response ul > li {
+    position: relative;
+  }
+  .markdown-response ul > li::before {
+    content: "→";
+    position: absolute;
+    left: -1.2rem;
+    color: hsl(var(--accent-deep));
+    font-weight: 800;
+    transform: rotate(-5deg);
+  }
+  .markdown-response h1,
+  .markdown-response h2,
+  .markdown-response h3 {
+    margin: .85rem 0 .45rem;
+    color: hsl(var(--text));
+    line-height: 1.2;
+  }
+  .markdown-response h1 { font-size: 1.35rem; }
+  .markdown-response h2 { font-size: 1.2rem; }
+  .markdown-response h3 { font-size: 1.05rem; }
+  .markdown-response blockquote {
+    margin: .7rem 0;
+    border-left: 3px solid hsl(var(--accent));
+    padding: .25rem 0 .25rem .8rem;
+    color: hsl(var(--text-muted));
+  }
+  .markdown-response code {
+    border: 1px solid hsl(var(--border));
+    border-radius: .3rem;
+    background: hsl(var(--surface-2));
+    padding: .1rem .3rem;
+    font-family: var(--font-mono), monospace;
+    font-size: .88em;
+  }
+  .markdown-response pre {
+    margin: .7rem 0;
+    overflow-x: auto;
+    border: 1px solid hsl(var(--border));
+    border-radius: .55rem;
+    background: hsl(var(--text));
+    padding: .8rem;
+    color: hsl(var(--bg));
+  }
+  .markdown-response pre code {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: inherit;
+  }
+  .markdown-response a {
+    color: hsl(var(--accent-deep));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .markdown-response hr {
+    margin: .9rem 0;
+    border-color: hsl(var(--border));
+  }
+
+  /* Landing motion: playful enough to feel alive, calm enough to read. */
+  .landing-motion .landing-reveal,
+  .landing-motion .hero-chip,
+  .landing-motion .hero-title,
+  .landing-motion .hero-copy,
+  .landing-motion .hero-actions,
+  .landing-motion .hero-proof {
+    opacity: 0;
+    animation: doodle-rise 700ms cubic-bezier(.2,.8,.2,1) forwards;
+  }
+
+  .landing-motion .landing-reveal { animation-delay: 40ms; }
+  .landing-motion .hero-chip { animation-delay: 140ms; }
+  .landing-motion .hero-title { animation-delay: 240ms; }
+  .landing-motion .hero-copy { animation-delay: 360ms; }
+  .landing-motion .hero-actions { animation-delay: 470ms; }
+  .landing-motion .hero-proof { animation-delay: 590ms; }
+
+  .landing-motion .text-gradient {
+    background-size: 0 100%;
+    background-repeat: no-repeat;
+    animation: marker-draw 800ms 750ms cubic-bezier(.2,.8,.2,1) forwards;
+  }
+
+  .landing-motion .hero-actions a:first-child svg {
+    animation: arrow-nudge 1.4s 1.2s ease-in-out infinite;
+  }
+
+  .landing-motion .hero-proof svg {
+    animation: star-wink 1.9s ease-in-out infinite;
+  }
+  .landing-motion .hero-proof svg:nth-child(2) { animation-delay: 120ms; }
+  .landing-motion .hero-proof svg:nth-child(3) { animation-delay: 240ms; }
+  .landing-motion .hero-proof svg:nth-child(4) { animation-delay: 360ms; }
+  .landing-motion .hero-proof svg:nth-child(5) { animation-delay: 480ms; }
+
+  .landing-motion .stat-pop {
+    display: inline-block;
+    transition: transform 180ms ease, color 180ms ease;
+  }
+  .landing-motion .hero-proof > div:hover .stat-pop {
+    color: hsl(var(--accent-deep));
+    transform: translateY(-2px) rotate(-3deg) scale(1.12);
+  }
+
+  .landing-motion .glow-blob-one { animation: blob-drift-one 12s ease-in-out infinite alternate; }
+  .landing-motion .glow-blob-two { animation: blob-drift-two 15s ease-in-out infinite alternate; }
+  .landing-motion .dot-grid { animation: paper-drift 24s linear infinite; }
+
+  .hero-doodle {
+    position: absolute;
+    z-index: 5;
+    color: hsl(var(--accent-deep) / .48);
+    font-family: var(--font-doodle), cursive;
+    pointer-events: none;
+    user-select: none;
+    animation: doodle-float 4s ease-in-out infinite;
+  }
+  .hero-doodle-star { top: 13rem; left: max(3vw, 1rem); font-size: 2.2rem; transform: rotate(-13deg); }
+  .hero-doodle-loop { top: 29rem; right: max(4vw, 1rem); font-size: 3rem; animation-delay: -1.1s; }
+  .hero-doodle-heart { top: 39rem; left: 12vw; font-size: 2.4rem; animation-delay: -2.2s; }
+
+  .landing-motion .doodle-sticker {
+    transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease;
+  }
+  .landing-motion a:hover .doodle-sticker,
+  .landing-motion .feature-doodle-card:hover .doodle-sticker {
+    transform: rotate(7deg) scale(1.1);
+    box-shadow: 4px 5px 0 hsl(var(--text) / .16);
+  }
+
+  .feature-doodle-card:hover {
+    transform: translateY(-5px) rotate(var(--card-tilt, -.4deg));
+    box-shadow: 6px 8px 0 hsl(var(--accent) / .16);
+  }
+  .feature-doodle-card:nth-child(even) { --card-tilt: .45deg; }
+
+  @supports (animation-timeline: view()) {
+    .landing-section-reveal,
+    .feature-doodle-card {
+      animation: section-sketch-in both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 28%;
+    }
+  }
+
+  @keyframes doodle-rise {
+    from { opacity: 0; transform: translateY(18px) rotate(.5deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0); }
+  }
+  @keyframes marker-draw { to { background-size: 100% 100%; } }
+  @keyframes arrow-nudge { 0%, 55%, 100% { transform: translateX(0); } 70% { transform: translateX(5px); } }
+  @keyframes star-wink { 0%, 70%, 100% { transform: scale(1) rotate(0); } 82% { transform: scale(1.28) rotate(12deg); } }
+  @keyframes doodle-float { 0%, 100% { translate: 0 0; rotate: -4deg; } 50% { translate: 0 -10px; rotate: 5deg; } }
+  @keyframes blob-drift-one { to { transform: translate(9vw, 4rem) rotate(9deg) scale(1.08); } }
+  @keyframes blob-drift-two { to { transform: translate(-7vw, 5rem) rotate(-11deg) scale(.94); } }
+  @keyframes paper-drift { to { background-position: 24px 24px, 120px 120px; } }
+  @keyframes section-sketch-in {
+    from { opacity: 0; transform: translateY(28px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @media (max-width: 640px) {
+    .hero-doodle-star { top: 10rem; }
+    .hero-doodle-loop { top: 34rem; }
+    .hero-doodle-heart { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-motion *,
+    .landing-motion *::before,
+    .landing-motion *::after {
+      animation-duration: 1ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
