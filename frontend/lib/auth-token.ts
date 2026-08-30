@@ -2,18 +2,18 @@
  * Token storage + claim decoding, shared by the browser and the edge runtime.
  *
  * Deliberately NOT a `"use client"` module and it never touches `document` at
- * module scope, because `middleware.ts` imports from here and runs on the edge.
+ * module scope, because `proxy.ts` imports from here and runs on the edge.
  *
  * The JWT lives in a plain, JS-readable cookie rather than an httpOnly one so
  * that both the middleware (route redirects) and `lib/api.ts` (Authorization
- * header) can read it. That's the same XSS exposure as localStorage — fine
- * here because the cookie is only ever a *hint*: `require_admin` on the
- * backend is what actually authorises a request.
+ * header) can read it. This makes CSP and output escaping important because a
+ * successful same-origin XSS could read the token. Backend role and tenant
+ * checks remain the authorization boundary.
  */
 
 export const TOKEN_COOKIE = "area303_token";
 
-export type Role = "admin" | "buyer";
+export type Role = "admin" | "seller" | "buyer";
 
 export type JwtClaims = {
   sub: string;

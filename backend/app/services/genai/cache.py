@@ -16,7 +16,9 @@ import functools
 import hashlib
 import json
 from collections.abc import Callable
-from typing import Any
+from typing import Any, get_type_hints
+
+from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -66,7 +68,8 @@ async def _redis_set(key: str, value: Any, ttl: int) -> None:
         from app.db.redis import get_redis
 
         client = get_redis()
-        await client.set(key, json.dumps(value, default=str), ex=ttl)
+        payload = value.model_dump(mode="json") if isinstance(value, BaseModel) else value
+        await client.set(key, json.dumps(payload, default=str), ex=ttl)
     except Exception as exc:  # pragma: no cover — best-effort
         log.warning("cache.redis_set_failed", error=str(exc))
 
@@ -86,13 +89,37 @@ def llm_cache(
     cache_ttl = ttl if ttl is not None else settings.LLM_CACHE_TTL_SECONDS
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        try:
+            return_type = get_type_hints(fn).get("return")
+        except (NameError, TypeError):
+            return_type = None
+
+        def restore_cached(value: Any) -> tuple[bool, Any]:
+            """Rebuild typed Pydantic responses stored as JSON dictionaries.
+
+            Older versions cached models via ``default=str``. Those entries
+            are strings such as ``"variants=[...]"`` and cannot be restored;
+            treating them as a miss lets the function compute a valid value
+            and replace the stale Redis entry automatically.
+            """
+            if isinstance(return_type, type) and issubclass(return_type, BaseModel):
+                if not isinstance(value, dict):
+                    return False, None
+                try:
+                    return True, return_type.model_validate(value)
+                except ValueError:
+                    return False, None
+            return True, value
+
         @functools.wraps(fn)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             key = _make_key(prefix, args, kwargs)
 
             cached = await _redis_get(key)
             if cached is not None:
-                return cached
+                valid, restored = restore_cached(cached)
+                if valid:
+                    return restored
 
             async with _LOCAL_LOCK:
                 entry = _LOCAL_CACHE.get(key)

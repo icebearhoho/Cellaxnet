@@ -4,6 +4,7 @@
 
 from app.api.v1.endpoints import (
     auth,
+    autopilot,
     content_generator,
     datasets,
     health,
@@ -14,10 +15,12 @@ from app.api.v1.endpoints import (
     segmentation,
     seller_coach,
     users,
+    workspaces,
 )
 
 __all__ = [
     "auth",
+    "autopilot",
     "content_generator",
     "datasets",
     "health",
@@ -28,4 +31,5 @@ __all__ = [
     "segmentation",
     "seller_coach",
     "users",
+    "workspaces",
 ]

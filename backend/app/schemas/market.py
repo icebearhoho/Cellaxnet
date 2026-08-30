@@ -27,7 +27,9 @@ class MarketRequest(BaseModel):
 
 class MarketResponse(BaseModel):
     position: Literal["cheaper", "parity", "pricier"]
-    recommended_action: Literal["hold", "match_price", "undercut", "differentiate"]
+    recommended_action: Literal[
+        "hold", "match_price", "undercut", "differentiate", "protect_margin"
+    ]
     recommended_price_vnd: int
     price_floor_vnd: int
     margin_pct_at_recommended: float

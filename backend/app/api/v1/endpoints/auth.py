@@ -12,23 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db_dep
 from app.core.responses import ApiResponse, PageMeta
-from app.core.security import create_access_token
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
+from app.schemas.auth import LoginRequest, RegisterRequest, UserOut
 from app.services import user_service
 
 router = APIRouter()
-
-
-def _token_response(user) -> dict:  # noqa: ANN001 — app.models.user.User
-    """Issue a JWT carrying the role, so authorisation needs no DB lookup."""
-    token = create_access_token(
-        user.id,
-        extra={"role": user.role, "email": user.email, "name": user.name},
-    )
-    return TokenResponse(
-        access_token=token,
-        user=UserOut.model_validate(user, from_attributes=True),
-    ).model_dump()
 
 
 @router.post("/register", response_model=ApiResponse[dict])
@@ -41,7 +28,10 @@ async def register(
         db, email=req.email, password=req.password, name=req.name
     )
     return ApiResponse[dict](
-        success=True, data=_token_response(user), meta=PageMeta(), error=None
+        success=True,
+        data=user_service.issue_token_response(user),
+        meta=PageMeta(),
+        error=None,
     )
 
 
@@ -51,7 +41,10 @@ async def login(
 ) -> ApiResponse[dict]:
     user = await user_service.authenticate(db, email=req.email, password=req.password)
     return ApiResponse[dict](
-        success=True, data=_token_response(user), meta=PageMeta(), error=None
+        success=True,
+        data=user_service.issue_token_response(user),
+        meta=PageMeta(),
+        error=None,
     )
 
 
@@ -66,4 +59,23 @@ async def me(user: dict = Depends(get_current_user)) -> ApiResponse[dict]:
     )
     return ApiResponse[dict](
         success=True, data=data.model_dump(), meta=PageMeta(), error=None
+    )
+
+
+@router.post("/refresh", response_model=ApiResponse[dict])
+async def refresh_session(
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_dep),
+) -> ApiResponse[dict]:
+    """Re-issue a JWT from current database state after role changes."""
+    account = await user_service.get_by_id(db, int(user["sub"]))
+    if account is None:
+        from app.core.exceptions import UnauthorizedError
+
+        raise UnauthorizedError("Tài khoản không còn tồn tại.")
+    return ApiResponse[dict](
+        success=True,
+        data=user_service.issue_token_response(account),
+        meta=PageMeta(),
+        error=None,
     )

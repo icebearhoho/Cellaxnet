@@ -1,13 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import type { PROVINCES } from "@/lib/mock-data";
 
 /**
  * Client-only wrapper around <GeoMap> so that react-leaflet (which
  * touches `window` at module init) is never evaluated during SSR.
  */
-const GeoMapClient = dynamic(
+const LazyGeoMap = dynamic(
   () => import("@/components/dashboard/geo-map").then((m) => m.GeoMap),
   { ssr: false, loading: () => <GeoMapSkeleton /> },
 );
@@ -20,4 +21,16 @@ function GeoMapSkeleton() {
 
 export type GeoMapClientProps = { nodes: typeof PROVINCES };
 
-export { GeoMapClient as GeoMap };
+export function GeoMap({ nodes }: GeoMapClientProps) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // React Strict Mode performs a setup/cleanup probe in development. Waiting
+    // one frame means that probe is cancelled before Leaflet receives a DOM
+    // node, preventing two map instances from claiming the same container.
+    const frame = window.requestAnimationFrame(() => setReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return ready ? <LazyGeoMap nodes={nodes} /> : <GeoMapSkeleton />;
+}

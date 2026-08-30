@@ -55,6 +55,17 @@ def get_llm_client() -> LlmClient:
     return MockLlmClient()
 
 
+async def close_llm_client() -> None:
+    """Close the cached provider transport without instantiating a new one."""
+    if get_llm_client.cache_info().currsize == 0:
+        return
+    client = get_llm_client()
+    close = getattr(client, "aclose", None)
+    if close is not None:
+        await close()
+    get_llm_client.cache_clear()
+
+
 @lru_cache(maxsize=1)
 def get_rag() -> BaseRetriever:
     """Return the configured retriever.

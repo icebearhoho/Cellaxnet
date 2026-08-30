@@ -1,6 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip as LTooltip } from "react-leaflet";
+import { useEffect, useRef } from "react";
+import * as L from "leaflet";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PROVINCES, ProvinceNode } from "@/lib/mock-data";
 
@@ -17,6 +18,50 @@ const statusLabel: Record<ProvinceNode["status"], string> = {
 };
 
 export function GeoMap({ nodes }: { nodes: typeof PROVINCES }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const map = L.map(container, {
+      center: [16, 108],
+      zoom: 5,
+      minZoom: 4,
+      maxZoom: 8,
+      attributionControl: false,
+      zoomControl: false,
+    });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: "abcd",
+    }).addTo(map);
+
+    for (const node of nodes) {
+      const color = statusColor[node.status];
+      L.circleMarker([node.lat, node.lng], {
+        radius: node.status === "critical" ? 8 : 6,
+        color,
+        fillColor: color,
+        fillOpacity: 0.7,
+        weight: 1.5,
+      })
+        .bindTooltip(node.name, { direction: "top", offset: [0, -4], opacity: 1 })
+        .bindPopup(
+          `<div class="mono text-xs"><div class="font-semibold">${node.name}</div>` +
+            `<div>Mức rủi ro: ${(node.load * 100).toFixed(0)}%</div>` +
+            `<div>Trạng thái: ${statusLabel[node.status]}</div></div>`,
+        )
+        .addTo(map);
+    }
+
+    return () => {
+      map.remove();
+      container.replaceChildren();
+    };
+  }, [nodes]);
+
   return (
     <Card>
       <CardHeader>
@@ -39,47 +84,10 @@ export function GeoMap({ nodes }: { nodes: typeof PROVINCES }) {
         </div>
       </CardHeader>
       <div className="px-5 pb-5">
-        <div className="h-72 w-full overflow-hidden rounded-lg border border-border">
-          <MapContainer
-            center={[16.0, 108.0]}
-            zoom={5}
-            minZoom={4}
-            maxZoom={8}
-            style={{ height: "100%", width: "100%", background: "hsl(var(--bg))" }}
-            attributionControl={false}
-            zoomControl={false}
-          >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              subdomains={["a", "b", "c", "d"]}
-            />
-            {nodes.map((n) => (
-              <CircleMarker
-                key={n.id}
-                center={[n.lat, n.lng]}
-                radius={n.status === "critical" ? 8 : 6}
-                pathOptions={{
-                  color: statusColor[n.status],
-                  fillColor: statusColor[n.status],
-                  fillOpacity: 0.7,
-                  weight: 1.5,
-                }}
-              >
-                <LTooltip direction="top" offset={[0, -4]} opacity={1}>
-                  <span className="mono">{n.name}</span>
-                </LTooltip>
-                <Popup>
-                  <div className="mono text-xs">
-                    <div className="font-semibold">{n.name}</div>
-                    <div>Mức rủi ro: {(n.load * 100).toFixed(0)}%</div>
-                    <div>Trạng thái: {statusLabel[n.status]}</div>
-                  </div>
-                </Popup>
-              </CircleMarker>
-            ))}
-          </MapContainer>
-        </div>
+        <div
+          ref={containerRef}
+          className="h-72 w-full overflow-hidden rounded-lg border border-border bg-bg"
+        />
       </div>
     </Card>
   );

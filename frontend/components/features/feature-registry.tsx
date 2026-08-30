@@ -21,9 +21,11 @@ import { ProductGraphPanel } from "./product-graph-panel";
 import { CopilotPanel } from "./copilot-panel";
 import { DailyBriefingPanel } from "./daily-briefing-panel";
 import { OrdersPanel } from "./orders-panel";
+import { AutopilotPanel } from "./autopilot-panel";
 
 /** Maps a feature slug to its live panel. Keep in sync with IMPLEMENTED in lib/nav. */
 const PANELS: Record<string, ComponentType> = {
+  autopilot: AutopilotPanel,
   copilot: CopilotPanel,
   "daily-briefing": DailyBriefingPanel,
   orders: OrdersPanel,

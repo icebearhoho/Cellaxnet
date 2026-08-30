@@ -130,7 +130,7 @@ export default function RegisterPage() {
         </Button>
 
         <p className="text-center text-xs text-text-dim">
-          Tài khoản mới là tài khoản người mua. Cổng người bán cần quyền quản trị viên.
+          Sau khi đăng ký, bạn có thể tạo workspace để kích hoạt tài khoản người bán.
         </p>
       </form>
     </AuthCard>

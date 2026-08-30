@@ -19,13 +19,13 @@ const APPS = [
     href: "/seller",
     icon: Store,
     title: "Cổng người bán",
-    tagline: "Cần quyền quản trị viên",
+    tagline: "Dành cho tài khoản người bán",
     desc: "Phân tích đánh giá, rủi ro khách hàng, gợi ý giá, hành trình khách và trợ lý vận hành.",
     app: "seller" as AppKind,
   },
 ];
 
-/** The seller card only exists for admins — everyone else never sees the door. */
+/** The seller card appears after a user activates a seller workspace. */
 export function AppChooser() {
   const { user } = useAuth();
   const mounted = useMounted();

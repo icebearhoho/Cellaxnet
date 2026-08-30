@@ -68,6 +68,34 @@ def _order_out(order) -> dict:  # noqa: ANN001 — app.models.order.Order
     ).model_dump()
 
 
+def _demo_order_out(order: dict) -> dict:
+    products = {product["id"]: product for product in store.all_products()}
+    status = {
+        "delivered": "shipped", "returned": "cancelled",
+    }.get(order["status"], order["status"])
+    customer = next(
+        (row for row in store.all_customers() if row["id"] == order["customer_id"]),
+        None,
+    )
+    return {
+        "order_no": order["order_no"], "status": status,
+        "customer_name": order["customer_name"],
+        "email": customer.get("email") if customer else None,
+        "total_vnd": order["total_vnd"], "created_at": order["created_at"],
+        "channel": order["channel"], "demo_order": True,
+        "items": [
+            {
+                "product_id": line["product_id"],
+                "product_name": line["product_name"],
+                "brand": products[line["product_id"]]["brand"],
+                "unit_price_vnd": line["unit_price_vnd"], "qty": line["qty"],
+                "line_total_vnd": line["line_total_vnd"],
+            }
+            for line in order["items"]
+        ],
+    }
+
+
 @router.get("/products", response_model=ApiResponse[dict])
 async def products(
     q: str | None = None,
@@ -148,6 +176,8 @@ async def all_orders(db: AsyncSession = Depends(get_db_dep)) -> ApiResponse[list
         log.warning("storefront.orders_unavailable", error=str(exc))
         rows = []
     items = [_order_out(o) for o in rows]
+    if not items:
+        items = [_demo_order_out(order) for order in store.all_demo_orders()[:100]]
     return ApiResponse[list[dict]](
         success=True, data=items, meta=PageMeta(total=len(items)), error=None
     )

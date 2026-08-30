@@ -81,6 +81,10 @@ def risk_portfolio() -> dict:
         rows.append({
             "id": cid,
             "customer": c["name"],
+            "last_order_no": c.get("last_order_no"),
+            "last_product": c.get("last_product"),
+            "lifetime_value_vnd": c.get("lifetime_value_vnd", 0),
+            "preferred_channel": c.get("preferred_channel"),
             "churn_risk": churn["churn_risk"] if churn else None,
             "churn_band": churn["risk_band"] if churn else None,
             "return_risk": ret["return_risk"] if ret else None,

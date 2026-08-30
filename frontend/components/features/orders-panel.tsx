@@ -23,7 +23,7 @@ const fmt = (n: number) => VND.format(n).replace(/\s*₫/g, "") + "₫";
 const STATUS: Record<OrderStatus, { label: string; cls: string }> = {
   pending: { label: "Chờ xử lý", cls: "bg-warning/10 text-warning" },
   paid: { label: "Đã thanh toán", cls: "bg-info/10 text-info" },
-  shipped: { label: "Đã giao", cls: "bg-success/10 text-success" },
+  shipped: { label: "Đã xuất hàng", cls: "bg-success/10 text-success" },
   cancelled: { label: "Đã hủy", cls: "bg-danger/10 text-danger" },
 };
 
@@ -62,7 +62,7 @@ export function OrdersPanel() {
   }
 
   const revenue = (orders ?? [])
-    .filter((o) => o.status !== "cancelled")
+    .filter((o) => o.status === "paid" || o.status === "shipped")
     .reduce((sum, o) => sum + o.total_vnd, 0);
 
   return (
@@ -119,6 +119,8 @@ export function OrdersPanel() {
                       {s.label}
                     </span>
                     <span className="text-xs text-text-muted">{o.customer_name}</span>
+                    {o.channel && <Badge variant="muted">{o.channel}</Badge>}
+                    {o.demo_order && <Badge variant="muted">đơn mẫu</Badge>}
                     <span className="text-xs text-text-dim">
                       {new Date(o.created_at).toLocaleString("vi-VN")}
                     </span>
@@ -133,7 +135,7 @@ export function OrdersPanel() {
                       .join(" · ")}
                   </div>
 
-                  {NEXT[o.status].length > 0 && (
+                  {!o.demo_order && NEXT[o.status].length > 0 && (
                     <div className="mt-3 flex gap-2">
                       {NEXT[o.status].map((next) => (
                         <Button

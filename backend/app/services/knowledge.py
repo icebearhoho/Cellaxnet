@@ -1,10 +1,10 @@
-"""Track 2, Đề 1 — Product Knowledge service (causal sales explanation).
+"""Track 2, Đề 1 — Product Knowledge service (sales-signal explanation).
 
-Heuristic driver attribution (deterministic): computes the sales change and
-ranks the contributing factors — stock availability, price change, traffic
-change, competitor promotion, own promotion — by the strength of their pull in
-the direction of the observed change. The natural-language explanation runs on
-the LLM with a templated fallback.
+Heuristic signal attribution (deterministic): computes the sales change and
+ranks possible contributing factors — stock availability, price change,
+traffic change, competitor promotion and own promotion. This is descriptive,
+not causal inference. The natural-language explanation runs on the LLM with a
+templated fallback.
 """
 
 from __future__ import annotations
@@ -64,15 +64,15 @@ def _promo_effectiveness(req: ProductKnowledgeRequest, change: float) -> str:
     if not req.promotion_active:
         return "Không có khuyến mãi đang chạy cho sản phẩm này."
     if change >= 10:
-        return f"Khuyến mãi HIỆU QUẢ — doanh số tăng {change:+.0f}% trong kỳ."
+        return f"Khuyến mãi trùng thời điểm doanh số tăng {change:+.0f}%; chưa thể tách riêng quan hệ nhân quả."
     if change <= -5:
-        return "Khuyến mãi KÉM hiệu quả — doanh số vẫn giảm dù đang giảm giá; xem lại mức ưu đãi/tiếp cận."
-    return "Khuyến mãi hiệu quả trung tính — chưa tạo được cú hích doanh số rõ ràng."
+        return "Doanh số vẫn giảm trong lúc chạy khuyến mãi; cần kiểm tra thêm mức ưu đãi và nguồn traffic."
+    return "Doanh số ít thay đổi trong lúc chạy khuyến mãi; chưa đủ dữ liệu để kết luận hiệu quả."
 
 
 _SYSTEM = (
     "You are a product-analytics agent for a Vietnamese e-commerce seller. Given "
-    "a product's sales change and a ranked list of causal drivers, explain in ONE "
+    "a product's sales change and possible contributing signals, explain in ONE "
     "short paragraph (2-3 sentences) WHY sales moved, referencing the "
     "top drivers. Do not invent facts beyond the drivers given. "
     'Reply as JSON: {"explanation": "..."}'
@@ -88,7 +88,7 @@ def _fallback_explanation(req: ProductKnowledgeRequest, change: float, drivers: 
     top = ", ".join(f"{d.factor} (kéo {d.direction})" for d in drivers[:3])
     return (
         f"Doanh số '{req.product}' {('giảm' if change < 0 else 'tăng')} {abs(change):.0f}%. "
-        f"Nguyên nhân chính theo thứ tự tác động: {top}."
+        f"Các tín hiệu có thể góp phần, xếp theo mức tác động heuristic: {top}."
     )
 
 

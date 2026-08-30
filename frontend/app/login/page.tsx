@@ -26,8 +26,19 @@ function LoginForm() {
       const user = await login(email.trim(), password);
       // Honour ?next= when the middleware bounced them here, else send admins
       // to the portal and everyone else to the shop.
-      const next = params.get("next");
-      router.replace(next || (user.role === "admin" ? "/seller" : "/shop"));
+      const requestedNext = params.get("next");
+      const next =
+        requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+          ? requestedNext
+          : null;
+      router.replace(
+        next ||
+          (user.role === "admin"
+            ? "/seller"
+            : user.role === "seller"
+              ? "/seller/onboarding"
+              : "/shop"),
+      );
     } catch (err) {
       setError(
         err instanceof ApiClientError

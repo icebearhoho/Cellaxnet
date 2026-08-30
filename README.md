@@ -5,7 +5,8 @@ Data + AI/ML **monorepo** for **ARRA 303 ("The Buffalo Playground")** — clothi
 This repo is organized as a small **monorepo**:
 
 - `backend/` — FastAPI API service (Python 3.11)
-- `frontend/` — Next.js 14 dashboard (App Router) — *to be added*
+- `frontend/` — Next.js web app (App Router)
+- `mobile/` — Expo Go iOS/Android shell dùng chung web và FastAPI
 - `dataset/` — raw + processed datasets for the 17 candidate product ideas
 - `common/` + feature folders (`review_sentiment/`, `fake_review/`, `dynamic_pricing/`, `personal_shopper/`, `customer_churn/`) — the LLM modeling layer for ideas #01–#05
 - `docker-compose.yml` — local Postgres + Redis + backend
@@ -75,6 +76,18 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 OpenAPI docs: <http://localhost:8000/docs>
+
+## Chạy web và app iOS local
+
+Sau khi cài dependencies trong `backend/`, `frontend/` và `mobile/`, cho laptop
+và iPhone vào cùng Wi-Fi rồi chạy:
+
+```powershell
+.\scripts\start-mobile-local.ps1
+```
+
+Mở web bằng URL LAN mà script in ra, hoặc quét QR bằng Expo Go để mở app. Xem
+chi tiết và troubleshooting trong [`mobile/README.md`](mobile/README.md).
 
 ## API response standard
 

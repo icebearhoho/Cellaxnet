@@ -38,6 +38,9 @@ class _FakeUsers:
     async def get_by_email(self, db, email):  # noqa: ANN001, ARG002
         return self.rows.get(email.strip().lower())
 
+    async def get_by_id(self, db, user_id):  # noqa: ANN001, ARG002
+        return next((row for row in self.rows.values() if row.id == user_id), None)
+
     async def create_user(self, db, *, email, password, name=None, role="buyer"):  # noqa: ANN001, ARG002
         email = email.strip().lower()
         if email in self.rows:
@@ -64,6 +67,7 @@ class _FakeUsers:
 def fake_users(monkeypatch) -> _FakeUsers:  # noqa: ANN001
     store = _FakeUsers()
     monkeypatch.setattr(user_service, "get_by_email", store.get_by_email)
+    monkeypatch.setattr(user_service, "get_by_id", store.get_by_id)
     monkeypatch.setattr(user_service, "create_user", store.create_user)
     monkeypatch.setattr(user_service, "authenticate", store.authenticate)
     return store
@@ -120,6 +124,7 @@ async def test_register_duplicate_email_conflicts(fake_users):  # noqa: ARG001
     "body",
     [
         {"email": "short@test.dev", "password": "1234567"},  # 7 chars
+        {"email": "unicode@test.dev", "password": "á" * 40},  # 80 UTF-8 bytes
         {"email": "not-an-email", "password": "buyer12345"},
         {"email": "spaced out@test.dev", "password": "buyer12345"},
     ],
@@ -171,6 +176,26 @@ async def test_me_echoes_claims(admin_headers):
 
 
 @pytest.mark.asyncio
+async def test_refresh_reissues_role_from_current_account(fake_users):
+    async with _client() as ac:
+        registered = await ac.post(
+            "/api/v1/auth/register",
+            json={"email": "invited@test.dev", "password": "buyer12345"},
+        )
+        old_token = registered.json()["data"]["access_token"]
+        fake_users.rows["invited@test.dev"].role = "seller"
+        refreshed = await ac.post(
+            "/api/v1/auth/refresh",
+            headers={"Authorization": f"Bearer {old_token}"},
+        )
+
+    assert refreshed.status_code == 200
+    data = refreshed.json()["data"]
+    assert data["user"]["role"] == "seller"
+    assert decode_access_token(data["access_token"])["role"] == "seller"
+
+
+@pytest.mark.asyncio
 async def test_me_rejects_missing_and_garbage_tokens():
     async with _client() as ac:
         missing = await ac.get("/api/v1/auth/me")
@@ -181,4 +206,18 @@ async def test_me_rejects_missing_and_garbage_tokens():
     assert missing.status_code == 401
     assert missing.json()["error"]["code"] == "UNAUTHORIZED"
     assert garbage.status_code == 401
-    assert garbage.json()["error"]["code"] == "TOKEN_EXPIRED"
+    assert garbage.json()["error"]["code"] == "UNAUTHORIZED"
+
+
+@pytest.mark.asyncio
+async def test_me_classifies_expired_token_separately():
+    from app.core.security import create_access_token
+
+    expired = create_access_token("2", expires_minutes=-1, extra={"role": "buyer"})
+    async with _client() as ac:
+        response = await ac.get(
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {expired}"}
+        )
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "TOKEN_EXPIRED"

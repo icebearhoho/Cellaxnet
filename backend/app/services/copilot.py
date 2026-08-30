@@ -26,6 +26,7 @@ from app.schemas.decision import DecisionRequest, PastDecision, PlaybookRequest
 from app.schemas.knowledge import ProductKnowledgeRequest
 from app.schemas.market import MarketRequest, MarketScanRequest
 from app.schemas.product_graph import ProductGraphRequest
+from app.services import commerce_store as store
 from app.services import creator as creator_svc
 from app.services import decision as decision_svc
 from app.services import knowledge as knowledge_svc
@@ -102,6 +103,43 @@ DECISIONS: list[dict] = [
     {"kind": "ad", "description": "Đẩy ads TikTok tháng 12", "metric": "ROAS", "value": 5.1, "month": 12},
     {"kind": "price", "description": "Giảm giá 10% ngày thường", "metric": "ROAS", "value": 2.3, "month": None},
     {"kind": "promo", "description": "Freeship toàn shop", "metric": "ROAS", "value": 3.8, "month": 6},
+]
+
+# Replace the small legacy fixtures above with adapters over the same Mây House
+# entities used by storefront, inventory, pricing, risk and dashboard. Keeping
+# the public names avoids churn in the copilot routing code below.
+PRODUCTS = []
+for _product in store.all_products():
+    _competitor = _product["competitors"][0]
+    PRODUCTS.append({
+        "name": _product["name"], "category": _product["category"],
+        "price_vnd": _product["price_vnd"], "cost_vnd": _product["cost_vnd"],
+        "sales_prev": _product["sales_prev"], "sales_curr": _product["sales_curr"],
+        "stock": _product["stock"], "daily_sales": _product["daily_sales"],
+        "stock_status": _product["stock_status"], "trend": _product["trend"],
+        "price_change_pct": 0.0,
+        "traffic_change_pct": {"rising": 28.0, "cooling": -22.0, "stable": 3.0}[_product["trend"]],
+        "promotion_active": _product["promotion"] is not None,
+        "competitor_promo": _competitor["discount_pct"] > 0,
+        "competitor_name": _competitor["name"],
+        "competitor_price_vnd": _competitor["price_vnd"],
+        "competitor_discount_pct": _competitor["discount_pct"],
+    })
+
+CREATORS_BY_CATEGORY = {category: [] for category in store.categories()}
+for _creator in store.all_creators():
+    for _campaign in _creator["campaigns"]:
+        CREATORS_BY_CATEGORY[_creator["category"]].append({
+            "creator": _creator["creator"],
+            "content_type": _campaign["content_type"],
+            "views": _campaign["views"],
+            "engagements": _campaign["engagements"],
+            "attributed_sales_vnd": _campaign["attributed_sales_vnd"],
+        })
+
+DECISIONS = [
+    {key: value for key, value in row.items() if key != "category"}
+    for row in store.all_decisions()
 ]
 
 _CATS = ("Thời trang", "Mỹ phẩm", "Phụ kiện")

@@ -23,6 +23,7 @@ const ACTION: Record<string, string> = {
   match_price: "Bám sát giá đối thủ",
   undercut: "Hạ giá thấp hơn",
   differentiate: "Khác biệt hoá, không đua giá",
+  protect_margin: "Tăng về giá sàn để bảo vệ lợi nhuận",
 };
 
 function vnd(n: number) {

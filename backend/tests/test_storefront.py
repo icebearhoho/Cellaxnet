@@ -33,5 +33,6 @@ async def test_storefront_detail_review_count_matches_rendered_reviews():
 
     assert response.status_code == 200
     detail = response.json()["data"]
-    assert 5 <= len(detail["review_items"]) <= 8
+    # The coherent shop snapshot keeps a richer 12-28 review history per SKU.
+    assert 12 <= len(detail["review_items"]) <= 28
     assert detail["product"]["reviews"] == len(detail["review_items"])

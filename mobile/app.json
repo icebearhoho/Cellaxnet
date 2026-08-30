@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "AREA 303",
+    "slug": "area-303-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "area303",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.area303.mobile"
+    },
+    "android": {
+      "package": "com.area303.mobile"
+    },
+    "extra": {
+      "purpose": "Local Expo Go shell for the AREA 303 web application"
+    }
+  }
+}

@@ -7,10 +7,23 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, UnauthorizedError
-from app.core.security import hash_password, verify_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
+from app.schemas.auth import TokenResponse, UserOut
 
 DEFAULT_ROLE = "buyer"
+
+
+def issue_token_response(user: User) -> dict:
+    """Issue a fresh JWT after login or an account-role transition."""
+    token = create_access_token(
+        user.id,
+        extra={"role": user.role, "email": user.email, "name": user.name},
+    )
+    return TokenResponse(
+        access_token=token,
+        user=UserOut.model_validate(user, from_attributes=True),
+    ).model_dump()
 
 
 async def get_by_email(db: AsyncSession, email: str) -> User | None:

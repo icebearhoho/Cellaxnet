@@ -16,19 +16,15 @@ type Mode = "traditional" | "ai";
 
 /** Signals shown to shoppers — Vietnamese labels, not raw feature keys. */
 const PROFILE_CHIPS = [
-  { label: "Loại da", value: "Da khô" },
-  { label: "Tone da", value: "Sáng" },
-  { label: "Đã mua gần đây", value: "Serum BHA" },
-  { label: "Hay xem", value: "Tote canvas, tone đất" },
-  { label: "Review của bạn", value: "Tích cực" },
+  { label: "Khách mẫu", value: "C001" },
+  { label: "Kênh ưa thích", value: "Shopee" },
+  { label: "Đã mua", value: "lịch sử đơn Mây House" },
+  { label: "Quan tâm", value: "serum, dưỡng ẩm" },
 ];
 
 const SIGNAL_PAYLOAD = {
-  skin_type: "dry",
-  skin_tone: "light",
-  bought_30d: "BHA serum",
-  browse_14d: "earth-tone canvas",
-  review_sentiment: "+0.71",
+  intent: "serum dưỡng ẩm",
+  preferred_channel: "Shopee",
 };
 
 const VND = new Intl.NumberFormat("vi-VN", {
@@ -110,7 +106,7 @@ export function RecsysPanel() {
 
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-2xs font-medium uppercase tracking-wider text-text-dim">
-            Hồ sơ mua sắm
+            Hồ sơ mẫu
           </span>
           {PROFILE_CHIPS.map((s) => (
             <Badge key={s.label} variant="muted">
@@ -133,17 +129,17 @@ export function RecsysPanel() {
           <div>
             <CardTitle>
               {mode === "ai"
-                ? "Gợi ý cá nhân hoá cho bạn"
-                : "Được mua cùng bởi người giống bạn"}
+                ? "Gợi ý theo hồ sơ minh hoạ"
+                : "Sản phẩm mua cùng minh hoạ"}
             </CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               {mode === "ai"
-                ? "Dựa trên loại da, đơn gần đây và sản phẩm bạn hay xem — kèm lý do từng món."
-                : "Những món người mua có hành vi tương tự thường chọn thêm."}
+                ? "Dữ liệu mẫu để minh hoạ luồng cá nhân hoá; chưa lấy lịch sử thật của tài khoản."
+                : "Dữ liệu mẫu; chưa có ma trận đồng mua thật từ cửa hàng."}
             </p>
           </div>
           <Badge variant={mode === "ai" ? "live" : "muted"}>
-            {mode === "ai" ? "Theo hồ sơ của bạn" : "Theo cộng đồng"}
+            {mode === "ai" ? "Hồ sơ demo" : "Dữ liệu demo"}
           </Badge>
         </CardHeader>
       </Card>

@@ -1,228 +1,355 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Loader2, Sparkles, Users2, Lightbulb, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ChartNoAxesColumnIncreasing, ChevronDown, Lightbulb, Mail, MapPin, Phone, Search, ShoppingBag,
+  Store, UserMinus, UserRound, UserRoundX, UsersRound, type LucideIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { predictSegmentation, type SegmentationFeatures, type SegmentationResult } from "@/lib/features";
-import { DEMO_CUSTOMERS, type DemoCustomer } from "@/lib/demo-customers";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { DEMO_CUSTOMERS } from "@/lib/demo-customers";
 import { cn } from "@/lib/utils";
 
-const PERSONA_TONE: Record<string, { cls: string }> = {
-  "Active Buyers": { cls: "text-success" },
-  "Sellers (listing & selling activity)": { cls: "text-accent" },
-  "At-risk / Low-activity Users": { cls: "text-warning" },
-  "Dormant / Ghost Users": { cls: "text-danger" },
+const PERSONAS = [
+  "Active Buyers",
+  "Sellers (listing & selling activity)",
+  "At-risk / Low-activity Users",
+  "Dormant / Ghost Users",
+] as const;
+
+type Persona = (typeof PERSONAS)[number];
+type PersonaMeta = {
+  label: string;
+  shortDescription: string;
+  analysis: string;
+  action: string;
+  icon: LucideIcon;
+  tone: string;
+  bar: string;
+  badge: "success" | "live" | "warning" | "danger";
 };
 
-/**
- * Nhận xét + phân tích + đề xuất hành động cố định theo persona — theo yêu
- * cầu của lead: sau khi predict xong phải có chỗ giải thích "vì sao" và
- * "nên làm gì". Nội dung lấy từ bảng đã thống nhất với lead.
- */
-const PERSONA_INSIGHT: Record<
-  string,
-  { note: string; analysis: string; action: string }
-> = {
+const PERSONA_META: Record<Persona, PersonaMeta> = {
   "Active Buyers": {
-    note: "Nhóm khách hàng \"vàng\" — hoạt động tích cực nhất trong 4 nhóm (28.3% tổng khách hàng).",
-    analysis:
-      "Đăng nhập gần đây hơn hẳn 3 nhóm còn lại, có mua hàng, thích sản phẩm và lưu wishlist nhiều — dấu hiệu rõ ràng của sự quan tâm và tương tác thật.",
-    action:
-      "Ưu tiên chương trình loyalty/VIP, gợi ý sản phẩm cá nhân hóa theo lịch sử thích/mua. Đây là nhóm tạo doanh thu chính nên ROI đầu tư cao nhất.",
+    label: "Khách hàng tích cực",
+    shortDescription: "Thường xuyên tương tác, yêu thích và mua sản phẩm.",
+    analysis: "Đây là nhóm tạo doanh thu chính, có tín hiệu mua và mức độ quan tâm cao nhất.",
+    action: "Ưu tiên loyalty/VIP và gợi ý sản phẩm theo lịch sử mua hoặc yêu thích.",
+    icon: ShoppingBag,
+    tone: "border-success/30 bg-success/[0.06] text-success",
+    bar: "bg-success",
+    badge: "success",
   },
   "Sellers (listing & selling activity)": {
-    note: "Nhóm người bán — có hoạt động đăng bán sản phẩm rõ rệt (14.0% tổng khách hàng).",
-    analysis:
-      "Tỷ lệ sản phẩm bị từ chối khi đăng bán cao bất thường (~4.14%, các nhóm khác gần 0%) — dấu hiệu chính phân biệt nhóm này.",
-    action:
-      "Hướng dẫn/checklist đăng bán chuẩn (ảnh, mô tả, giá) để giảm tỷ lệ bị từ chối. Cân nhắc hỗ trợ riêng qua Seller Coach để giữ chân seller.",
+    label: "Người bán",
+    shortDescription: "Có hoạt động đăng bán hoặc bán sản phẩm.",
+    analysis: "Hành vi nổi bật là đăng bán; một số tài khoản có tỷ lệ sản phẩm bị từ chối cao.",
+    action: "Cung cấp checklist tối ưu ảnh, mô tả và giá; kết nối Seller Coach khi cần.",
+    icon: Store,
+    tone: "border-accent/30 bg-accent/[0.06] text-accent",
+    bar: "bg-accent",
+    badge: "live",
   },
   "At-risk / Low-activity Users": {
-    note: "Nhóm \"sắp mất\" — còn hiện diện nhưng đang nguội dần (14.7% tổng khách hàng).",
-    analysis:
-      "Vẫn có cài app (69%, cao hơn hẳn nhóm Dormant) và còn mở app gần đây, nhưng gần như không mua/bán/thích gì — khác Dormant ở chỗ chưa hoàn toàn \"biến mất\".",
-    action:
-      "Can thiệp SỚM trước khi chuyển hẳn sang Dormant: push notification nhắc nhở, ưu đãi nhỏ có thời hạn ngắn. Chi phí giữ chân luôn thấp hơn kéo lại người đã bỏ hẳn.",
+    label: "Có nguy cơ rời bỏ",
+    shortDescription: "Vẫn còn hiện diện nhưng mức tương tác đang giảm.",
+    analysis: "Nhóm này chưa hoàn toàn rời đi nhưng gần như không còn mua, bán hoặc yêu thích sản phẩm.",
+    action: "Can thiệp sớm bằng thông báo nhắc nhớ và ưu đãi nhỏ có thời hạn ngắn.",
+    icon: UserMinus,
+    tone: "border-warning/30 bg-warning/[0.06] text-warning",
+    bar: "bg-warning",
+    badge: "warning",
   },
   "Dormant / Ghost Users": {
-    note: "Nhóm lớn nhất và đáng lo ngại nhất — chiếm tới 43.0% tổng khách hàng.",
-    analysis:
-      "98% hoàn toàn không có hoạt động mua/bán/thích/wishlist nào, không đăng nhập trung bình gần 2 năm — gần như đã \"biến mất\" khỏi hệ thống.",
-    action:
-      "Chiến dịch re-engagement: email/SMS định kỳ (không quá dày), ưu đãi \"chào mừng quay lại\" mạnh tay. Kỳ vọng tỷ lệ phản hồi thấp nhưng vì chiếm 43% nên dù chỉ 2-3% quay lại cũng là con số lớn.",
+    label: "Không còn hoạt động",
+    shortDescription: "Đã ngừng tương tác trong thời gian dài.",
+    analysis: "Phần lớn không còn hoạt động mua, bán, thích hoặc wishlist và đã lâu không đăng nhập.",
+    action: "Chạy chiến dịch win-back qua email/SMS với ưu đãi quay lại đủ mạnh nhưng tần suất vừa phải.",
+    icon: UserRoundX,
+    tone: "border-danger/30 bg-danger/[0.06] text-danger",
+    bar: "bg-danger",
+    badge: "danger",
   },
 };
 
+/** Nhóm đông nhất có ~130 khách. Đổ hết một lượt thì trang dài lê thê, còn
+ *  nhốt trong khung cuộn riêng lại để thừa một mảng trắng bên dưới — phân
+ *  trang cho danh sách cao vừa phải và trôi theo trang như mọi nội dung khác. */
+const PAGE_SIZE = 12;
 
 export function SegmentationPanel() {
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<DemoCustomer | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<SegmentationResult | null>(null);
-  const [error, setError] = useState(false);
+  const [page, setPage] = useState(0);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return DEMO_CUSTOMERS.slice(0, 8);
-    return DEMO_CUSTOMERS.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        c.city.toLowerCase().includes(q),
-    ).slice(0, 8);
-  }, [query]);
+  const segmentCounts = useMemo(
+    () => Object.fromEntries(PERSONAS.map((persona) => [
+      persona,
+      DEMO_CUSTOMERS.filter((customer) => customer.persona === persona).length,
+    ])) as Record<Persona, number>,
+    [],
+  );
 
-  function pick(c: DemoCustomer) {
-    setSelected(c);
-    setResult(null);
-    setError(false);
+  const customers = useMemo(() => {
+    if (!selectedPersona) return [];
+    const keyword = query.trim().toLocaleLowerCase("vi");
+    return DEMO_CUSTOMERS.filter((customer) => {
+      if (customer.persona !== selectedPersona) return false;
+      if (!keyword) return true;
+      return [customer.name, customer.phone, customer.email, customer.city]
+        .some((value) => value.toLocaleLowerCase("vi").includes(keyword));
+    });
+  }, [query, selectedPersona]);
+
+  const selectedMeta = selectedPersona ? PERSONA_META[selectedPersona] : null;
+
+  const pageCount = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
+  const current = Math.min(page, pageCount - 1);
+  const visible = customers.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+
+  useEffect(() => { setPage(0); }, [query, selectedPersona]);
+
+  function selectPersona(persona: Persona) {
+    setSelectedPersona(persona);
+    setQuery("");
   }
-
-  async function run() {
-    if (busy || !selected) return;
-    setBusy(true);
-    setError(false);
-    // Không fallback về nhãn có sẵn trong file demo: kết quả hiển thị phải
-    // luôn đến từ model thật, nếu không sẽ hiểu nhầm là model đang chạy.
-    const r = await predictSegmentation(selected.features as SegmentationFeatures);
-    if (r) setResult(r);
-    else setError(true);
-    setBusy(false);
-  }
-
-  const topProb = result ? Math.max(...Object.values(result.probabilities)) : 0;
-  const tone = result ? PERSONA_TONE[result.persona] : null;
-  const insight = result ? PERSONA_INSIGHT[result.persona] : null;
-  const sortedProbs = result
-    ? Object.entries(result.probabilities).sort((a, b) => b[1] - a[1])
-    : [];
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-      <Card className="lg:col-span-7">
-        <CardHeader>
-          <CardTitle>Danh sách khách hàng</CardTitle>
-          <Badge variant="muted">{DEMO_CUSTOMERS.length} khách hàng</Badge>
+    <section aria-labelledby="customer-segments-title" className="space-y-5">
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b border-border bg-gradient-to-r from-accent/[0.07] to-accent-2/[0.05] p-5 sm:p-6">
+          <div className="min-w-0">
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
+              <UsersRound className="h-4 w-4" aria-hidden="true" /> Phân khúc khách hàng
+            </div>
+            <CardTitle id="customer-segments-title" className="text-lg sm:text-xl">
+              Bạn muốn xem nhóm khách hàng nào?
+            </CardTitle>
+            <p className="mt-1.5 max-w-3xl text-sm leading-6 text-text-muted">
+              Chọn một phân khúc để xem toàn bộ khách hàng thuộc nhóm, thông tin liên hệ, hành vi và lịch sử hoạt động.
+            </p>
+          </div>
+          <Badge variant="muted" className="hidden shrink-0 sm:inline-flex">
+            {DEMO_CUSTOMERS.length} khách hàng
+          </Badge>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-dim" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm theo tên, số điện thoại, thành phố..."
-              className="w-full rounded-md border border-border bg-bg-alt py-2 pl-8 pr-3 text-sm text-text placeholder:text-text-dim focus:border-accent focus:outline-none"
-            />
-          </div>
-
-          <div className="max-h-72 space-y-1.5 overflow-y-auto">
-            {filtered.length === 0 ? (
-              <p className="px-2 py-4 text-center text-sm text-text-dim">Không tìm thấy khách hàng nào.</p>
-            ) : (
-              filtered.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => pick(c)}
-                  className={cn(
-                    "w-full rounded-md border px-3 py-2 text-left transition-colors",
-                    selected?.id === c.id
-                      ? "border-accent bg-accent/10"
-                      : "border-border bg-bg-alt hover:border-accent/50",
-                  )}
-                >
-                  <div className="text-sm font-medium text-text">{c.name}</div>
-                  <div className="text-xs text-text-dim">
-                    {c.age} tuổi · {c.city} · {c.phone}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-
-          {selected && (
-            <div className="border-t border-border pt-3">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-dim">
-                Khách hàng đã chọn
-              </p>
-              <div className="space-y-2 rounded-md border border-border bg-bg-alt p-3">
-                <div className="text-sm font-medium text-text">{selected.name}</div>
-                <p className="text-xs text-text-muted">{selected.behavior}</p>
-                <p className="text-xs text-text-dim">{selected.history}</p>
+        <CardContent className="p-5 sm:p-6">
+          <div className="mb-5 grid gap-4 rounded-2xl border border-border bg-bg-alt p-4 lg:grid-cols-[220px_1fr] lg:p-5">
+            <div className="flex items-center gap-4 border-b border-border pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+                <ChartNoAxesColumnIncreasing className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">Tổng quy mô</p>
+                <p className="tnum mt-1 text-3xl font-bold tracking-tight text-text">{DEMO_CUSTOMERS.length}</p>
+                <p className="text-xs text-text-muted">khách hàng đã phân nhóm</p>
               </div>
             </div>
-          )}
 
-          <Button onClick={run} disabled={busy || !selected} className="w-full">
-            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-            Predict Persona
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="lg:col-span-5">
-        <CardHeader>
-          <CardTitle>Result</CardTitle>
-          {result && <Badge variant="muted">conf {Math.round(topProb * 100)}%</Badge>}
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <p className="text-sm text-danger">
-              Không gọi được model. Kiểm tra backend có đang chạy không, rồi thử lại.
-            </p>
-          ) : !result ? (
-            <p className="text-sm text-text-muted">
-              {selected ? "Bấm Predict Persona để phân loại." : "Chọn 1 khách hàng từ danh sách bên trái."}
-            </p>
-          ) : (
-            <div className="space-y-4">
-              <div className={cn("flex items-center gap-2 text-2xl font-semibold tracking-tight", tone?.cls)}>
-                <Users2 className="h-5 w-5" />
-                {result.persona}
+            <div className="min-w-0">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-text">Phân bổ khách hàng</p>
+                <p className="text-xs text-text-muted">4 phân khúc</p>
               </div>
-              <div className="space-y-2">
-                {sortedProbs.map(([persona, prob]) => (
-                  <div key={persona} className="space-y-1">
-                    <div className="flex justify-between text-xs text-text-muted">
-                      <span>{persona}</span>
-                      <span className="mono">{Math.round(prob * 100)}%</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                      <div
-                        className="h-full rounded-full bg-accent transition-all"
-                        style={{ width: `${Math.round(prob * 100)}%` }}
-                      />
-                    </div>
-                  </div>
+              <div
+                className="mt-3 flex h-4 w-full overflow-hidden rounded-full bg-surface-3"
+                role="img"
+                aria-label="Phân bổ gồm 85 khách hàng tích cực, 42 người bán, 44 khách hàng có nguy cơ rời bỏ và 129 khách hàng không còn hoạt động"
+              >
+                {PERSONAS.map((persona) => (
+                  <span
+                    key={persona}
+                    className={cn("h-full border-r-2 border-bg-alt last:border-r-0", PERSONA_META[persona].bar)}
+                    style={{ width: `${(segmentCounts[persona] / DEMO_CUSTOMERS.length) * 100}%` }}
+                    aria-hidden="true"
+                  />
                 ))}
               </div>
-
-              {insight && (
-                <div className="space-y-3 rounded-md border border-border bg-bg-alt p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-text-dim">
-                    <Lightbulb className="h-3.5 w-3.5" />
-                    Nhận xét & Đề xuất hành động
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <p className="text-text">{insight.note}</p>
-                    <div>
-                      <span className="text-xs font-medium text-text-dim">Vì sao thuộc nhóm này: </span>
-                      <span className="text-text-muted">{insight.analysis}</span>
-                    </div>
-                    <div>
-                      <span className="text-xs font-medium text-text-dim">Nên làm gì: </span>
-                      <span className="text-text-muted">{insight.action}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <ul className="mt-4 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-4" aria-label="Chú thích phân khúc">
+                {PERSONAS.map((persona) => {
+                  const meta = PERSONA_META[persona];
+                  return (
+                    <li key={persona} className="flex min-w-0 items-center gap-2">
+                      <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", meta.bar)} aria-hidden="true" />
+                      <span className="min-w-0 truncate text-xs text-text-muted" title={meta.label}>{meta.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
-          )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" role="group" aria-label="Chọn phân khúc khách hàng">
+            {PERSONAS.map((persona) => {
+              const meta = PERSONA_META[persona];
+              const Icon = meta.icon;
+              const isSelected = selectedPersona === persona;
+              const count = segmentCounts[persona];
+              return (
+                <button
+                  key={persona}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => selectPersona(persona)}
+                  className={cn(
+                    "min-h-40 cursor-pointer rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
+                    isSelected
+                      ? `${meta.tone} ring-1 ring-current`
+                      : "border-border bg-surface hover:border-border-strong hover:bg-bg-alt",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <span className={cn("grid h-10 w-10 place-items-center rounded-xl", isSelected ? "bg-surface/80" : meta.tone)}>
+                      <Icon className="h-5 w-5" aria-hidden={true} />
+                    </span>
+                    <span className="flex items-center gap-1.5 text-text">
+                      <UserRound className="h-5 w-5 text-text-muted" aria-hidden="true" />
+                      <span className="tnum text-2xl font-bold">{count}</span>
+                    </span>
+                  </div>
+                  <p className="mt-4 font-semibold text-text">{meta.label}</p>
+                  <p className="mt-1 text-sm leading-5 text-text-muted">{meta.shortDescription}</p>
+                  <p className={cn("mt-3 text-xs font-semibold", isSelected ? "text-current" : "text-accent")}>Chọn để xem danh sách</p>
+                </button>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
-    </div>
+
+      {!selectedPersona || !selectedMeta ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-accent/10 text-accent">
+              <UsersRound className="h-7 w-7" aria-hidden="true" />
+            </div>
+            <p className="font-semibold text-text">Chưa chọn phân khúc</p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-text-muted">
+              Chọn một trong bốn nhóm phía trên để mở danh sách khách hàng tương ứng.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <CardHeader className="gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:p-6">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="text-lg">{selectedMeta.label}</CardTitle>
+                <Badge variant={selectedMeta.badge}>{segmentCounts[selectedPersona]} khách hàng</Badge>
+              </div>
+              <p className="mt-1.5 text-sm text-text-muted">{selectedMeta.shortDescription}</p>
+            </div>
+            <div className="relative w-full shrink-0 sm:w-80">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-dim" aria-hidden="true" />
+              <Input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Tìm tên, SĐT, email, thành phố…"
+                className="pl-10"
+                aria-label={`Tìm trong nhóm ${selectedMeta.label}`}
+              />
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-5 p-5 sm:p-6">
+            <div className="grid gap-3 rounded-2xl border border-border bg-bg-alt p-4 lg:grid-cols-2">
+              <div>
+                <p className="flex items-center gap-2 text-sm font-semibold text-text">
+                  <Lightbulb className="h-4 w-4 text-warning" aria-hidden="true" /> Đặc điểm nhóm
+                </p>
+                <p className="mt-1.5 text-sm leading-6 text-text-muted">{selectedMeta.analysis}</p>
+              </div>
+              <div className="border-t border-border pt-3 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+                <p className="text-sm font-semibold text-text">Hành động đề xuất</p>
+                <p className="mt-1.5 text-sm leading-6 text-text-muted">{selectedMeta.action}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-text" aria-live="polite">
+                Hiển thị {customers.length} trên {segmentCounts[selectedPersona]} khách hàng
+              </p>
+              {query && <p className="text-xs text-text-muted">Kết quả cho “{query}”</p>}
+            </div>
+
+            {customers.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+                <Search className="mx-auto h-6 w-6 text-text-dim" aria-hidden="true" />
+                <p className="mt-3 font-semibold text-text">Không tìm thấy khách hàng</p>
+                <p className="mt-1 text-sm text-text-muted">Thử tên, số điện thoại, email hoặc thành phố khác.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" aria-label={`Danh sách ${selectedMeta.label}`}>
+                {visible.map((customer) => (
+                  <article key={customer.id} className="rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-border-strong">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate font-semibold text-text" title={customer.name}>{customer.name}</h3>
+                        <p className="mt-1 text-xs text-text-muted">{customer.gender} · {customer.age} tuổi · {customer.id}</p>
+                      </div>
+                      <Badge variant={selectedMeta.badge} className="shrink-0">{selectedMeta.label}</Badge>
+                    </div>
+
+                    <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                      <div className="flex min-w-0 items-center gap-2 text-text-muted">
+                        <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <dt className="sr-only">Số điện thoại</dt><dd className="tnum truncate">{customer.phone}</dd>
+                      </div>
+                      <div className="flex min-w-0 items-center gap-2 text-text-muted">
+                        <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <dt className="sr-only">Thành phố</dt><dd className="truncate">{customer.city}</dd>
+                      </div>
+                      <div className="flex min-w-0 items-center gap-2 text-text-muted sm:col-span-2">
+                        <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <dt className="sr-only">Email</dt><dd className="truncate" title={customer.email}>{customer.email}</dd>
+                      </div>
+                    </dl>
+
+                    <details className="group mt-4 border-t border-border pt-3">
+                      <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between text-sm font-semibold text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                        Xem hành vi và lịch sử
+                        <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
+                      </summary>
+                      <div className="mt-3 space-y-3 rounded-xl bg-bg-alt p-3 text-sm leading-6">
+                        <div><p className="text-xs font-semibold uppercase tracking-wider text-text-dim">Hành vi</p><p className="mt-1 text-text-muted">{customer.behavior}</p></div>
+                        <div><p className="text-xs font-semibold uppercase tracking-wider text-text-dim">Lịch sử hoạt động</p><p className="mt-1 text-text-muted">{customer.history}</p></div>
+                      </div>
+                    </details>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {customers.length > 0 && pageCount > 1 && (
+              <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                <span className="tnum text-xs text-text-muted">
+                  {current * PAGE_SIZE + 1}–{Math.min((current + 1) * PAGE_SIZE, customers.length)}
+                  {" / "}{customers.length} khách hàng
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary" size="sm"
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={current === 0}
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    variant="secondary" size="sm"
+                    onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                    disabled={current >= pageCount - 1}
+                  >
+                    Sau
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </section>
   );
 }

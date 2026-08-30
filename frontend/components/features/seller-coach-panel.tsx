@@ -84,12 +84,10 @@ export function SellerCoachPanel() {
           <div>
             <CardTitle>Điểm sức khỏe cửa hàng</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Tổng hợp từ sản phẩm, đánh giá khách hàng và tình trạng tồn kho.
+              Tính từ cùng snapshot 60 SKU, đơn hàng, đánh giá và tồn kho của Mây House demo.
             </p>
           </div>
-          <Badge variant={scoreBand(overall) === "good" ? "live" : "warning"}>
-            {scoreBand(overall) === "good" ? "Hoạt động tốt" : "Cần cải thiện"}
-          </Badge>
+          <Badge variant="muted">shop demo thống nhất</Badge>
         </CardHeader>
         <CardContent className="flex justify-center pb-6">
           <ScoreGauge score={overall} label="Điểm tổng" />

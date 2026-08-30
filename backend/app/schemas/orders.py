@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 OrderStatus = Literal["pending", "paid", "shipped", "cancelled"]
 
@@ -20,6 +20,14 @@ class CheckoutRequest(BaseModel):
     items: list[CheckoutItem] = Field(min_length=1, max_length=50)
     customer_name: str = Field(min_length=1, max_length=80)
     email: str | None = Field(default=None, max_length=255)
+
+    @field_validator("customer_name")
+    @classmethod
+    def normalize_customer_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("customer_name must not be blank")
+        return value
 
 
 class OrderItemOut(BaseModel):

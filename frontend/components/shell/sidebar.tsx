@@ -1,29 +1,31 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Store, ShoppingCart, ArrowLeftRight } from "lucide-react";
+import { Menu, X, ArrowLeftRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { navForApp, NAV_SECTIONS, type AppKind } from "@/lib/nav";
+import { navForApp, NAV_SECTIONS, SELLER_SELF_SERVICE_SLUGS, type AppKind } from "@/lib/nav";
 import { useAuth } from "@/lib/auth-context";
 import { useMounted } from "@/lib/hooks/use-mounted";
 
 export function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const mounted = useMounted();
 
   useEffect(() => setOpen(false), [pathname]);
 
   const app: AppKind = pathname.startsWith("/seller") ? "seller" : "shop";
-  const items = navForApp(app);
+  const items = navForApp(app).filter(
+    (item) => app !== "seller" || isAdmin || SELLER_SELF_SERVICE_SLUGS.has(item.slug),
+  );
   const brand = app === "seller"
-    ? { label: "Người bán", icon: Store, other: "/shop", otherLabel: "Cửa hàng" }
-    : { label: "Cửa hàng", icon: ShoppingCart, other: "/seller", otherLabel: "Người bán" };
-  const BrandIcon = brand.icon;
-  const home = app === "seller" ? "/seller" : "/shop";
+    ? { label: "Người bán", other: "/shop", otherLabel: "Cửa hàng" }
+    : { label: "Cửa hàng", other: "/seller", otherLabel: "Người bán" };
+  const home = app === "seller" && user?.role !== "admin" ? "/seller/workspace" : app === "seller" ? "/seller" : "/shop";
 
   const isActive = (href: string) =>
     href === home ? pathname === home : pathname.startsWith(href);
@@ -44,15 +46,21 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "card-surface fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r transition-transform lg:translate-x-0",
+          // Cùng nền mờ với thanh trên, để hai mảng chrome đọc ra một hệ.
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface/70 backdrop-blur-xl transition-transform lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {/* Brand */}
+        {/* Brand — logo đã tự mang nền tím bo góc nên không bọc thêm khung nền. */}
         <Link href={home} className="flex h-16 items-center gap-2.5 border-b border-border px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent/15">
-            <BrandIcon className="h-4 w-4 text-accent" />
-          </div>
+          <Image
+            src="/logo/logo.svg"
+            alt=""
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 rounded-xl"
+            priority
+          />
           <div className="flex flex-col leading-none">
             <span className="text-sm font-semibold">{brand.label}</span>
             <span className="mono text-2xs text-text-dim">AREA-303</span>

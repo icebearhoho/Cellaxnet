@@ -43,3 +43,4 @@ class SupplyChainResponse(BaseModel):
     summary: str
     news: list[NewsArticle] = []
     news_live: bool = False
+    scenario_mode: bool = True

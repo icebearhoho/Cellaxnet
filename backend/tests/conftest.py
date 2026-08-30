@@ -3,8 +3,11 @@
 import os
 
 # Force test config BEFORE importing app modules.
-os.environ.setdefault("APP_ENV", "test")
-os.environ.setdefault("JWT_SECRET", "test-secret")
+os.environ["APP_ENV"] = "test"
+os.environ["DEBUG"] = "false"
+os.environ["JWT_SECRET"] = "test-secret"
+os.environ["DEMO_MODE"] = "true"
+os.environ["LLM_PROVIDER"] = "mock"
 os.environ.setdefault("POSTGRES_HOST", "localhost")
 os.environ.setdefault("REDIS_HOST", "localhost")
 
@@ -12,6 +15,17 @@ import pytest  # noqa: E402
 
 from app.core.security import create_access_token  # noqa: E402
 from app.main import app  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def reset_process_rate_limiter():
+    """Keep per-process rate-limit state from leaking between unit tests."""
+    from app.core import rate_limit
+
+    rate_limit._LOCAL.clear()
+    rate_limit._REDIS_DOWN_UNTIL = 0.0
+    yield
+    rate_limit._LOCAL.clear()
 
 
 def _bearer(user_id: str, role: str, email: str) -> dict[str, str]:

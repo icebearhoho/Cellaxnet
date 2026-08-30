@@ -29,7 +29,10 @@ export default async function SellerFeaturePage({
   }
 
   return (
-    <DashboardShell breadcrumb={[{ label: "Người bán", href: "/seller" }, { label: item.label }]}>
+    <DashboardShell
+      breadcrumb={[{ label: "Người bán", href: "/seller" }, { label: item.label }]}
+      ambient={slug !== "dynamic-pricing"}
+    >
       <FeatureHeader
         id={item.id}
         title={item.label}

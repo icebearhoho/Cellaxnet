@@ -14,7 +14,16 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin
@@ -22,11 +31,15 @@ from app.db.base import Base, TimestampMixin
 
 class ShopeeSession(Base, TimestampMixin):
     __tablename__ = "shopee_sessions"
+    __table_args__ = (
+        UniqueConstraint("user_id", name="uq_shopee_session_user"),
+        Index("ix_shopee_sessions_user_id", "user_id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     #: One connection per account. Reconnecting replaces the row's contents.
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True, nullable=False
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     #: Fernet-encrypted Playwright storage_state JSON, filtered to Shopee origins.
     state_encrypted: Mapped[str] = mapped_column(Text, nullable=False)

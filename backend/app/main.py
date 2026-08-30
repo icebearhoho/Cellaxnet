@@ -15,7 +15,9 @@ from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestContextMiddleware
 from app.core.rate_limit import RateLimitMiddleware
 from app.db.redis import close_redis
+from app.db.session import close_database
 from app.services import segmentation
+from app.services.genai.factory import close_llm_client
 
 log = get_logger("app.main")
 
@@ -28,7 +30,9 @@ async def lifespan(app: FastAPI):
     # Safe no-op if the .pkl artifacts aren't present yet.
     segmentation.warmup()
     yield
+    await close_llm_client()
     await close_redis()
+    await close_database()
     log.info("shutdown")
 
 
@@ -41,6 +45,14 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
         openapi_url="/openapi.json",
         lifespan=lifespan,
+        # Starlette's default slash-redirect answers with an absolute URL built
+        # from the request's own Host header (http://localhost:8000/...). Behind
+        # the Next.js rewrite proxy that leaks the backend's origin straight to
+        # the browser, which the frontend CSP's connect-src then blocks. The
+        # frontend always calls these collection routes with the trailing slash
+        # already in place, so disabling the redirect only turns a slash-less
+        # request into a 404 instead of a cross-origin redirect.
+        redirect_slashes=False,
     )
 
     app.add_middleware(RequestContextMiddleware)

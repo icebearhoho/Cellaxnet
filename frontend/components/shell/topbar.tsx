@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { LogOut, Search, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { READY_NAV_ITEMS } from "@/lib/nav";
+import { READY_NAV_ITEMS, SELLER_SELF_SERVICE_SLUGS } from "@/lib/nav";
 import { useAuth } from "@/lib/auth-context";
 import {
   CommandDialog,
@@ -15,6 +15,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
+import { LanguageToggle } from "@/components/shell/language-toggle";
 import { useMounted } from "@/lib/hooks/use-mounted";
 
 type Crumb = { label: string; href?: string };
@@ -44,8 +45,10 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
     [router],
   );
 
+  // Nền mờ thay vì trắng đặc: để quầng sáng tím/xanh sau lưng ánh qua, nên
+  // thanh trên và nội dung bên dưới đọc ra cùng một mặt phẳng.
   return (
-    <header className="card-surface sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-4 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-surface/70 px-4 backdrop-blur-xl lg:px-6">
       {/* Breadcrumb */}
       <nav className="flex min-w-0 items-center gap-1.5 text-sm">
         {breadcrumb.map((c, i) => (
@@ -74,6 +77,10 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
         <CommandShortcut>Ctrl K</CommandShortcut>
       </Button>
 
+      {/* Ngôn ngữ. Chỉ hiện sau khi mount vì lựa chọn nằm trong localStorage,
+          server render không thấy được. */}
+      {mounted ? <LanguageToggle /> : <div className="shrink-0" style={{ width: 74, height: 32 }} />}
+
       {/* Signed-in identity + logout. Rendered after mount so the markup
           matches the server render, which can't know the cookie. */}
       {mounted && user ? (
@@ -81,7 +88,11 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
           <div className="hidden text-right leading-tight sm:block">
             <div className="text-xs font-semibold">{user.name || user.email}</div>
             <div className="text-2xs font-medium text-text-dim">
-              {user.role === "admin" ? "Quản trị viên" : "Người mua"}
+              {user.role === "admin"
+                ? "Quản trị viên"
+                : user.role === "seller"
+                  ? "Người bán"
+                  : "Người mua"}
             </div>
           </div>
           <button
@@ -105,7 +116,12 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
           <CommandList>
             <CommandEmpty>Không tìm thấy.</CommandEmpty>
             <CommandGroup heading="Điều hướng">
-              {READY_NAV_ITEMS.map((item) => (
+              {READY_NAV_ITEMS.filter(
+                (item) =>
+                  item.app !== "seller" ||
+                  user?.role === "admin" ||
+                  SELLER_SELF_SERVICE_SLUGS.has(item.slug),
+              ).map((item) => (
                 <CommandItem
                   key={item.slug}
                   value={`${item.label} ${item.slug}`}

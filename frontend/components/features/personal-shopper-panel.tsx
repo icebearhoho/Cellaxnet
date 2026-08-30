@@ -143,7 +143,7 @@ export function PersonalShopperPanel() {
               </span>
             </div>
             <div className="flex items-center gap-2 text-2xs text-text-muted">
-              <Badge variant="live">Tư vấn theo nhu cầu</Badge>
+              <Badge variant="muted">Catalog demo</Badge>
             </div>
           </div>
 

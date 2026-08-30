@@ -39,6 +39,7 @@ class ShopperRequest(BaseModel):
 class ShopperProductsResponse(BaseModel):
     products: list[ProductCard]
     sources: list[dict]  # retrieved docs metadata
+    demo_mode: bool = True
 
 
 # --------------------------------------------------------------------- #
@@ -101,6 +102,7 @@ class RecsysResponse(BaseModel):
     items: list[Recommendation]
     metrics: dict[str, float]
     model: str
+    demo_mode: bool = True
 
 
 # --------------------------------------------------------------------- #

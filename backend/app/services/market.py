@@ -27,7 +27,9 @@ from app.services import commerce_store as store
 from app.services.llm_reasoning import reason_json
 
 _PositionLit = Literal["cheaper", "parity", "pricier"]
-_ActionLit = Literal["hold", "match_price", "undercut", "differentiate"]
+_ActionLit = Literal[
+    "hold", "match_price", "undercut", "differentiate", "protect_margin"
+]
 
 
 def _round100(v: float) -> int:
@@ -65,6 +67,12 @@ def _heuristic(req: MarketRequest) -> dict:
         action, rec = "hold", float(req.our_price_vnd)
 
     rec_i = max(_round100(rec), floor_i)
+    if rec_i > req.our_price_vnd:
+        # No action may be paired with a different recommended number while
+        # claiming to keep the current price.
+        # When the current price violates the requested margin, restoring the
+        # floor is the primary action regardless of competitor position.
+        action = "protect_margin"
     margin = (rec_i - req.our_cost_vnd) / rec_i * 100.0 if rec_i > 0 else 0.0
     return {
         "position": position,
@@ -91,6 +99,7 @@ def _fallback_reasoning(req: MarketRequest, h: dict) -> str:
         "match_price": "hạ về ngang đối thủ",
         "undercut": f"hạ nhẹ xuống {h['recommended_price_vnd']:,}₫ (dưới đối thủ)",
         "differentiate": "giữ giá và cạnh tranh bằng chất lượng/ưu đãi thay vì phá giá",
+        "protect_margin": f"tăng lên sàn lợi nhuận {h['recommended_price_vnd']:,}₫",
     }[h["recommended_action"]]
     return (
         f"{req.competitor_name} đang bán ở mức thực tế {h['competitor_effective_price_vnd']:,}₫; "

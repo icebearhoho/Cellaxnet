@@ -16,9 +16,8 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "redis>=5.2.0",
     "python-jose[cryptography]>=3.3.0",
-    "passlib[bcrypt]>=1.7.4",
-    # See requirements.txt — bcrypt 5.0 breaks passlib 1.7.4's backend probe.
-    "bcrypt>=4.0.1,<5.0",
+    # Used directly: passlib 1.7.4's backend probe breaks with bcrypt 5.x.
+    "bcrypt>=4.0.1,<6.0",
     "python-multipart>=0.0.20",
     "httpx>=0.28.0",
     "tenacity>=9.0.0",
@@ -44,7 +43,6 @@ dev = [
     "pytest-cov>=6.0.0",
     "ruff>=0.7.0",
     "mypy>=1.13.0",
-    "types-passlib>=1.7.7.20240819",
 ]
 
 [build-system]

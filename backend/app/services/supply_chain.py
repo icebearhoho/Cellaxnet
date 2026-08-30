@@ -55,18 +55,22 @@ async def check_supply_chain(req: SupplyChainRequest) -> SupplyChainResponse:
     matched = [e for e in DISRUPTION_EVENTS if e["region"] == req.region]
     overall = max((e["severity"] for e in matched), key=lambda s: _SEVERITY_RANK[s], default="low")
 
-    if matched:
-        max_delay = max(e["estimated_delay_days"] for e in matched)
-        summary = (f"{len(matched)} tín hiệu gián đoạn đang ảnh hưởng {req.region} — "
-                  f"nên dự trù thêm tối đa {max_delay} ngày cho đơn hàng {req.category}.")
-    else:
-        summary = f"Không có tín hiệu gián đoạn nào đang hoạt động tại {req.region}."
-
     # Real Google News feed (SerpApi) — best-effort; empty if key/quota absent.
     articles = await fetch_supply_news(req.region)
+
+    if matched:
+        max_delay = max(e["estimated_delay_days"] for e in matched)
+        summary = (f"{len(matched)} kịch bản rủi ro tham chiếu cho {req.region}; độ trễ "
+                  f"giả định tối đa {max_delay} ngày với hàng {req.category}. "
+                  "Đây không phải xác nhận rằng sự cố đang diễn ra.")
+    else:
+        summary = f"Không có kịch bản tham chiếu nào được cấu hình cho {req.region}."
+    if articles:
+        summary += f" Đã tải {len(articles)} tin liên quan để người bán đối chiếu trước khi hành động."
 
     return SupplyChainResponse(
         alerts=[DisruptionAlert(**e) for e in matched],
         overall_risk=cast(Literal["low", "medium", "high"], overall), summary=summary,
         news=[NewsArticle(**a) for a in articles], news_live=bool(articles),
+        scenario_mode=True,
     )

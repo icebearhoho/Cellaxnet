@@ -88,3 +88,19 @@ async def take(db: AsyncSession, items: list[tuple[str, int]]) -> None:
             raise ConflictError(
                 f"Không đủ hàng: chỉ còn {left} sản phẩm."
             )
+
+
+async def put_back(db: AsyncSession, items: list[tuple[str, int]]) -> None:
+    """Return previously reserved units to stock without committing.
+
+    Used when an unshipped order is cancelled. The caller owns the transaction
+    so the order-state change and stock restoration succeed or fail together.
+    """
+    for product_id, qty in items:
+        result = await db.execute(
+            update(ProductStock)
+            .where(ProductStock.product_id == product_id)
+            .values(stock=ProductStock.stock + qty)
+        )
+        if cast(CursorResult, result).rowcount == 0:
+            raise NotFoundError(f"Sản phẩm {product_id} không tồn tại trong kho.")

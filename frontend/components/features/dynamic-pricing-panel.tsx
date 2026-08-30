@@ -1,116 +1,513 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Tag } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { type FormEvent, useEffect, useId, useState } from "react";
+import {
+  AlertCircle,
+  BadgeDollarSign,
+  BarChart3,
+  Calculator,
+  Check,
+  ChevronsUpDown,
+  CircleDollarSign,
+  Droplets,
+  Gem,
+  Lightbulb,
+  Loader2,
+  MoveHorizontal,
+  RefreshCw,
+  Search,
+  Shirt,
+  SlidersHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { recommendPrice, type PricingResult } from "@/lib/features";
+import {
+  getStoreProducts,
+  recommendPrice,
+  type PricingResult,
+  type StoreProduct,
+} from "@/lib/features";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["Thời trang", "Mỹ phẩm", "Phụ kiện"] as const;
 
-const VND = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 });
+type Category = (typeof CATEGORIES)[number];
+
+const CATEGORY_META = {
+  "Thời trang": {
+    icon: Shirt,
+    active: "border-info bg-info/10 text-info",
+    iconColor: "text-info",
+  },
+  "Mỹ phẩm": {
+    icon: Droplets,
+    active: "border-series-4 bg-series-4/10 text-series-4",
+    iconColor: "text-series-4",
+  },
+  "Phụ kiện": {
+    icon: Gem,
+    active: "border-accent bg-accent/10 text-accent",
+    iconColor: "text-accent",
+  },
+} as const;
+type PricingQuery = {
+  name: string;
+  category: Category;
+  currentPrice?: number;
+};
+
+const VND = new Intl.NumberFormat("vi-VN", {
+  style: "currency",
+  currency: "VND",
+  maximumFractionDigits: 0,
+});
+
+function parsePrice(value: string): number | undefined {
+  if (!value.trim()) return undefined;
+  const parsed = Number(value.replace(/\D/g, ""));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function markerPosition(value: number, low: number, high: number): number {
+  const width = Math.max(high - low, 1);
+  return Math.min(100, Math.max(0, ((value - low) / width) * 100));
+}
 
 export function DynamicPricingPanel() {
   const [name, setName] = useState("Serum Vitamin C 15%");
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("Mỹ phẩm");
+  const [category, setCategory] = useState<Category>("Mỹ phẩm");
   const [price, setPrice] = useState("450000");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PricingResult | null>(null);
-  const [error, setError] = useState(false);
+  const [submitted, setSubmitted] = useState<PricingQuery | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productPickerOpen, setProductPickerOpen] = useState(false);
+  const nameId = useId();
+  const priceId = useId();
 
-  async function run() {
-    if (busy) return;
-    setBusy(true);
-    setError(false);
-    const cur = price.trim() ? Number(price.replace(/\D/g, "")) : undefined;
-    const r = await recommendPrice(name, category, cur);
-    setError(r === null);
-    setResult(r);
-    setBusy(false);
+  useEffect(() => {
+    let active = true;
+    setProductsLoading(true);
+
+    void getStoreProducts(undefined, category).then((response) => {
+      if (!active) return;
+      setProducts(response?.products ?? []);
+      setProductsLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [category]);
+
+  function selectCategory(nextCategory: Category) {
+    if (nextCategory === category) return;
+    setCategory(nextCategory);
+    setName("");
+    setPrice("");
+    setProductPickerOpen(false);
+    setError(null);
   }
 
-  return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-      <Card className="lg:col-span-7">
-        <CardHeader>
-          <div>
-            <CardTitle>Sản phẩm cần định giá</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">
-              So sánh với comps cùng danh mục để đề xuất giá cạnh tranh.
-            </p>
-          </div>
-          <Badge variant="muted">comps median</Badge>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-text-dim">Tên sản phẩm</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5 h-10" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-text-dim">Danh mục</label>
-            <div className="mt-1.5 inline-flex overflow-hidden rounded-md border border-border">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(c)}
-                  className={cn(
-                    "px-3 py-2 text-xs font-medium transition-colors",
-                    category === c ? "bg-accent/15 text-accent" : "text-text-muted hover:text-text",
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-text-dim">Giá hiện tại (₫, tuỳ chọn)</label>
-            <Input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Để trống nếu chưa có giá"
-              className="mt-1.5 h-10"
-            />
-          </div>
-          <Button onClick={run} disabled={busy} className="w-full">
-            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Tag className="h-3.5 w-3.5" />}
-            Đề xuất giá
-          </Button>
-        </CardContent>
-      </Card>
+  function selectProduct(product: StoreProduct) {
+    setName(product.name);
+    setPrice(String(product.price_vnd));
+    setProductPickerOpen(false);
+    setError(null);
+  }
 
-      <Card className="lg:col-span-5">
-        <CardHeader>
-          <CardTitle>Đề xuất</CardTitle>
-          {result && <Badge variant="muted">n={result.sample_size} comps</Badge>}
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <p className="text-sm text-danger">Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.</p>
-          ) : !result ? (
-            <p className="text-sm text-text-muted">Nhập sản phẩm và bấm Đề xuất giá.</p>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <div className="mono text-3xl font-semibold tracking-tight text-accent">
-                  {VND.format(result.recommended_price)}₫
-                </div>
-                <div className="mt-1 text-xs text-text-muted">
-                  Khoảng đề xuất: {VND.format(result.low)}₫ – {VND.format(result.high)}₫
-                </div>
+  const currentPrice = parsePrice(price);
+  const isDirty = Boolean(
+    result && submitted && (
+      submitted.name !== name.trim()
+      || submitted.category !== category
+      || submitted.currentPrice !== currentPrice
+    ),
+  );
+
+  async function run(event?: FormEvent) {
+    event?.preventDefault();
+    if (busy) return;
+
+    const productName = name.trim();
+    if (!productName) {
+      setError("Nhập tên sản phẩm để bắt đầu định giá.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await recommendPrice(productName, category, currentPrice);
+      if (response.ok) {
+        setResult(response.data);
+        setSubmitted({ name: productName, category, currentPrice });
+        return;
+      }
+
+      setResult(null);
+      setSubmitted(null);
+      setError(
+        response.status === 403
+          ? "Tài khoản chưa có quyền định giá. Hãy dùng tài khoản người bán hoặc quản trị viên."
+          : response.message,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const priceDelta = result && submitted?.currentPrice
+    ? Math.round(
+        ((result.recommended_price - submitted.currentPrice) / submitted.currentPrice) * 100,
+      )
+    : null;
+  const recommendedPosition = result
+    ? markerPosition(result.recommended_price, result.low, result.high)
+    : 0;
+  const medianPosition = result
+    ? markerPosition(result.category_median, result.low, result.high)
+    : 0;
+
+  return (
+    <Card
+      className="overflow-hidden rounded-xl border-t-2 border-t-accent hover:border-border hover:border-t-accent"
+      aria-labelledby="pricing-workspace-title"
+    >
+      <div className="grid min-h-[520px] lg:grid-cols-[minmax(320px,0.78fr)_minmax(0,1.22fr)]">
+        <section className="border-b border-border lg:border-b-0 lg:border-r" aria-labelledby="pricing-workspace-title">
+          {/* Cùng chiều cao và cùng nền với header cột phải, để đường kẻ ngang
+              giữa hai cột nối thẳng thành một mạch. */}
+          <div className="flex h-[69px] items-center gap-3 border-b border-border bg-surface-2/60 px-5 sm:px-6">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+              <SlidersHorizontal className="h-4.5 w-4.5" aria-hidden="true" />
+            </span>
+            <h2 id="pricing-workspace-title" className="text-base font-semibold text-text">
+              Thiết lập định giá
+            </h2>
+          </div>
+
+          <form onSubmit={run} className="space-y-6 px-5 py-6 sm:px-6" noValidate>
+            <fieldset>
+              <legend className="text-sm font-medium text-text">Danh mục</legend>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {CATEGORIES.map((item) => {
+                  const meta = CATEGORY_META[item];
+                  const CategoryIcon = meta.icon;
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => selectCategory(item)}
+                      aria-pressed={category === item}
+                      className={cn(
+                        "flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border px-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+                        category === item
+                          ? meta.active
+                          : "border-border bg-surface text-text-muted hover:border-border-strong hover:bg-surface-2 hover:text-text",
+                      )}
+                    >
+                      <CategoryIcon className={cn("h-4 w-4 shrink-0", category === item ? "" : meta.iconColor)} aria-hidden="true" />
+                      <span>{item}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="rounded-md border border-border bg-bg-alt px-3 py-2 text-xs text-text-muted">
-                Trung vị danh mục: <span className="mono text-text">{VND.format(result.category_median)}₫</span>
+            </fieldset>
+
+            <div>
+              <label htmlFor={nameId} className="text-sm font-medium text-text">
+                Tên sản phẩm <span className="text-danger" aria-hidden="true">*</span>
+              </label>
+              <div className="mt-2 flex gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-dim" aria-hidden="true" />
+                  <Input
+                    id={nameId}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className="rounded-lg pl-10"
+                    aria-required="true"
+                    aria-invalid={Boolean(error && !name.trim())}
+                    placeholder="Nhập tên hoặc chọn từ danh sách"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-11 w-11 shrink-0 rounded-lg border-accent/30 text-accent hover:bg-accent/10"
+                  onClick={() => setProductPickerOpen(true)}
+                  aria-label={`Tìm sản phẩm trong danh mục ${category}`}
+                  aria-haspopup="dialog"
+                >
+                  <ChevronsUpDown className="h-4 w-4" aria-hidden="true" />
+                </Button>
               </div>
-              <p className="text-sm text-text-muted">{result.rationale}</p>
+              <p className="mt-2 text-xs leading-5 text-text-muted">
+                Có thể nhập sản phẩm mới hoặc chọn nhanh từ catalog của cửa hàng.
+              </p>
             </div>
+
+            <div>
+              <label htmlFor={priceId} className="flex items-center gap-2 text-sm font-medium text-text">
+                <CircleDollarSign className="h-4 w-4 text-success" aria-hidden="true" />
+                <span>Giá bán hiện tại <span className="font-normal text-text-muted">(không bắt buộc)</span></span>
+              </label>
+              <div className="relative mt-2">
+                <Input
+                  id={priceId}
+                  value={price}
+                  onChange={(event) => setPrice(event.target.value.replace(/\D/g, ""))}
+                  placeholder="450000"
+                  inputMode="numeric"
+                  className="rounded-lg pr-14 tnum"
+                  aria-describedby={`${priceId}-hint`}
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-text-dim">
+                  VND
+                </span>
+              </div>
+              <p id={`${priceId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
+                Dùng để tính mức tăng hoặc giảm so với giá đang bán.
+              </p>
+            </div>
+
+            {error && !name.trim() && (
+              <p className="text-sm text-danger" role="alert">{error}</p>
+            )}
+
+            <Button
+              type="submit"
+              disabled={busy}
+              size="lg"
+              className="w-full rounded-lg"
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
+              {!busy && <Calculator className="h-4 w-4" aria-hidden="true" />}
+              {busy ? "Đang lấy dữ liệu giá…" : result ? "Cập nhật đề xuất" : "Xem giá đề xuất"}
+            </Button>
+
+            <p className="text-center text-xs text-text-dim">
+              Kết quả mang tính tham khảo, chưa tự động thay đổi giá bán.
+            </p>
+          </form>
+        </section>
+
+        <section className="min-w-0 bg-bg-alt/40" aria-labelledby="pricing-result-title" aria-busy={busy}>
+          <div className="flex h-[69px] items-center justify-between gap-4 border-b border-border bg-surface-2/60 px-5 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-success/10 text-success">
+                <BarChart3 className="h-4.5 w-4.5" aria-hidden="true" />
+              </span>
+              <h2 id="pricing-result-title" className="text-base font-semibold text-text">Kết quả định giá</h2>
+            </div>
+            {result && (
+              <span className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                isDirty ? "bg-warning/10 text-warning" : "bg-success/10 text-success",
+              )}>
+                {isDirty ? <RefreshCw className="h-3 w-3" aria-hidden="true" /> : <Check className="h-3 w-3" aria-hidden="true" />}
+                {isDirty ? "Cần cập nhật" : "Đã cập nhật"}
+              </span>
+            )}
+          </div>
+
+          <div className="p-5 sm:p-6">
+            {busy ? (
+              <div className="space-y-5" role="status" aria-live="polite">
+                <p className="flex items-center gap-2 text-sm font-medium text-text">
+                  <Loader2 className="h-4 w-4 animate-spin text-accent motion-reduce:animate-none" aria-hidden="true" />
+                  Đang đối chiếu mặt bằng giá
+                </p>
+                <div className="h-24 animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div className="h-20 animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
+                  <div className="h-20 animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
+                  <div className="h-20 animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
+                </div>
+              </div>
+            ) : error && name.trim() ? (
+              <div className="rounded-lg border border-danger/20 bg-surface p-5" role="alert">
+                <div className="flex gap-3">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger" aria-hidden="true" />
+                  <div>
+                    <p className="font-medium text-text">Không thể lấy giá đề xuất</p>
+                    <p className="mt-1 text-sm leading-6 text-text-muted">{error}</p>
+                    <Button type="button" variant="secondary" size="sm" className="mt-4 rounded-lg" onClick={() => run()}>
+                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> Thử lại
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : !result ? (
+              <div className="rounded-lg border border-border bg-surface">
+                <div className="flex items-start gap-3 border-b border-border px-5 py-4">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+                    <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-text">Chưa có kết quả</p>
+                    <p className="mt-1 text-sm leading-6 text-text-muted">
+                      Điền thông tin sản phẩm và chọn “Xem giá đề xuất”.
+                    </p>
+                  </div>
+                </div>
+                <dl className="divide-y divide-border px-5">
+                  {["Giá đề xuất", "Khoảng giá tham khảo", "Trung vị danh mục"].map((label) => (
+                    <div key={label} className="flex items-center justify-between gap-4 py-4">
+                      <dt className="text-sm text-text-muted">{label}</dt>
+                      <dd className="tnum text-sm font-medium text-text-dim">—</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : (
+              <div className="space-y-5" aria-live="polite">
+                <div className="rounded-lg border border-accent/20 bg-accent/[0.025] p-5 sm:p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <p className="flex items-center gap-2 text-sm font-medium text-text-muted">
+                        <BadgeDollarSign className="h-4 w-4 text-accent" aria-hidden="true" /> Giá bán đề xuất
+                      </p>
+                      <p className="tnum mt-2 text-3xl font-semibold tracking-tight text-accent-deep sm:text-4xl">
+                        {VND.format(result.recommended_price)}
+                      </p>
+                    </div>
+                    {priceDelta !== null && Number.isFinite(priceDelta) && (
+                      <span className={cn(
+                        "rounded-md px-2.5 py-1.5 text-sm font-semibold tnum",
+                        priceDelta > 0
+                          ? "bg-success/10 text-success"
+                          : priceDelta < 0
+                            ? "bg-warning/10 text-warning"
+                            : "bg-surface-2 text-text-muted",
+                      )}>
+                        {priceDelta > 0 ? "+" : ""}{priceDelta}% so với giá hiện tại
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-7" aria-label={`Khoảng giá từ ${VND.format(result.low)} đến ${VND.format(result.high)}`}>
+                    <div className="relative h-2 rounded-full bg-accent/15">
+                      <span
+                        className="absolute top-1/2 h-5 w-0.5 -translate-y-1/2 bg-warning"
+                        style={{ left: `${medianPosition}%` }}
+                        aria-hidden="true"
+                      />
+                      <span
+                        className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-accent shadow-sm"
+                        style={{ left: `${recommendedPosition}%` }}
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 text-xs text-text-muted">
+                      <span className="tnum">{VND.format(result.low)}</span>
+                      <span className="text-center">Trung vị</span>
+                      <span className="tnum text-right">{VND.format(result.high)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <dl className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-info/20 bg-info/[0.035] p-4">
+                    <dt className="flex flex-col gap-2 text-xs text-text-muted">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-info/10 text-info">
+                        <CircleDollarSign className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      Giá hiện tại
+                    </dt>
+                    <dd className="tnum mt-2 text-sm font-semibold text-text">
+                      {submitted?.currentPrice ? VND.format(submitted.currentPrice) : "Chưa nhập"}
+                    </dd>
+                  </div>
+                  <div className="rounded-lg border border-success/20 bg-success/[0.035] p-4">
+                    <dt className="flex flex-col gap-2 text-xs text-text-muted">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-success/10 text-success">
+                        <BarChart3 className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      Trung vị danh mục
+                    </dt>
+                    <dd className="mt-2">
+                      <span className="tnum text-sm font-semibold text-text">
+                        {VND.format(result.category_median)}
+                      </span>
+                      <span className="tnum ml-1.5 text-xs text-text-dim">
+                        /{result.sample_size} SP
+                      </span>
+                    </dd>
+                  </div>
+                  <div className="rounded-lg border border-warning/20 bg-warning/[0.035] p-4">
+                    <dt className="flex flex-col gap-2 text-xs text-text-muted">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-warning/10 text-warning">
+                        <MoveHorizontal className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      Biên giá tham khảo
+                    </dt>
+                    <dd className="tnum mt-2 text-sm font-semibold text-text">
+                      {VND.format(result.low)} – {VND.format(result.high)}
+                    </dd>
+                  </div>
+                </dl>
+
+                <div className="rounded-lg border border-warning/20 bg-warning/[0.035] px-5 py-4">
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-warning">
+                    <Lightbulb className="h-4 w-4" aria-hidden="true" /> Cơ sở đề xuất
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-text-muted">{result.rationale}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <CommandDialog open={productPickerOpen} onOpenChange={setProductPickerOpen}>
+        <CommandInput placeholder={`Tìm sản phẩm trong ${category}…`} autoFocus />
+        <CommandList>
+          <CommandEmpty>
+            {productsLoading ? "Đang tải danh sách sản phẩm…" : "Không tìm thấy sản phẩm phù hợp."}
+          </CommandEmpty>
+          {!productsLoading && products.length > 0 && (
+            <CommandGroup heading={`${category} · ${products.length} sản phẩm`}>
+              {products.map((product) => (
+                <CommandItem
+                  key={product.id}
+                  value={`${product.name} ${product.brand}`}
+                  onSelect={() => selectProduct(product)}
+                  className="h-auto min-h-12 cursor-pointer py-2.5"
+                >
+                  <Check
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-accent",
+                      name === product.name ? "opacity-100" : "opacity-0",
+                    )}
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-text">{product.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-text-muted">{product.brand}</p>
+                  </div>
+                  <span className="tnum shrink-0 text-sm font-medium text-text">
+                    {VND.format(product.price_vnd)}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </CommandList>
+      </CommandDialog>
+    </Card>
   );
 }

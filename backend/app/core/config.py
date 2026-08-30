@@ -3,15 +3,22 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_BACKEND_DIR = Path(__file__).resolve().parents[2]
+_REPO_ROOT = _BACKEND_DIR.parent
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # Local development keeps shared secrets/Compose config at repo root,
+        # while backend/.env overrides backend-specific values. Absolute paths
+        # make this work whether uvicorn starts from root or backend/.
+        env_file=(_REPO_ROOT / ".env", _BACKEND_DIR / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -82,9 +89,20 @@ class Settings(BaseSettings):
 
     # Cache TTL for LLM responses (seconds).
     LLM_CACHE_TTL_SECONDS: int = 600  # 10 min per project plan
+    LLM_REQUEST_TIMEOUT_SECONDS: float = 15.0
+
+    # Seller Autopilot calls Ollama Cloud directly. Numeric impacts remain
+    # deterministic; the model only writes concise grounded explanations.
+    OLLAMA_API_KEY: str | None = None
+    AUTOPILOT_OLLAMA_URL: str = "https://ollama.com"
+    AUTOPILOT_OLLAMA_MODEL: str = "gpt-oss:120b"
+    AUTOPILOT_LLM_TIMEOUT_SECONDS: float = 60.0
 
     # Rate limiting — anti spam on GenAI endpoints.
     RATE_LIMIT_PER_MINUTE: int = 30
+    GLOBAL_RATE_LIMIT_PER_MINUTE: int = 300
+    # Only enable behind a trusted proxy that replaces client-supplied XFF.
+    TRUST_PROXY_HEADERS: bool = False
 
     # --- RAG / Vector store ---
     # Pinecone primary; FAISS local fallback if no key.

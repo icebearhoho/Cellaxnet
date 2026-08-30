@@ -9,13 +9,19 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.models.order import Order, OrderItem
 from app.schemas.orders import CheckoutRequest
 from app.services import commerce_store as store
 from app.services import inventory_service
 
 _ORDER_NO_ATTEMPTS = 5
+_ALLOWED_TRANSITIONS: dict[str, set[str]] = {
+    "pending": {"paid", "cancelled"},
+    "paid": {"shipped", "cancelled"},
+    "shipped": set(),
+    "cancelled": set(),
+}
 
 
 def _new_order_no() -> str:
@@ -47,25 +53,27 @@ async def create_order(
 
     await inventory_service.take(db, list(wanted.items()))
 
-    items: list[OrderItem] = []
+    item_specs: list[dict[str, object]] = []
     total = 0
     for product_id, qty in wanted.items():
         p = catalogue[product_id]
         # Price comes from the catalogue, never from the request body.
         unit = int(p["price_vnd"])
         total += unit * qty
-        items.append(
-            OrderItem(
-                product_id=product_id,
-                product_name=p["name"],
-                brand=p["brand"],
-                unit_price_vnd=unit,
-                qty=qty,
-            )
-        )
+        item_specs.append({
+            "product_id": product_id,
+            "product_name": p["name"],
+            "brand": p["brand"],
+            "unit_price_vnd": unit,
+            "qty": qty,
+        })
 
     # order_no collisions are astronomically unlikely but cheap to survive.
     for attempt in range(_ORDER_NO_ATTEMPTS):
+        if attempt:
+            # The failed commit was rolled back, including the stock decrement.
+            # Reserve it again before retrying the order insert.
+            await inventory_service.take(db, list(wanted.items()))
         order = Order(
             order_no=_new_order_no(),
             customer_id=customer_id,
@@ -73,7 +81,7 @@ async def create_order(
             email=(req.email or "").strip().lower() or None,
             total_vnd=total,
             status="pending",
-            items=items,
+            items=[OrderItem(**spec) for spec in item_specs],
         )
         db.add(order)
         try:
@@ -117,7 +125,22 @@ async def list_all(db: AsyncSession, limit: int = 100) -> list[Order]:
 
 
 async def set_status(db: AsyncSession, order_no: str, status: str) -> Order:
-    order = await get_by_order_no(db, order_no)
+    result = await db.execute(
+        select(Order).where(Order.order_no == order_no).with_for_update()
+    )
+    order = result.scalar_one_or_none()
+    if order is None:
+        raise NotFoundError(f"Không tìm thấy đơn {order_no}.")
+    if status == order.status:
+        return order
+    if status not in _ALLOWED_TRANSITIONS.get(order.status, set()):
+        raise ConflictError(
+            f"Không thể chuyển đơn từ '{order.status}' sang '{status}'."
+        )
+    if status == "cancelled":
+        await inventory_service.put_back(
+            db, [(item.product_id, item.qty) for item in order.items]
+        )
     order.status = status
     await db.commit()
     await db.refresh(order)

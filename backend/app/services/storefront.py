@@ -39,12 +39,12 @@ async def _attach_stock(products: list[StoreProduct], db: AsyncSession) -> None:
 
 
 def _to_product(p: dict) -> StoreProduct:
-    h = abs(hash(p["id"]))
     image_urls = image_urls_for_type(p["type_key"], p["id"])
     reviews = p.get("reviews_list", [])
+    rating = sum(review["rating"] for review in reviews) / max(len(reviews), 1)
     return StoreProduct(
         id=p["id"], sku=p["sku"], name=p["name"], brand=p["brand"], category=p["category"],
-        price_vnd=p["price_vnd"], rating=round(4.0 + (h % 10) / 10, 1), reviews=len(reviews),
+        price_vnd=p["price_vnd"], rating=round(rating, 1), reviews=len(reviews),
         trend=p["trend"], image_url=image_urls[0], image_urls=image_urls,
         attributes=p.get("attributes", {}),
     )

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C d:/arena/AREA-303 check-ignore -v backend/.env)",
+      "Bash(git -C d:/arena/AREA-303 log --oneline -1 -- backend/.env)",
+      "Bash(../.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(../.venv/Scripts/python.exe -c ' *)",
+      "Bash(git stash *)",
+      "Bash(../.venv/Scripts/python.exe -m pytest -q tests/test_genai_endpoints.py)",
+      "Bash(../.venv/Scripts/python.exe -m pytest -q tests/test_behavior_metrics.py tests/test_journey_demo.py tests/test_journey_events_endpoint.py tests/test_review_moderation.py tests/test_review_submission.py tests/test_storefront.py)",
+      "Bash(../.venv/Scripts/python.exe -m alembic history)",
+      "Bash(../.venv/Scripts/python.exe -m alembic heads)",
+      "Bash(timeout 15 ../.venv/Scripts/python.exe -m alembic upgrade head)",
+      "Bash(npm run *)"
+    ]
+  }
+}

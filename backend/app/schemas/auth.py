@@ -14,7 +14,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-Role = Literal["admin", "buyer"]
+Role = Literal["admin", "seller", "buyer"]
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -31,6 +31,12 @@ def _normalize_email(value: str) -> str:
     return value
 
 
+def _validate_password_bytes(value: str) -> str:
+    if len(value.encode("utf-8")) > _PASSWORD_MAX:
+        raise ValueError("Mật khẩu không được vượt quá 72 byte UTF-8.")
+    return value
+
+
 class RegisterRequest(BaseModel):
     email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=_PASSWORD_MIN, max_length=_PASSWORD_MAX)
@@ -40,6 +46,11 @@ class RegisterRequest(BaseModel):
     @classmethod
     def _email(cls, v: str) -> str:
         return _normalize_email(v)
+
+    @field_validator("password")
+    @classmethod
+    def _password_bytes(cls, v: str) -> str:
+        return _validate_password_bytes(v)
 
 
 class LoginRequest(BaseModel):
@@ -52,6 +63,11 @@ class LoginRequest(BaseModel):
     @classmethod
     def _email(cls, v: str) -> str:
         return _normalize_email(v)
+
+    @field_validator("password")
+    @classmethod
+    def _password_bytes(cls, v: str) -> str:
+        return _validate_password_bytes(v)
 
 
 class UserOut(BaseModel):

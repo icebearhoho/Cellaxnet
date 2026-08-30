@@ -9,9 +9,10 @@
  */
 
 import { clearTokenCookie, readTokenCookie } from "@/lib/auth-token";
+import { readActiveWorkspaceId } from "@/lib/active-workspace";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 export type ApiError = {
   code: string;
@@ -45,6 +46,7 @@ async function request<T>(
 ): Promise<ApiEnvelope<T>> {
   const url = `${BASE_URL}${path}`;
   const token = readTokenCookie();
+  const workspaceId = readActiveWorkspaceId();
   const res = await fetch(url, {
     ...init,
     signal,
@@ -52,6 +54,7 @@ async function request<T>(
       "Content-Type": "application/json",
       // Admin-gated endpoints need this; harmless when absent.
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(workspaceId ? { "X-Workspace-ID": String(workspaceId) } : {}),
       // Spread last so an explicit per-call header still wins.
       ...init?.headers,
     },
@@ -102,6 +105,9 @@ export const api = {
   },
   post<T>(path: string, body: unknown, signal?: AbortSignal) {
     return request<T>(path, { method: "POST", body: JSON.stringify(body) }, signal);
+  },
+  patch<T>(path: string, body: unknown, signal?: AbortSignal) {
+    return request<T>(path, { method: "PATCH", body: JSON.stringify(body) }, signal);
   },
   delete<T>(path: string, signal?: AbortSignal) {
     return request<T>(path, { method: "DELETE" }, signal);

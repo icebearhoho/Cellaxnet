@@ -25,7 +25,7 @@ function CtrBar({ value }: { value: number }) {
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-2xs">
         <span className="mono uppercase tracking-wider text-text-dim">
-          Lượt nhấp dự kiến
+          CTR ước tính (quy tắc)
         </span>
         <span className="mono text-text" data-tnum>
           {pct.toFixed(1)}%
@@ -150,8 +150,8 @@ export function ContentGeneratorPanel() {
               So sánh nội dung và hiệu quả dự kiến trên 3 sàn
             </div>
           </div>
-          <Badge variant="live">
-            Sẵn sàng sử dụng
+          <Badge variant="warning">
+            Cần duyệt trước khi đăng
           </Badge>
         </div>
 

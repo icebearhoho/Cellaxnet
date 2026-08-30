@@ -1,10 +1,10 @@
 """Track 2, Đề 5 — E-commerce Decision Intelligence service.
 
-Heuristic core (deterministic): for every listed metric, higher is better
-(ROAS, sales lift %, margin %, sell-through %), so the "best" past decision is
-simply the highest-value entry. The best month to push ads is the month of the
-best-performing `ad` decision (falls back to None if no ad decisions carry a
-month). The recommendation narrative runs on the LLM with a templated fallback.
+Heuristic core (deterministic): metrics use different units, so values are
+normalized to a 0..1 impact score before decisions are compared. The best month
+to push ads is the month of the best normalized `ad` decision (falls back to
+None if no ad decisions carry a month). The narrative uses an LLM with a
+templated fallback.
 """
 
 from __future__ import annotations
@@ -26,11 +26,28 @@ _MONTHS_VI = {
     7: "Tháng 7", 8: "Tháng 8", 9: "Tháng 9", 10: "Tháng 10", 11: "Tháng 11", 12: "Tháng 12",
 }
 
+# Fixed reference maxima so different metrics map to a comparable 0..1 score.
+_METRIC_REF = {
+    "ROAS": 6.0,
+    "sales_lift_pct": 40.0,
+    "margin_pct": 100.0,
+    "sell_through_pct": 100.0,
+}
+
+
+def _impact_score(metric: str, value: float) -> float:
+    ref = _METRIC_REF.get(metric, 100.0)
+    return round(min(1.0, max(0.0, value / ref)), 3)
+
 
 def _best(req: DecisionRequest) -> tuple[PastDecision, int | None]:
-    best = max(req.decisions, key=lambda d: d.value)
+    best = max(req.decisions, key=lambda d: _impact_score(d.metric, d.value))
     ad_decisions = [d for d in req.decisions if d.kind == "ad" and d.month is not None]
-    best_ad_month = max(ad_decisions, key=lambda d: d.value).month if ad_decisions else None
+    best_ad_month = (
+        max(ad_decisions, key=lambda d: _impact_score(d.metric, d.value)).month
+        if ad_decisions
+        else None
+    )
     return best, best_ad_month
 
 
@@ -84,15 +101,6 @@ async def recommend_decision(req: DecisionRequest) -> DecisionResponse:
 # --------------------------------------------------------------------------- #
 # Đề 5 — playbook: normalize metrics to a comparable impact score + seasonality
 # --------------------------------------------------------------------------- #
-# Fixed reference maxima so different metrics map to a comparable 0..1 score.
-_METRIC_REF = {"ROAS": 6.0, "sales_lift_pct": 40.0, "margin_pct": 100.0, "sell_through_pct": 100.0}
-
-
-def _impact_score(metric: str, value: float) -> float:
-    ref = _METRIC_REF.get(metric, 100.0)
-    return round(min(1.0, max(0.0, value / ref)), 3)
-
-
 async def playbook(req: PlaybookRequest, narrate: bool = True) -> PlaybookResponse:
     decisions = [d for d in _store.all_decisions() if d["category"] == req.category] or _store.all_decisions()
     scored = [

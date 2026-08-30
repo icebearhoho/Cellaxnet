@@ -101,7 +101,7 @@ def _next_action(stage: FunnelStage, prob: float, engagement: float,
         if prob >= 0.5:
             return ("add_to_cart", "Có khả năng thêm vào giỏ",
                     f"Khách đã xem/click nhiều lần ngành {cat}, mức quan tâm {pct}% — nhắc "
-                    f"'chỉ còn ít hàng' + hiển thị review nổi bật để tạo động lực thêm giỏ."
+                    f"lại lợi ích chính + hiển thị review nổi bật để tạo động lực thêm giỏ."
                     f"{review_note}")
         return ("keep_browsing", "Còn xem tiếp, chưa quyết",
                 f"Khách mới xem qua vài SP {cat}, chưa có dấu hiệu quyết định rõ ({pct}%) — "

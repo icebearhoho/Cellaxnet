@@ -4,9 +4,9 @@ Key strategy: ``area303:rl:<scope>:<bucket>:<ip>`` where ``bucket``
 is the current epoch minute. The middleware increments the counter
 on every request and rejects when it exceeds the configured limit.
 
-If Redis is unreachable we fail OPEN — better to serve traffic than
-to 503 the entire API on a transient blip. This is logged so the
-operator can react.
+If Redis is unreachable, the process-local limiter remains active. This does
+not coordinate multiple instances, but it avoids silently disabling all
+protection during an outage.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ _REDIS_DOWN_COOLDOWN = 30.0  # seconds
 
 def _client_ip(request: Request) -> str:
     fwd = request.headers.get("x-forwarded-for")
-    if fwd:
+    if settings.TRUST_PROXY_HEADERS and fwd:
         return fwd.split(",")[0].strip()
     if request.client:
         return request.client.host
@@ -51,11 +51,13 @@ def _scope_for(request: Request) -> str:
     return "global"
 
 
-async def _check_redis(scope: str, ip: str, *, limit: int, window: int = 60) -> tuple[bool, int]:
+async def _check_redis(
+    scope: str, ip: str, *, limit: int, window: int = 60
+) -> tuple[bool, int] | None:
     global _REDIS_DOWN_UNTIL
     # Skip Redis entirely during the cooldown after a recent failure.
     if time.monotonic() < _REDIS_DOWN_UNTIL:
-        return True, 0  # fail open, fast
+        return None
 
     bucket = int(time.time() // window)
     key = f"area303:rl:{scope}:{bucket}:{ip}"
@@ -71,7 +73,7 @@ async def _check_redis(scope: str, ip: str, *, limit: int, window: int = 60) -> 
     except Exception as exc:
         _REDIS_DOWN_UNTIL = time.monotonic() + _REDIS_DOWN_COOLDOWN
         log.warning("rate_limit.redis_failed", error=str(exc), cooldown_s=_REDIS_DOWN_COOLDOWN)
-        return True, 0  # fail open
+        return None
 
 
 def _check_local(scope: str, ip: str, *, limit: int, window: int = 60) -> tuple[bool, int]:
@@ -96,13 +98,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         scope = _scope_for(request)
         ip = _client_ip(request)
-        limit = settings.RATE_LIMIT_PER_MINUTE
+        limit = (
+            settings.RATE_LIMIT_PER_MINUTE
+            if scope == "genai"
+            else settings.GLOBAL_RATE_LIMIT_PER_MINUTE
+        )
 
-        ok, count = await _check_redis(scope, ip, limit=limit)
+        redis_result = await _check_redis(scope, ip, limit=limit)
+        if redis_result is None:
+            ok, count = _check_local(scope, ip, limit=limit)
+        else:
+            ok, count = redis_result
         if not ok:
-            ok_local, count_local = _check_local(scope, ip, limit=limit)
-            if not ok_local:
-                return _reject(scope, ip, count_local or count, limit)
+            return _reject(scope, ip, count, limit)
 
         response = await call_next(request)
         response.headers["x-ratelimit-limit"] = str(limit)

@@ -19,7 +19,6 @@ from app.schemas.reviews import ReviewStatus
 from app.services import insights
 
 _MIN_WORDS = 4
-_REJECT_CONFIDENCE = 0.75
 
 
 class ModerationDecision(BaseModel):
@@ -35,9 +34,13 @@ async def moderate(text: str, rating: int, category: str | None) -> ModerationDe
     )
 
     if fake.is_fake:
-        status: ReviewStatus = "rejected" if fake.confidence >= _REJECT_CONFIDENCE else "flagged"
         reason = f"{fake.reason} (độ tin cậy {fake.confidence:.0%})"
-        return ModerationDecision(status=status, reason=reason, confidence=fake.confidence)
+        # Model confidence is not proof. Keep suspected reviews out of the
+        # storefront, but send every case to the seller queue for a human
+        # decision instead of silently auto-rejecting customer content.
+        return ModerationDecision(
+            status="flagged", reason=reason, confidence=fake.confidence
+        )
 
     if len(text.split()) < _MIN_WORDS:
         return ModerationDecision(

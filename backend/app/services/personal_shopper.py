@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from functools import lru_cache
 
 from app.core.exceptions import ValidationError
 from app.core.logging import get_logger
 from app.schemas.genai import ProductCard, ShopperProductsResponse
+from app.services import commerce_store as store
 from app.services.genai import (
     INTENT_CLASSIFICATION_PROMPT,
     PERSONAL_SHOPPER_SYSTEM,
@@ -15,16 +17,38 @@ from app.services.genai import (
 )
 from app.services.genai.base import LlmMessage
 from app.services.genai.demo_data import (
-    DEMO_CATALOG,
-    SHOPPER_DEMO_PRODUCT_IDS,
     SHOPPER_DEMO_REPLY,
     get_product_image_url,
+    image_urls_for_type,
 )
 from app.services.genai.factory import get_llm_client, get_rag
 
 log = get_logger("app.services.shopper")
 
-_PRODUCT_INDEX = {p["id"]: p for p in DEMO_CATALOG}
+@lru_cache(maxsize=1)
+def _catalog() -> list[dict]:
+    """Adapt the same catalog used by storefront, pricing and inventory."""
+    items = []
+    for product in store.all_products():
+        attributes = ", ".join(f"{key}: {value}" for key, value in product["attributes"].items())
+        reviews = product["reviews_list"]
+        avg_rating = sum(review["rating"] for review in reviews) / max(len(reviews), 1)
+        items.append({
+            "id": product["id"],
+            "title": product["name"],
+            "text": f"{product['brand']}. {attributes}",
+            "metadata": {
+                "category": product["category"],
+                "platform": product["channels"][0],
+                "price_vnd": product["price_vnd"],
+                "brand": product["brand"],
+                "rating": round(avg_rating, 1),
+                "reviews": len(reviews),
+                "stock": product["stock"],
+                "image_url": image_urls_for_type(product["type_key"], product["id"])[0],
+            },
+        })
+    return items
 
 # --------------------------------------------------------------------- #
 # Stopwords tiếng Việt - loại bỏ khi build keyword index
@@ -93,7 +117,7 @@ _KEYWORD_INDEX: dict[str, set[str]] | None = None
 def _get_keyword_index() -> dict[str, set[str]]:
     global _KEYWORD_INDEX
     if _KEYWORD_INDEX is None:
-        _KEYWORD_INDEX = _build_keyword_index(DEMO_CATALOG)
+        _KEYWORD_INDEX = _build_keyword_index(_catalog())
     return _KEYWORD_INDEX
 
 def reset_keyword_index():
@@ -116,6 +140,7 @@ def _build_context_block(docs: list) -> str:
 
 def _card(item: dict, score: float, image_url: str | None = None) -> ProductCard:
     meta = item.get("metadata", {})
+    stable_hash = sum((index + 1) * ord(char) for index, char in enumerate(item["id"]))
     # Generate image URL based on product title, unless the caller already
     # has an exact one (e.g. a commerce_store product's type_key lookup).
     img_url = image_url or get_product_image_url(item["title"])
@@ -126,11 +151,11 @@ def _card(item: dict, score: float, image_url: str | None = None) -> ProductCard
         category=meta.get("category", "Thời trang"),
         platform=meta.get("platform", "Shopee"),
         price_vnd=meta.get("price_vnd", 0),
-        rating=round(4.0 + (hash(item["id"]) % 10) / 10, 1),
-        reviews=120 + (hash(item["id"]) % 4000),
+        rating=float(meta.get("rating", round(4.0 + (stable_hash % 10) / 10, 1))),
+        reviews=int(meta.get("reviews", 0)),
         similarity=score,
-        image_hue=200 + (hash(item["id"]) % 160),
-        image_url=img_url,
+        image_hue=200 + (stable_hash % 160),
+        image_url=meta.get("image_url") or img_url,
     )
 
 
@@ -352,7 +377,8 @@ async def _retrieve_products(query: str, top_k: int) -> ShopperProductsResponse:
     log.debug(f"Query: '{query}' -> Intent: {intent}, Categories: {allowed_categories}")
 
     # Step 2: Catalog-driven matching (keyword index)
-    matching, matched_kws = _find_matching_products(qtokens, DEMO_CATALOG)
+    catalog = [item for item in _catalog() if item["metadata"].get("stock", 0) > 0]
+    matching, matched_kws = _find_matching_products(qtokens, catalog)
 
     if matched_kws:
         # Sort matching products by relevance
@@ -365,7 +391,7 @@ async def _retrieve_products(query: str, top_k: int) -> ShopperProductsResponse:
             for kw in matched_kws:
                 extra_ids.update(keyword_index.get(kw, set()))
 
-            extra = [it for it in DEMO_CATALOG if it["id"] in extra_ids and it["id"] not in {it2["id"] for it2 in scored}]
+            extra = [it for it in catalog if it["id"] in extra_ids and it["id"] not in {it2["id"] for it2 in scored}]
             extra_sorted = sorted(extra, key=lambda it: _relevance_v2(it, matched_kws), reverse=True)
 
             scored.extend(extra_sorted[:top_k - len(scored)])
@@ -379,7 +405,7 @@ async def _retrieve_products(query: str, top_k: int) -> ShopperProductsResponse:
         
         # Map RAG docs back to catalog items
         rag_ids = [d.id for d in rag_docs]
-        scored = [it for it in DEMO_CATALOG if it["id"] in rag_ids]
+        scored = [it for it in catalog if it["id"] in rag_ids]
         
         # Sort by RAG score
         rag_scores = {d.id: d.score for d in rag_docs}
@@ -388,7 +414,7 @@ async def _retrieve_products(query: str, top_k: int) -> ShopperProductsResponse:
         # Fallback to category-based scoring if RAG returned nothing useful
         if not scored:
             scored = sorted(
-                DEMO_CATALOG,
+                catalog,
                 key=lambda it: _relevance(it, qtokens, q, cos, fas),
                 reverse=True,
             )
@@ -409,7 +435,7 @@ async def _retrieve_products(query: str, top_k: int) -> ShopperProductsResponse:
         ]
         seen = {it["id"] for it in affordable}
         refill = [
-            it for it in DEMO_CATALOG
+            it for it in catalog
             if it["id"] not in seen
             and it["metadata"].get("category") in allowed_categories
             and int(it["metadata"].get("price_vnd", 0)) <= max_price
@@ -423,7 +449,7 @@ async def _retrieve_products(query: str, top_k: int) -> ShopperProductsResponse:
         if matched_kws:
             scored_full = sorted(matching, key=lambda it: _relevance_v2(it, matched_kws), reverse=True)
         else:
-            scored_full = sorted(DEMO_CATALOG, key=lambda it: _relevance(it, qtokens, q, cos, fas), reverse=True)
+            scored_full = sorted(catalog, key=lambda it: _relevance(it, qtokens, q, cos, fas), reverse=True)
         picks = scored_full[:top_k]
         log.warning(f"Intent filter removed all products for query: '{query}', returning top matches")
 
@@ -478,4 +504,5 @@ async def products_for(query: str, top_k: int = 4) -> ShopperProductsResponse:
 
 def demo_reply() -> tuple[str, list[str]]:
     """Pure fallback for the absolute worst case (LLM disabled, cache empty)."""
-    return SHOPPER_DEMO_REPLY, SHOPPER_DEMO_PRODUCT_IDS
+    product_ids = [item["id"] for item in _catalog() if item["metadata"]["stock"] > 0][:4]
+    return SHOPPER_DEMO_REPLY, product_ids

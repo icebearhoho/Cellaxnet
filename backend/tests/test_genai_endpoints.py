@@ -4,9 +4,8 @@ DEMO_MODE is on by default in Settings, so these tests exercise the
 mock client path. They verify the contract the frontend consumes:
 shape, key fields, demo_mode flag.
 
-Assertions stay behaviour-only: these endpoints must answer correctly whether
-DEMO_MODE is on (fixtures) or off (a real LLM), so nothing here pins the flag
-to a particular value.
+The shared test environment forces demo mode so CI never depends on an API key,
+quota, network timing, or a provider client bound to another event loop.
 """
 
 from __future__ import annotations

@@ -27,9 +27,9 @@ export function TrafficChart({
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Doanh thu hàng hóa — 24 giờ gần nhất</CardTitle>
+          <CardTitle>Nhịp doanh thu theo giờ</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Triệu ₫ theo giờ, phân nhóm theo ngành hàng.
+            Triệu ₫ trung bình theo giờ trong 14 ngày, phân nhóm theo ngành hàng.
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs text-text-muted">
@@ -42,10 +42,7 @@ export function TrafficChart({
               {s.label}
             </span>
           ))}
-          <Badge variant="live">
-            <span className="live-dot" />
-            trực tiếp
-          </Badge>
+          <Badge variant="muted">shop demo</Badge>
         </div>
       </CardHeader>
       <div className="px-5 pb-5">

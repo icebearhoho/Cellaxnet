@@ -34,7 +34,9 @@ def analyze_hesitation(req: FlashSaleRequest) -> FlashSaleResponse:
     if trigger_now:
         message = f"⏰ Ưu đãi riêng cho bạn: giảm {discount}% nếu hoàn tất đơn trong 10 phút tới!"
     elif hesitating:
-        message = "Sản phẩm bạn đang xem còn số lượng giới hạn — đừng bỏ lỡ nhé!"
+        # Hesitation signals say nothing about inventory. Do not manufacture
+        # scarcity; offer decision support instead.
+        message = "Bạn có cần thêm thông tin về sản phẩm hoặc so sánh lựa chọn không?"
     else:
         message = "Chưa cần can thiệp — khách đang duyệt bình thường."
 

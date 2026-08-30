@@ -36,7 +36,7 @@ class OpenAIClient(LlmClient):
         # models via a free API). Default stays OpenAI.
         self._http = httpx.AsyncClient(
             base_url=settings.OPENAI_BASE_URL.rstrip("/"),
-            timeout=httpx.Timeout(60.0, connect=10.0),
+            timeout=httpx.Timeout(settings.LLM_REQUEST_TIMEOUT_SECONDS, connect=8.0),
             headers={
                 "Authorization": f"Bearer {self._api_key}",
                 "Content-Type": "application/json",

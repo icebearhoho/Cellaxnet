@@ -120,7 +120,7 @@ async def test_generic_short_review_is_flagged_not_published(fake_store, monkeyp
         )
         assert response.status_code == 200
         body = response.json()["data"]
-        assert body["status"] == "rejected"
+        assert body["status"] == "flagged"
         assert body["review"] is None
 
         detail = await ac.get(f"/api/v1/storefront/products/{pid}")

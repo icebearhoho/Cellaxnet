@@ -46,7 +46,7 @@ export function SupplyChainPanel() {
               Cảnh báo sớm gián đoạn logistics + <span className="text-text">tin tức thật</span> (Google News) theo khu vực.
             </p>
           </div>
-          <Badge variant="muted">live news</Badge>
+          <Badge variant="muted">scenario + optional news</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
@@ -90,7 +90,9 @@ export function SupplyChainPanel() {
         <>
           <Card>
             <CardContent className="py-4">
-              <div className={cn("text-xl font-semibold", overall?.cls)}>Nguy cơ tổng thể: {overall?.label}</div>
+              <div className={cn("text-xl font-semibold", overall?.cls)}>
+                {result.scenario_mode ? "Mức rủi ro kịch bản" : "Nguy cơ tổng thể"}: {overall?.label}
+              </div>
               <p className="mt-1 text-sm text-text-muted">{result.summary}</p>
             </CardContent>
           </Card>

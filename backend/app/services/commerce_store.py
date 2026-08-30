@@ -12,9 +12,24 @@ from __future__ import annotations
 
 import random
 import unicodedata
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 
 Category = str  # "Thời trang" | "Mỹ phẩm" | "Phụ kiện"
+
+SHOP_PROFILE = {
+    "id": "shop-may-001",
+    "name": "Mây House Official",
+    "legal_name": "Công ty TNHH Mây Commerce",
+    "business_model": "omnichannel_d2c",
+    "currency": "VND",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "warehouse": "Kho Bình Dương",
+    "channels": ["Shopee", "TikTok Shop", "Tiki", "Website"],
+    "categories": ["Thời trang", "Mỹ phẩm", "Phụ kiện"],
+    "data_as_of": "2026-08-12T16:00:00+00:00",
+    "demo_mode": True,
+}
 
 # --- fabricated review pool (deterministic per product, not real customers) - #
 _REVIEWER_NAMES = [
@@ -43,7 +58,7 @@ _REVIEW_TEMPLATES_3 = [
 
 
 def _gen_reviews(rng: random.Random, product_name: str, brand: str) -> list[dict]:
-    n = rng.randint(5, 8)
+    n = rng.randint(12, 28)
     reviews: list[dict] = []
     for _ in range(n):
         # Skew toward positive, matching a shop with mostly-good ratings.
@@ -76,6 +91,14 @@ _CATALOG_SPEC: dict[str, dict] = {
             ("Quần short kaki", (160000, 300000), {"chất liệu": "kaki", "form": "regular"}, "shorts"),
             ("Blazer linen", (450000, 850000), {"chất liệu": "linen", "form": "regular"}, "blazer"),
             ("Áo len tăm cổ lọ", (260000, 460000), {"chất liệu": "len", "form": "ôm"}, "knitwear"),
+            ("Cardigan len mỏng", (260000, 490000), {"chất liệu": "len", "form": "regular"}, "knitwear"),
+            ("Quần tây ống suông", (280000, 520000), {"chất liệu": "tuytsi", "form": "ống suông"}, "jogger"),
+            ("Áo polo pique", (220000, 390000), {"chất liệu": "cotton pique", "form": "regular"}, "polo"),
+            ("Đầm dự tiệc satin", (480000, 890000), {"chất liệu": "satin", "form": "ôm nhẹ"}, "dress"),
+            ("Áo khoác denim unisex", (390000, 690000), {"chất liệu": "denim 12oz", "form": "rộng"}, "denim_jacket"),
+            ("Quần jogger thể thao", (240000, 420000), {"chất liệu": "thun da cá", "form": "jogger"}, "jogger"),
+            ("Áo hai dây basic", (90000, 190000), {"chất liệu": "cotton gân", "form": "ôm"}, "crop_top"),
+            ("Áo măng tô dáng dài", (650000, 1200000), {"chất liệu": "dạ", "form": "dài"}, "winter_coat"),
         ],
     },
     "Mỹ phẩm": {
@@ -93,6 +116,14 @@ _CATALOG_SPEC: dict[str, dict] = {
             ("Kem dưỡng ẩm ban đêm", (200000, 450000), {"loại": "kem dưỡng", "công dụng": "phục hồi"}, "moisturizer"),
             ("Mascara làm dày mi", (160000, 330000), {"loại": "mascara", "finish": "dày"}, "mascara"),
             ("Niacinamide 10%", (180000, 360000), {"loại": "serum", "công dụng": "giảm thâm"}, "serum"),
+            ("BHA 2% tẩy tế bào chết", (260000, 690000), {"loại": "treatment", "công dụng": "giảm mụn"}, "serum"),
+            ("Phấn má kem", (170000, 380000), {"loại": "phấn má", "finish": "tự nhiên"}, "blush"),
+            ("Nước hoa mini 10ml", (250000, 650000), {"loại": "nước hoa", "dung tích": "10ml"}, "perfume"),
+            ("Kem nền kiềm dầu", (280000, 620000), {"loại": "kem nền", "finish": "lì"}, "foundation"),
+            ("Mặt nạ đất sét", (180000, 420000), {"loại": "mask", "công dụng": "làm sạch"}, "face_mask"),
+            ("Dầu gội phục hồi", (160000, 380000), {"loại": "chăm sóc tóc", "công dụng": "phục hồi"}, "face_wash"),
+            ("Xịt khoáng làm dịu", (120000, 290000), {"loại": "xịt khoáng", "công dụng": "làm dịu"}, "toner"),
+            ("Kẻ mắt chống nước", (130000, 310000), {"loại": "eyeliner", "finish": "chống nước"}, "mascara"),
         ],
     },
     "Phụ kiện": {
@@ -110,6 +141,14 @@ _CATALOG_SPEC: dict[str, dict] = {
             ("Tất cổ trung combo", (60000, 130000), {"chất liệu": "cotton", "kiểu": "combo"}, "leggings"),
             ("Khăn lụa vuông", (110000, 240000), {"chất liệu": "lụa", "kiểu": "vuông"}, "scarf"),
             ("Kẹp tóc ngọc trai", (50000, 120000), {"chất liệu": "ngọc trai", "kiểu": "kẹp"}, "earrings"),
+            ("Bông tai bạc 925", (190000, 490000), {"chất liệu": "bạc 925", "kiểu": "tối giản"}, "earrings"),
+            ("Dây chuyền mặt đá", (220000, 550000), {"chất liệu": "thép mạ", "kiểu": "mặt đá"}, "necklace"),
+            ("Túi clutch dự tiệc", (260000, 590000), {"chất liệu": "satin", "kiểu": "clutch"}, "clutch_bag"),
+            ("Balo mini nữ", (230000, 480000), {"chất liệu": "da pu", "kiểu": "balo mini"}, "backpack"),
+            ("Đồng hồ điện tử", (420000, 1100000), {"dây": "nhựa", "kiểu": "thể thao"}, "watch"),
+            ("Mũ lưỡi trai thêu", (120000, 260000), {"chất liệu": "cotton", "kiểu": "lưỡi trai"}, "cap"),
+            ("Túi đựng mỹ phẩm", (90000, 220000), {"chất liệu": "chống nước", "kiểu": "pouch"}, "handbag"),
+            ("Khuyên tai vòng nhỏ", (140000, 360000), {"chất liệu": "titan", "kiểu": "vòng"}, "earrings"),
         ],
     },
 }
@@ -217,6 +256,9 @@ def _build() -> dict:
                 "promotion": promo,
                 "competitors": competitors,
                 "reviews_list": _gen_reviews(rng, name, brand),
+                "channels": ["Shopee", "TikTok Shop", "Tiki"] if pid % 4 else ["Shopee", "Website"],
+                "listing_completeness": rng.randint(68, 100),
+                "image_quality_score": rng.randint(55, 96),
             })
 
     # --- creators with multi-campaign history (for Đề 4 correlation) --------- #
@@ -228,17 +270,28 @@ def _build() -> dict:
         ("Trang Fashionista", "Thời trang", "video", 0.8),
         ("Style By An", "Thời trang", "livestream", 0.85),
         ("Daily Look", "Phụ kiện", "post", 0.5),
+        ("Linh Trương Beauty", "Mỹ phẩm", "livestream", 0.72),
+        ("Mộc Skincare", "Mỹ phẩm", "video", 0.68),
+        ("Minh Tú Closet", "Thời trang", "post", 0.62),
+        ("Huyền Outfit", "Thời trang", "video", 0.76),
+        ("An Nhiên Style", "Phụ kiện", "video", 0.7),
+        ("Góc Nhỏ Của My", "Phụ kiện", "livestream", 0.64),
     ]
     for name, cat, ctype, eff in creator_defs:
         campaigns = []
         for m in (9, 10, 11, 12):
+            promoted = rng.choice([p for p in products if p["category"] == cat])
             views = rng.randint(20000, 180000)
             # sales correlate with views * creator efficiency (+noise) → measurable correlation
             sales = int(views * eff * rng.uniform(180, 320))
             campaigns.append({
+                "id": f"CR-{len(creators) + 1:02d}-{m:02d}",
                 "month": m, "content_type": ctype, "views": views,
                 "engagements": int(views * rng.uniform(0.03, 0.12)),
                 "attributed_sales_vnd": sales,
+                "product_id": promoted["id"],
+                "product_name": promoted["name"],
+                "channel": "TikTok Shop" if ctype in {"video", "livestream"} else "Shopee",
             })
         creators.append({"creator": name, "category": cat, "campaigns": campaigns})
 
@@ -255,10 +308,17 @@ def _build() -> dict:
     ]
 
     # --- customers (for churn / return / regret auto-analysis) -------------- #
+    family_names = ["Nguyễn", "Trần", "Lê", "Phạm", "Vũ", "Đặng", "Bùi", "Hoàng", "Đỗ", "Ngô"]
+    middle_names = ["Thu", "Minh", "Bảo", "Gia", "Khánh", "Tuấn", "Phương", "Nhật", "Mỹ", "Thành"]
+    given_names = ["Hà", "Quân", "Ngọc", "Huy", "Linh", "Anh", "Thảo", "Nam", "Duyên", "Đạt", "Vy", "Khang"]
+    # Walk a shuffled 10 x 12 family/given-name grid so all 120 demo customers
+    # have distinct display names while still looking like ordinary VN names.
     cust_names = [
-        "Nguyễn Thu Hà", "Trần Minh Quân", "Lê Bảo Ngọc", "Phạm Gia Huy",
-        "Vũ Khánh Linh", "Đặng Tuấn Anh", "Bùi Phương Thảo", "Hoàng Nhật Nam",
-        "Đỗ Mỹ Duyên", "Ngô Thành Đạt",
+        f"{family_names[j % len(family_names)]} "
+        f"{middle_names[(j // len(given_names)) % len(middle_names)]} "
+        f"{given_names[(j // len(family_names)) % len(given_names)]}"
+        for i in range(120)
+        for j in [(i * 37) % 120]
     ]
     trends3 = ["declining", "stable", "growing"]
     customers: list[dict] = []
@@ -284,6 +344,142 @@ def _build() -> dict:
             "revisits_before_buy": rng.randint(0, 4),
             "purchase_hour": rng.choice([9, 13, 18, 22, 23, 1]),
             "discount_driven": rng.random() < 0.5,
+            "email": f"customer{i + 1:03d}@example.demo",
+            "province": rng.choice(["TP.HCM", "Hà Nội", "Bình Dương", "Đà Nẵng", "Đồng Nai", "Cần Thơ"]),
+            "preferred_channel": rng.choices(
+                ["Shopee", "TikTok Shop", "Tiki", "Website"],
+                weights=[48, 25, 17, 10],
+            )[0],
+        })
+
+    # --- linked order history: customers ↔ orders ↔ products/channels ------- #
+    anchor = datetime(2026, 8, 12, 16, 0, tzinfo=UTC)
+    orders: list[dict] = []
+    provinces = ["TP.HCM", "Hà Nội", "Bình Dương", "Đà Nẵng", "Đồng Nai", "Cần Thơ"]
+    for i in range(540):
+        customer = customers[i % len(customers)]
+        # More orders near the present, with a six-month history behind them.
+        days_ago = min(179, int((i / 539) ** 1.45 * 179))
+        created = anchor - timedelta(
+            days=days_ago,
+            hours=rng.randint(0, 20),
+            minutes=rng.randint(0, 59),
+        )
+        category = products[(i * 7) % len(products)]["category"]
+        pool = [p for p in products if p["category"] == category]
+        line_count = rng.choices([1, 2, 3], weights=[64, 28, 8])[0]
+        chosen = rng.sample(pool, k=min(line_count, len(pool)))
+        lines = []
+        subtotal = 0
+        for product in chosen:
+            qty = rng.choices([1, 2, 3], weights=[84, 14, 2])[0]
+            line_total = product["price_vnd"] * qty
+            subtotal += line_total
+            lines.append({
+                "product_id": product["id"],
+                "sku": product["sku"],
+                "product_name": product["name"],
+                "category": product["category"],
+                "qty": qty,
+                "unit_price_vnd": product["price_vnd"],
+                "line_total_vnd": line_total,
+            })
+        discount_pct = rng.choices([0, 5, 10, 15, 20], weights=[35, 20, 25, 15, 5])[0]
+        discount = round(subtotal * discount_pct / 100)
+        shipping = 0 if subtotal - discount >= 300_000 else rng.choice([15_000, 22_000, 30_000])
+        status = rng.choices(
+            ["delivered", "shipped", "paid", "pending", "cancelled", "returned"],
+            weights=[66, 12, 7, 4, 7, 4],
+        )[0]
+        channel = customer["preferred_channel"]
+        orders.append({
+            "id": f"DO-{i + 1:05d}",
+            "order_no": f"MAY-{created:%y%m%d}-{i + 1:05d}",
+            "customer_id": customer["id"],
+            "customer_name": customer["name"],
+            "channel": channel,
+            "province": customer.get("province") or rng.choice(provinces),
+            "created_at": created.isoformat(),
+            "status": status,
+            "payment_status": "refunded" if status in {"cancelled", "returned"} else ("unpaid" if status == "pending" else "paid"),
+            "items": lines,
+            "subtotal_vnd": subtotal,
+            "discount_vnd": discount,
+            "shipping_vnd": shipping,
+            "total_vnd": subtotal - discount + shipping,
+            "discount_pct": discount_pct,
+        })
+    orders.sort(key=lambda order: order["created_at"], reverse=True)
+
+    # Recompute product velocity/trend from those exact order lines. This makes
+    # Product Graph, Copilot, inventory runway and dashboard explain the same
+    # commerce history instead of independent random sales counters.
+    for product in products:
+        period_units = [0, 0, 0, 0]
+        for order in orders:
+            if order["status"] in {"cancelled", "pending", "returned"}:
+                continue
+            age = (anchor - datetime.fromisoformat(order["created_at"])).days
+            period_index = min(3, age // 45)
+            for line in order["items"]:
+                if line["product_id"] == product["id"]:
+                    period_units[3 - period_index] += line["qty"]
+        product["sales_history"] = period_units
+        product["sales_prev"] = period_units[-2]
+        product["sales_curr"] = period_units[-1]
+        product["daily_sales"] = round(max(0.1, period_units[-1] / 45), 2)
+        change = (period_units[-1] - period_units[-2]) / max(period_units[-2], 1)
+        product["trend"] = "rising" if change >= 0.15 else ("cooling" if change <= -0.15 else "stable")
+        if product["stock"] == 0:
+            product["stock_status"] = "out"
+        elif product["stock"] / product["daily_sales"] <= 14:
+            product["stock_status"] = "low"
+        else:
+            product["stock_status"] = "ok"
+
+    # Make customer features traceable to their actual order history.
+    orders_by_customer: dict[str, list[dict]] = {}
+    for order in orders:
+        orders_by_customer.setdefault(order["customer_id"], []).append(order)
+    for customer in customers:
+        history = orders_by_customer.get(customer["id"], [])
+        completed = [o for o in history if o["status"] in {"delivered", "shipped", "paid", "returned"}]
+        if not completed:
+            continue
+        latest = completed[0]
+        latest_item = latest["items"][0]
+        customer.update({
+            "frequency_orders": len(completed),
+            "recency_days": max(0, (anchor - datetime.fromisoformat(latest["created_at"])).days),
+            "last_order_no": latest["order_no"],
+            "last_product_id": latest_item["product_id"],
+            "last_product": latest_item["product_name"],
+            "last_category": latest_item["category"],
+            "last_order_value_vnd": latest["total_vnd"],
+            "lifetime_value_vnd": sum(o["total_vnd"] for o in completed if o["status"] != "returned"),
+            "return_count": sum(o["status"] == "returned" for o in history),
+            "discount_driven": latest["discount_pct"] >= 10,
+        })
+
+    # Daily fact table shared by dashboard, alerts and audit features.
+    daily_metrics: list[dict] = []
+    for day_offset in range(89, -1, -1):
+        day = (anchor - timedelta(days=day_offset)).date().isoformat()
+        day_orders = [o for o in orders if o["created_at"][:10] == day]
+        recognized = [o for o in day_orders if o["status"] not in {"cancelled", "returned", "pending"}]
+        revenue = sum(o["total_vnd"] for o in recognized)
+        sessions_count = 130 + len(day_orders) * rng.randint(12, 24) + rng.randint(0, 90)
+        paid_count = len(recognized)
+        daily_metrics.append({
+            "date": day,
+            "revenue_vnd": revenue,
+            "orders": len(day_orders),
+            "paid_orders": paid_count,
+            "sessions": sessions_count,
+            "conversion_rate": round(paid_count / max(sessions_count, 1) * 100, 2),
+            "aov_vnd": round(revenue / paid_count) if paid_count else 0,
+            "cancelled_orders": sum(o["status"] == "cancelled" for o in day_orders),
+            "returned_orders": sum(o["status"] == "returned" for o in day_orders),
         })
 
     # --- pre-built demo shopping sessions (replayable, not live recordings) - #
@@ -327,8 +523,9 @@ def _build() -> dict:
 
     _attach_synthetic_timestamps(rng, sessions)
 
-    return {"products": products, "creators": creators, "decisions": decisions,
-            "customers": customers, "sessions": sessions}
+    return {"profile": SHOP_PROFILE, "products": products, "creators": creators,
+            "decisions": decisions, "customers": customers, "orders": orders,
+            "daily_metrics": daily_metrics, "sessions": sessions}
 
 
 # --------------------------------------------------------------------------- #
@@ -336,6 +533,66 @@ def _build() -> dict:
 # --------------------------------------------------------------------------- #
 def all_products() -> list[dict]:
     return _build()["products"]
+
+
+def shop_profile() -> dict:
+    return _build()["profile"]
+
+
+def all_demo_orders() -> list[dict]:
+    return _build()["orders"]
+
+
+def all_daily_metrics() -> list[dict]:
+    return _build()["daily_metrics"]
+
+
+def customer_orders(customer_id: str) -> list[dict]:
+    return [o for o in all_demo_orders() if o["customer_id"] == customer_id]
+
+
+def product_sales_stats(product_id: str, days: int = 30) -> dict:
+    cutoff = datetime.fromisoformat(str(SHOP_PROFILE["data_as_of"])) - timedelta(days=days)
+    units = revenue = orders = returned_units = 0
+    channels: dict[str, int] = {}
+    for order in all_demo_orders():
+        if datetime.fromisoformat(order["created_at"]) < cutoff:
+            continue
+        matching = [line for line in order["items"] if line["product_id"] == product_id]
+        if not matching:
+            continue
+        orders += 1
+        channels[order["channel"]] = channels.get(order["channel"], 0) + 1
+        for line in matching:
+            if order["status"] == "returned":
+                returned_units += line["qty"]
+            elif order["status"] not in {"cancelled", "pending"}:
+                units += line["qty"]
+                revenue += line["line_total_vnd"]
+    return {
+        "product_id": product_id,
+        "days": days,
+        "orders": orders,
+        "units_sold": units,
+        "revenue_vnd": revenue,
+        "returned_units": returned_units,
+        "channels": channels,
+    }
+
+
+def co_purchase_scores(product_ids: set[str] | None = None) -> dict[str, int]:
+    """Count products bought with a given basket/history in completed orders."""
+    seeds = product_ids or set()
+    scores: dict[str, int] = {}
+    for order in all_demo_orders():
+        if order["status"] in {"cancelled", "pending", "returned"}:
+            continue
+        ids = {line["product_id"] for line in order["items"]}
+        if seeds and not (ids & seeds):
+            continue
+        for product_id in ids - seeds:
+            scores[product_id] = scores.get(product_id, 0) + 1
+    return scores
 
 
 def all_creators() -> list[dict]:

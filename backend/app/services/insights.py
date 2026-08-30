@@ -34,8 +34,8 @@ from app.schemas.insights import (
     SentimentRequest,
     SentimentResponse,
 )
+from app.services import commerce_store as store
 from app.services.genai.base import LlmMessage
-from app.services.genai.demo_data import DEMO_CATALOG
 from app.services.genai.factory import get_llm_client
 
 log = get_logger("app.services.insights")
@@ -233,12 +233,12 @@ async def detect_fake(req: FakeReviewRequest) -> FakeReviewResponse:
 # ---------------------------------------------------------------------------
 def _category_price_stats(category: str) -> tuple[list[int], int, int, int]:
     prices = sorted(
-        item["metadata"]["price_vnd"]
-        for item in DEMO_CATALOG
-        if item["metadata"].get("category") == category
+        item["price_vnd"]
+        for item in store.all_products()
+        if item.get("category") == category
     )
     if not prices:
-        prices = sorted(item["metadata"]["price_vnd"] for item in DEMO_CATALOG)
+        prices = sorted(item["price_vnd"] for item in store.all_products())
     n = len(prices)
     median = prices[n // 2]
     p25 = prices[max(0, n // 4)]
@@ -406,9 +406,9 @@ def score_regret(req: RegretRequest) -> RegretResponse:
         drivers.append("Deliberate, well-considered purchase")
 
     if band == "high":
-        msg = "Cảm ơn bạn đã mua hàng! Bạn có 7 ngày đổi trả miễn phí nếu sản phẩm chưa phù hợp — không cần lo lắng nhé 💛"
+        msg = "Cảm ơn bạn đã mua hàng! Nếu sản phẩm chưa phù hợp, hãy xem chính sách đổi trả của cửa hàng hoặc liên hệ hỗ trợ nhé 💛"
     elif band == "medium":
-        msg = "Đơn hàng của bạn đang được xử lý. Nếu cần đổi size hoặc màu khác, chỉ cần liên hệ trong vòng 7 ngày."
+        msg = "Đơn hàng của bạn đang được xử lý. Nếu cần đổi size hoặc màu khác, hãy liên hệ cửa hàng để được hỗ trợ theo chính sách hiện hành."
     else:
         msg = "Cảm ơn bạn đã tin tưởng lựa chọn kỹ lưỡng — chúc bạn hài lòng với sản phẩm!"
 
@@ -432,9 +432,12 @@ def score_inventory_alert(req: InventoryAlertRequest) -> InventoryAlertResponse:
     days_left = req.current_stock / max(req.avg_daily_sales, 0.1)
     projected_daily = req.avg_daily_sales * (1 + min(2.0, trend_score / 3))
 
-    if is_trending and days_left <= 7:
+    # Stock health is a hard constraint even when social buzz is quiet. The
+    # previous implementation returned ``none`` for a sold-out product with no
+    # mentions and even said its runway was fine.
+    if days_left <= 3:
         level = "urgent"
-    elif is_trending and days_left <= 14:
+    elif days_left <= 7 or (is_trending and days_left <= 14):
         level = "watch"
     else:
         level = "none"
@@ -442,12 +445,18 @@ def score_inventory_alert(req: InventoryAlertRequest) -> InventoryAlertResponse:
     target_days = 14
     needed = max(0, round(projected_daily * target_days - req.current_stock))
 
-    if level == "urgent":
+    if level == "urgent" and is_trending:
         reason = (f"'{req.product_name}' is trending (score {trend_score:.1f}) "
                   f"with only {days_left:.1f} days of stock left — restock now.")
-    elif level == "watch":
+    elif level == "urgent":
+        reason = (f"'{req.product_name}' has only {days_left:.1f} days of stock left "
+                  "at the current sales rate — restock now even without unusual social buzz.")
+    elif level == "watch" and is_trending:
         reason = (f"'{req.product_name}' is picking up buzz (score {trend_score:.1f}) "
                   f"and stock runway is getting short ({days_left:.1f} days) — plan a restock.")
+    elif level == "watch":
+        reason = (f"'{req.product_name}' has a short stock runway ({days_left:.1f} days) "
+                  "at the current sales rate — plan a restock.")
     else:
         reason = "No unusual social buzz — current stock runway looks fine."
 

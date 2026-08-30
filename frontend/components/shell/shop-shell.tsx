@@ -18,6 +18,8 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { user, isAdmin, logout } = useAuth();
+  const sellerHref = isAdmin ? "/seller" : "/seller/onboarding";
+  const sellerLabel = user?.role === "buyer" ? "Bắt đầu bán hàng →" : "Không gian bán hàng →";
   // Gate on mount so the server-rendered markup (which knows no cookie) and
   // the first client render agree — otherwise React reports a hydration
   // mismatch on every shop page.
@@ -66,10 +68,9 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
               </Link>
             )}
             <CartButton />
-            {/* Seller entry point — admins only, and never before hydration. */}
-            {mounted && isAdmin && (
+            {mounted && user && (
               <Button asChild variant="secondary" size="sm" className="hidden md:inline-flex">
-                <Link href="/seller">Cổng người bán →</Link>
+                <Link href={sellerHref}>{sellerLabel}</Link>
               </Button>
             )}
             {mounted && !user && (
@@ -113,13 +114,13 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                   {item.label}
                 </Link>
               ))}
-              {mounted && isAdmin && (
+              {mounted && user && (
                 <Link
-                  href="/seller"
+                  href={sellerHref}
                   onClick={() => setOpen(false)}
                   className="rounded-xl px-3 py-2.5 text-sm font-medium text-text-muted"
                 >
-                  Cổng người bán →
+                  {sellerLabel}
                 </Link>
               )}
               {mounted && !user ? (

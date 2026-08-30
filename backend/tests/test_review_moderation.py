@@ -38,10 +38,10 @@ async def test_detailed_aligned_review_is_published(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_high_confidence_fake_is_rejected(monkeypatch):
+async def test_high_confidence_fake_is_flagged_for_human_review(monkeypatch):
     _patch_insights(monkeypatch, is_fake=True, fake_confidence=0.9, sentiment="positive")
     decision = await review_moderation.moderate("Amazing! Love it! Best product ever!", 5, "Thời trang")
-    assert decision.status == "rejected"
+    assert decision.status == "flagged"
 
 
 @pytest.mark.asyncio

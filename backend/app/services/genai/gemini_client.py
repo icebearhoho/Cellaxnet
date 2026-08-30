@@ -56,7 +56,9 @@ class GeminiClient(LlmClient):
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{self.model}:streamGenerateContent?alt=sse"
         )
-        self._http = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0))
+        self._http = httpx.AsyncClient(
+            timeout=httpx.Timeout(settings.LLM_REQUEST_TIMEOUT_SECONDS, connect=8.0)
+        )
 
     async def aclose(self) -> None:
         await self._http.aclose()

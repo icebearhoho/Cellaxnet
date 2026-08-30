@@ -4,7 +4,7 @@
  * the frontend camelCase types and falls back to the supplied mock data when the
  * backend is unreachable or NEXT_PUBLIC_DEMO_MODE=true — so the UI never breaks.
  */
-import { api } from "@/lib/api";
+import { api, ApiClientError } from "@/lib/api";
 import type {
   Product,
   Recommendation,
@@ -61,32 +61,32 @@ async function get<T>(path: string): Promise<T | null> {
 export async function shopperProducts(
   query: string, topK: number, fallback: Product[],
 ): Promise<{ products: Product[]; live: boolean }> {
-  const data = await get<{ products: BackendProduct[] }>(
+  const data = await get<{ products: BackendProduct[]; demo_mode?: boolean }>(
     `/personal-shopper/products?query=${encodeURIComponent(query)}&top_k=${topK}`,
   );
   if (!data?.products?.length) return { products: fallback, live: false };
-  return { products: data.products.map(mapProduct), live: true };
+  return { products: data.products.map(mapProduct), live: !data.demo_mode };
 }
 
 // --- #11 Recsys -----------------------------------------------------------
 export async function recsysRecommend(
-  signals: Record<string, string>, topK: number, fallback: Recommendation[],
+  signals: Record<string, string>, topK: number, fallback: Recommendation[], userId = "C001",
 ): Promise<{ items: Recommendation[]; live: boolean; model?: string }> {
-  const data = await post<{ items: BackendRec[]; model: string }>(
-    "/recsys/", { signals, top_k: topK },
+  const data = await post<{ items: BackendRec[]; model: string; demo_mode?: boolean }>(
+    "/recsys/", { user_id: userId, signals, top_k: topK },
   );
   if (!data?.items?.length) return { items: fallback, live: false };
   const items = data.items.map((r) => ({
     ...mapProduct({ ...r, id: r.product_id }), reason: r.reason,
   }));
-  return { items, live: true, model: data.model };
+  return { items, live: !data.demo_mode, model: data.model };
 }
 
 // --- #09 Content Generator ------------------------------------------------
 export async function contentGenerate(
   productName: string, features: string, platforms: string[], fallback: ContentVariant[],
 ): Promise<{ variants: ContentVariant[]; live: boolean }> {
-  const data = await post<{ variants: BackendVariant[] }>(
+  const data = await post<{ variants: BackendVariant[]; demo_mode?: boolean }>(
     "/content-generator/", { product_name: productName, features, platforms },
   );
   if (!data?.variants?.length) return { variants: fallback, live: false };
@@ -94,7 +94,7 @@ export async function contentGenerate(
     platform: v.platform as ContentVariant["platform"],
     title: v.title, body: v.body, predictedCtr: v.predicted_ctr, rationale: v.rationale,
   }));
-  return { variants, live: true };
+  return { variants, live: !data.demo_mode };
 }
 
 // --- #01 Review Sentiment -------------------------------------------------
@@ -115,11 +115,11 @@ export async function detectFake(text: string, rating?: number, category?: strin
 export async function sellerCoach(
   fallback: { overall: number; audit: AuditStep[]; roadmap: RoadmapWeek[] },
 ): Promise<{ overall: number; audit: AuditStep[]; roadmap: RoadmapWeek[]; live: boolean }> {
-  const data = await post<{ overall: number; audit: AuditStep[]; roadmap: RoadmapWeek[] }>(
+  const data = await post<{ overall: number; audit: AuditStep[]; roadmap: RoadmapWeek[]; demo_mode?: boolean }>(
     "/seller-coach/", {},
   );
   if (!data?.audit?.length) return { ...fallback, live: false };
-  return { overall: data.overall, audit: data.audit, roadmap: data.roadmap, live: true };
+  return { overall: data.overall, audit: data.audit, roadmap: data.roadmap, live: !data.demo_mode };
 }
 
 // --- #19 Customer Segmentation ---------------------------------------------
@@ -158,12 +158,34 @@ export type PricingResult = {
   category_median: number; sample_size: number; rationale: string;
 };
 
+export type PricingResponse =
+  | { ok: true; data: PricingResult }
+  | { ok: false; message: string; status?: number };
+
 export async function recommendPrice(
   productName: string, category: string, currentPrice?: number,
-): Promise<PricingResult | null> {
-  return post<PricingResult>("/dynamic-pricing/", {
-    product_name: productName, category, current_price: currentPrice ?? null,
-  });
+): Promise<PricingResponse> {
+  if (DEMO) {
+    return { ok: false, message: "Chế độ demo đang bật nên chưa thể gọi dịch vụ định giá." };
+  }
+  try {
+    const response = await api.post<PricingResult>("/dynamic-pricing/", {
+      product_name: productName, category, current_price: currentPrice ?? null,
+    });
+    return { ok: true, data: response.data as PricingResult };
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      return {
+        ok: false,
+        status: error.status,
+        message: error.envelope.error?.message ?? "Backend không thể xử lý yêu cầu định giá.",
+      };
+    }
+    return {
+      ok: false,
+      message: "Không thể kết nối đến backend. Hãy kiểm tra dịch vụ FastAPI và thử lại.",
+    };
+  }
 }
 
 // --- #04 Churn Prediction ---------------------------------------------------
@@ -258,6 +280,10 @@ export type RiskBand = "low" | "medium" | "high" | null;
 export type RiskRow = {
   id: string;
   customer: string;
+  last_order_no: string | null;
+  last_product: string | null;
+  lifetime_value_vnd: number;
+  preferred_channel: string | null;
   churn_risk: number | null;
   churn_band: RiskBand;
   return_risk: number | null;
@@ -268,8 +294,31 @@ export type RiskRow = {
 };
 export type RiskPortfolio = { customers: RiskRow[]; total: number; critical_count: number };
 
-export async function getRiskPortfolio(): Promise<RiskPortfolio | null> {
-  return get<RiskPortfolio>("/risk-portfolio/");
+export type RiskPortfolioResponse =
+  | { ok: true; data: RiskPortfolio }
+  | { ok: false; message: string; status?: number };
+
+export async function getRiskPortfolio(): Promise<RiskPortfolioResponse> {
+  if (DEMO) {
+    return { ok: false, message: "Chế độ demo đang bật nên chưa thể tải dữ liệu rủi ro khách hàng." };
+  }
+
+  try {
+    const response = await api.get<RiskPortfolio>("/risk-portfolio/");
+    return { ok: true, data: response.data as RiskPortfolio };
+  } catch (error) {
+    if (error instanceof ApiClientError) {
+      return {
+        ok: false,
+        status: error.status,
+        message: error.envelope.error?.message ?? `Backend trả về lỗi HTTP ${error.status}.`,
+      };
+    }
+    return {
+      ok: false,
+      message: "Không thể kết nối đến backend. Kiểm tra dịch vụ FastAPI và thử lại.",
+    };
+  }
 }
 
 // --- #08 Sentiment-driven Inventory Alert ----------------------------------
@@ -293,7 +342,7 @@ export type DisruptionAlert = {
   estimated_delay_days: number; contingency: string;
 };
 export type NewsArticle = { title: string; source: string; link: string; date: string; snippet: string };
-export type SupplyChainResult = { alerts: DisruptionAlert[]; overall_risk: "low" | "medium" | "high"; summary: string; news: NewsArticle[]; news_live: boolean };
+export type SupplyChainResult = { alerts: DisruptionAlert[]; overall_risk: "low" | "medium" | "high"; summary: string; news: NewsArticle[]; news_live: boolean; scenario_mode: boolean };
 
 export async function checkSupplyChain(region: string, category: string): Promise<SupplyChainResult | null> {
   return post<SupplyChainResult>("/supply-chain/", { region, category });
@@ -328,7 +377,7 @@ export async function analyzeProductKnowledge(input: {
 // --- Market Intelligence — phân tích đối thủ & giá -------------------------
 export type MarketIntelligenceResult = {
   position: "cheaper" | "parity" | "pricier";
-  recommended_action: "hold" | "match_price" | "undercut" | "differentiate";
+  recommended_action: "hold" | "match_price" | "undercut" | "differentiate" | "protect_margin";
   recommended_price_vnd: number;
   price_floor_vnd: number;
   margin_pct_at_recommended: number;
@@ -701,6 +750,8 @@ export type Order = {
   order_no: string; status: OrderStatus; customer_name: string;
   email: string | null; total_vnd: number; created_at: string;
   items: OrderItemOut[];
+  channel?: string;
+  demo_order?: boolean;
 };
 
 /**

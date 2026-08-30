@@ -1,33 +1,17 @@
-"""Dashboard KPIs — 4 cards on the home page. Skeleton with mock values."""
+"""Dashboard KPIs derived from the coherent demo-shop fact tables."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter
 
 from app.core.responses import ApiResponse, PageMeta
+from app.services import shop_analytics
 
 router = APIRouter()
 
 
 @router.get("/summary", response_model=ApiResponse[dict])
 async def summary() -> ApiResponse[dict]:
-    """Return the 4 dashboard KPIs.
-
-    Wire to real data sources once the registry + pipelines are in place.
-    """
-    data = {
-        "kpis": [
-            {"key": "ideas_total",      "value": 17,  "label": "Candidate ideas"},
-            {"key": "datasets_usable",  "value": 12,  "label": "Usable datasets"},
-            {"key": "models_planned",   "value": 17,  "label": "Models planned"},
-            {"key": "platforms",        "value": 3,   "label": "Platforms (Shopee / Tiki / Lazada)"},
-        ],
-        "by_category": {
-            "NLP": 4,
-            "Time Series": 4,
-            "Computer Vision": 2,
-            "Generative AI": 4,
-            "Behavioral AI": 3,
-        },
-    }
+    """Return one internally consistent snapshot of Mây House Official."""
+    data = shop_analytics.summary()
     return ApiResponse[dict](success=True, data=data, meta=PageMeta(), error=None)

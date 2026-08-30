@@ -1,4 +1,4 @@
-"""Role gating: the seller portal is admin-only, the buyer flow stays open.
+"""Role gating: tenant-safe seller tools and admin analytics stay separated.
 
 The public-path half of this file is the regression net for "adding auth
 didn't break shopping" — those four endpoints back the storefront, the two
@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.security import create_access_token
 from app.main import app
 
 # One representative route per gating mechanism:
@@ -67,14 +68,44 @@ async def test_admin_routes_admit_admin(path, admin_headers):
 
 
 @pytest.mark.asyncio
-async def test_admin_only_post_rejects_buyer(buyer_headers):
+async def test_dynamic_pricing_admits_seller_but_rejects_buyer(buyer_headers):
+    seller_token = create_access_token(
+        "9",
+        extra={"role": "seller", "email": "seller@test.dev", "name": "Seller"},
+    )
+    seller_headers = {"Authorization": f"Bearer {seller_token}"}
     async with _client() as ac:
         body = {"product_name": "Áo thun", "category": "Thời trang", "current_price": 200000}
         anon = await ac.post("/api/v1/dynamic-pricing/", json=body)
         buyer = await ac.post("/api/v1/dynamic-pricing/", json=body, headers=buyer_headers)
+        seller = await ac.post("/api/v1/dynamic-pricing/", json=body, headers=seller_headers)
 
     assert anon.status_code == 401
     assert buyer.status_code == 403
+    # No workspace header in this isolated RBAC test, so validation stops at
+    # 422. The important regression is that a seller passed the role gate.
+    assert seller.status_code == 422
+    assert seller.json()["error"]["message"] == "Thiếu workspace đang hoạt động."
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "path",
+    ["/api/v1/content-generator/", "/api/v1/seller-coach/"],
+)
+async def test_tenant_safe_tools_admit_seller_but_reject_buyer(path, buyer_headers):
+    seller_token = create_access_token(
+        "9",
+        extra={"role": "seller", "email": "seller@test.dev", "name": "Seller"},
+    )
+    seller_headers = {"Authorization": f"Bearer {seller_token}"}
+    async with _client() as ac:
+        buyer = await ac.post(path, headers=buyer_headers, json={})
+        seller = await ac.post(path, headers=seller_headers, json={})
+
+    assert buyer.status_code == 403
+    # Invalid input may be 422; the point is that the seller passed the role gate.
+    assert seller.status_code not in (401, 403)
 
 
 @pytest.mark.asyncio
