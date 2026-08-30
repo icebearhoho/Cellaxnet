@@ -183,3 +183,59 @@ async def test_pricing_still_works_with_no_dataset_configured() -> None:
     assert result.data_source == "demo"
     assert result.sample_size > 0
     assert result.recommended_price > 0
+
+
+@pytest.mark.asyncio
+async def test_price_is_placed_within_the_observed_distribution(monkeypatch) -> None:
+    """A gap to the median says how far; the percentile says how unusual.
+
+    502,000₫ against a 67,900₫ median reads as "3.5x over", which sounds like
+    an error. "Dearer than nearly everything on sale" is the same fact stated
+    so a seller can act on it.
+    """
+    async def _ref(category: str):
+        return _reference(prices=tuple(range(10_000, 210_000, 10_000))) \
+            if category == "Mỹ phẩm" else None
+
+    monkeypatch.setattr(btc_market, "price_reference", _ref)
+
+    top = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=500_000)
+    )
+    middle = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=100_000)
+    )
+
+    assert top.price_percentile == 100
+    assert "gần như toàn bộ" in top.rationale
+    assert middle.price_percentile == 50
+    assert "đắt hơn 50%" in middle.rationale
+
+
+def test_percentile_declines_to_answer_without_prices() -> None:
+    """An older snapshot carries no price list; guessing one would be worse."""
+    assert _reference(prices=()).percentile_of(50_000) is None
+
+
+def test_percentile_counts_prices_at_or_below() -> None:
+    ref = _reference(prices=(10, 20, 30, 40))
+
+    assert ref.percentile_of(5) == 0
+    assert ref.percentile_of(20) == 50
+    assert ref.percentile_of(40) == 100
+
+
+@pytest.mark.asyncio
+async def test_quartiles_travel_with_the_response(monkeypatch) -> None:
+    """The spread a median hides: same median, very different categories."""
+    async def _ref(category: str):
+        return _reference() if category == "Mỹ phẩm" else None
+
+    monkeypatch.setattr(btc_market, "price_reference", _ref)
+
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=100_000)
+    )
+
+    assert result.market_p25 == 44_900
+    assert result.market_p75 == 98_300

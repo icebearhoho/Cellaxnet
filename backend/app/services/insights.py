@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal, cast
 
@@ -293,6 +294,8 @@ class _PriceStats:
     sample_size: int
     source: PriceSource
     shop_count: int | None = None
+    #: Placement of the seller's own price, when the source can compute one.
+    percentile_of: Callable[[int], int | None] | None = None
 
 
 def _category_price_stats(category: str) -> _PriceStats:
@@ -327,6 +330,7 @@ async def _price_stats(category: str) -> _PriceStats:
     return _PriceStats(
         median=ref.median, p25=ref.p25, p75=ref.p75,
         sample_size=ref.sample_size, source=ref.source, shop_count=ref.shop_count,
+        percentile_of=ref.percentile_of,
     )
 
 
@@ -358,6 +362,23 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             recommended = round((cur + median) / 2)
             rationale = f"{_vnd(cur)} đã sát {basis} — chỉ cần tinh chỉnh nhẹ."
 
+    # Where the seller actually sits. A gap to the median says how far; the
+    # percentile says how unusual — 502,000₫ against a 67,900₫ median reads as
+    # "3.5x over" but lands as "pricier than 99% of what is on sale".
+    percentile = (
+        stats.percentile_of(req.current_price)
+        if stats.percentile_of and req.current_price is not None
+        else None
+    )
+    if percentile is not None:
+        if percentile >= 98:
+            placement = "đắt hơn gần như toàn bộ sản phẩm đang bán"
+        elif percentile <= 2:
+            placement = "rẻ hơn gần như toàn bộ sản phẩm đang bán"
+        else:
+            placement = f"đắt hơn {percentile}% sản phẩm đang bán"
+        rationale += f" Mức giá này {placement}."
+
     # The floor outranks the market: undercutting the competition at a loss is
     # not a cheaper price, it is a slower way to lose money.
     cost_floor = _cost_floor(req)
@@ -385,6 +406,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         recommended_price=int(recommended), low=int(min(p25, recommended)),
         high=int(max(p75, recommended)), category_median=int(median),
         sample_size=stats.sample_size, rationale=rationale,
+        market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
         price_floor=cost_floor.floor if cost_floor else None,
         margin_pct_at_recommended=margin_at_rec,
         channel_name=cost_floor.channel_name if cost_floor else None,

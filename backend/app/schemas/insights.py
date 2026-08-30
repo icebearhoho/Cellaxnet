@@ -69,6 +69,13 @@ class PricingResponse(BaseModel):
     category_median: int
     sample_size: int
     rationale: str
+    #: Observed quartiles, so the panel can show the spread a single median
+    #: hides — a category can be tight or five-fold wide at the same median.
+    market_p25: int | None = None
+    market_p75: int | None = None
+    #: Share of observed products priced at or below the seller's current
+    #: price. Says *where* they sit, which a bare gap to the median does not.
+    price_percentile: int | None = None
     #: Lowest price that still clears `min_margin_pct` after commission, or
     #: None when no cost was supplied. The recommendation never sits below it.
     price_floor: int | None = None

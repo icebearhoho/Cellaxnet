@@ -78,7 +78,10 @@ SELECT
     PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY price)   AS p25,
     PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY price)   AS median,
     PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY price)   AS p75,
-    MAX(price)                                            AS max_price
+    MAX(price)                                            AS max_price,
+    -- Sorted prices, so a seller's own price can be placed in the
+    -- distribution exactly rather than interpolated between quartiles.
+    ARRAY_AGG(price ORDER BY price)                       AS prices
 FROM (
     SELECT DISTINCT p.shop_id, p.item_id, p.price
     FROM {schema}.products p
@@ -109,6 +112,16 @@ class PriceReference:
     p75: int
     max_price: int
     source: ObservedSource
+    #: Every observed price, ascending. Empty when a snapshot predates this
+    #: field — `percentile_of` then declines to answer rather than guessing.
+    prices: tuple[int, ...] = ()
+
+    def percentile_of(self, price: int) -> int | None:
+        """Share of observed products priced at or below `price`, 0-100."""
+        if not self.prices:
+            return None
+        at_or_below = sum(1 for p in self.prices if p <= price)
+        return round(at_or_below / len(self.prices) * 100)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -121,6 +134,7 @@ class PriceReference:
             "p75": self.p75,
             "max_price": self.max_price,
             "source": self.source,
+            "prices": list(self.prices),
         }
 
 
@@ -179,6 +193,7 @@ def _row_to_reference(category: str, row: Any, source: ObservedSource) -> PriceR
         p75=int(round(float(row.p75))),
         max_price=int(row.max_price),
         source=source,
+        prices=tuple(int(p) for p in (row.prices or ())),
     )
 
 
@@ -238,6 +253,7 @@ def _load_snapshot() -> dict[str, PriceReference]:
                     p75=int(entry["p75"]),
                     max_price=int(entry["max_price"]),
                     source="btc_snapshot",
+                    prices=tuple(int(p) for p in entry.get("prices", ())),
                 )
         except (OSError, ValueError, KeyError) as exc:
             log.warning("btc.snapshot_unreadable", error=str(exc))

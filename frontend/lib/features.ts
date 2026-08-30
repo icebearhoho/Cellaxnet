@@ -160,6 +160,11 @@ export type PriceSource = "demo" | "btc_live" | "btc_snapshot";
 export type PricingResult = {
   recommended_price: number; low: number; high: number;
   category_median: number; sample_size: number; rationale: string;
+  /** Observed quartiles — the spread a single median hides. */
+  market_p25: number | null;
+  market_p75: number | null;
+  /** Share of observed products at or below the seller's current price. */
+  price_percentile: number | null;
   /** Lowest price that still clears the margin after commission; null without a cost. */
   price_floor: number | null;
   margin_pct_at_recommended: number | null;
