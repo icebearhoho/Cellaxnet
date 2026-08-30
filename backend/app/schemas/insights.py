@@ -82,6 +82,10 @@ class PricingResponse(BaseModel):
     #: Margin on revenue actually achieved at `recommended_price`, after
     #: commission — the number to check before accepting the suggestion.
     margin_pct_at_recommended: float | None = None
+    #: Shopee market(s) the reference came from, already localised —
+    #: "Shopee Indonesia" rather than a bare "Shopee" the reader will take
+    #: to mean their own.
+    market_label: str | None = None
     #: Commission applied, so the floor can be traced back to a rate.
     channel_name: str | None = None
     channel_commission_pct: float | None = None

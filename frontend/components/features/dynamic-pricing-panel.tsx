@@ -101,7 +101,10 @@ function parsePrice(value: string): number | undefined {
  *  the honest option — and a few observed shops are a reference, not the
  *  Shopee-wide market price, so the badge reports the shop count too.
  */
-function SourceBadge({ source, shopCount }: { source: PriceSource; shopCount: number | null }) {
+function SourceBadge(
+  { source, shopCount, marketLabel }:
+  { source: PriceSource; shopCount: number | null; marketLabel: string | null },
+) {
   if (source === "demo") {
     return (
       <span className="mt-1.5 flex w-fit items-center gap-1 rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-dim">
@@ -114,7 +117,7 @@ function SourceBadge({ source, shopCount }: { source: PriceSource; shopCount: nu
   return (
     <span className="mt-1.5 flex w-fit items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[11px] font-medium text-success">
       <Database className="h-3 w-3" aria-hidden="true" />
-      Shopee T7/2026{shops}
+      {marketLabel ?? "Shopee"} · T7/2026{shops}
     </span>
   );
 }
@@ -577,6 +580,7 @@ export function DynamicPricingPanel() {
                       <SourceBadge
                         source={result.data_source}
                         shopCount={result.shop_count}
+                        marketLabel={result.market_label}
                       />
                     </dd>
                   </div>
@@ -596,7 +600,8 @@ export function DynamicPricingPanel() {
                 {result.market_p25 !== null && result.market_p75 !== null && (
                   <div className="rounded-lg border border-border bg-surface-2/40 px-5 py-4">
                     <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
-                      <BarChart3 className="h-4 w-4" aria-hidden="true" /> Mặt bằng giá quan sát được
+                      <BarChart3 className="h-4 w-4" aria-hidden="true" />{" "}
+                      Mặt bằng giá {result.market_label ?? "quan sát được"}
                     </p>
 
                     {/* A median alone cannot say whether a category is tight or

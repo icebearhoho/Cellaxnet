@@ -279,6 +279,25 @@ def _net_margin_pct(price: int, cost: int, commission_pct: float) -> float:
     return round((revenue - cost) / revenue * 100.0, 1) if revenue > 0 else 0.0
 
 
+#: Shopee runs a separate marketplace per country, at its own price level. The
+#: label names the one actually measured — calling Indonesian listings "Shopee"
+#: in a Vietnamese UI reads as the seller's own market, which they are not.
+_MARKETS = {"vn": "Shopee Việt Nam", "id": "Shopee Indonesia",
+            "th": "Shopee Thái Lan", "my": "Shopee Malaysia",
+            "ph": "Shopee Philippines", "sg": "Shopee Singapore",
+            "tw": "Shopee Đài Loan", "br": "Shopee Brazil"}
+
+
+def _market_label(countries: tuple[str, ...]) -> str:
+    """Name the marketplace(s) a sample came from."""
+    named = [_MARKETS.get(c, f"Shopee {c.upper()}") for c in countries]
+    if not named:
+        return "Shopee"
+    if len(named) == 1:
+        return named[0]
+    return " + ".join(named)
+
+
 def _vnd(amount: int) -> str:
     """Vietnamese money formatting: 67.900₫, not the 67,900₫ Python defaults to."""
     return f"{amount:,}".replace(",", ".") + "₫"
@@ -294,6 +313,8 @@ class _PriceStats:
     sample_size: int
     source: PriceSource
     shop_count: int | None = None
+    #: Shopee markets behind the figures, so the label can name them.
+    countries: tuple[str, ...] = ()
     #: Placement of the seller's own price, when the source can compute one.
     percentile_of: Callable[[int], int | None] | None = None
 
@@ -330,7 +351,7 @@ async def _price_stats(category: str) -> _PriceStats:
     return _PriceStats(
         median=ref.median, p25=ref.p25, p75=ref.p75,
         sample_size=ref.sample_size, source=ref.source, shop_count=ref.shop_count,
-        percentile_of=ref.percentile_of,
+        countries=ref.countries, percentile_of=ref.percentile_of,
     )
 
 
@@ -344,7 +365,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         shops = f" của {stats.shop_count} nhà bán" if stats.shop_count else ""
         basis = (
             f"trung vị {_vnd(stats.median)} từ {stats.sample_size} sản phẩm {req.category}"
-            f"{shops} quan sát được trên Shopee (T7/2026)"
+            f"{shops} quan sát được trên {_market_label(stats.countries)} (T7/2026)"
         )
 
     if req.current_price is None:
@@ -407,6 +428,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         high=int(max(p75, recommended)), category_median=int(median),
         sample_size=stats.sample_size, rationale=rationale,
         market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
+        market_label=_market_label(stats.countries) if stats.source != "demo" else None,
         price_floor=cost_floor.floor if cost_floor else None,
         margin_pct_at_recommended=margin_at_rec,
         channel_name=cost_floor.channel_name if cost_floor else None,

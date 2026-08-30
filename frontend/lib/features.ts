@@ -160,6 +160,8 @@ export type PriceSource = "demo" | "btc_live" | "btc_snapshot";
 export type PricingResult = {
   recommended_price: number; low: number; high: number;
   category_median: number; sample_size: number; rationale: string;
+  /** Localised name of the Shopee market behind the reference. */
+  market_label: string | null;
   /** Observed quartiles — the spread a single median hides. */
   market_p25: number | null;
   market_p75: number | null;

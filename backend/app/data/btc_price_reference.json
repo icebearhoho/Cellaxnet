@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-30T10:12:55+00:00",
+  "generated_at": "2026-08-30T10:23:32+00:00",
   "schema": "data_shopee",
   "price_window_vnd": [
     1000,
@@ -14,6 +14,9 @@
       "median": 67900,
       "p75": 98300,
       "max_price": 295400,
+      "countries": [
+        "id"
+      ],
       "prices": [
         29000,
         29000,

@@ -239,3 +239,53 @@ async def test_quartiles_travel_with_the_response(monkeypatch) -> None:
 
     assert result.market_p25 == 44_900
     assert result.market_p75 == 98_300
+
+
+@pytest.mark.asyncio
+async def test_the_label_names_the_market_actually_measured(monkeypatch) -> None:
+    """Shopee runs a marketplace per country, each at its own price level.
+
+    The accessible cosmetics rows are Indonesian, so calling them "Shopee" in a
+    Vietnamese UI would read as the seller's own market and quietly misprice
+    every recommendation drawn from them.
+    """
+    async def _ref(category: str):
+        return _reference(countries=("id",)) if category == "Mỹ phẩm" else None
+
+    monkeypatch.setattr(btc_market, "price_reference", _ref)
+
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000)
+    )
+
+    assert result.market_label == "Shopee Indonesia"
+    assert "Shopee Indonesia" in result.rationale
+
+
+@pytest.mark.asyncio
+async def test_a_blended_sample_names_every_market(monkeypatch) -> None:
+    """Percentiles spanning two markets must not claim to describe one."""
+    async def _ref(category: str):
+        return _reference(countries=("id", "vn")) if category == "Mỹ phẩm" else None
+
+    monkeypatch.setattr(btc_market, "price_reference", _ref)
+
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000)
+    )
+
+    assert result.market_label == "Shopee Indonesia + Shopee Việt Nam"
+
+
+@pytest.mark.asyncio
+async def test_the_demo_catalogue_claims_no_market(monkeypatch) -> None:
+    async def _no_reference(_category: str):
+        return None
+
+    monkeypatch.setattr(btc_market, "price_reference", _no_reference)
+
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Thời trang", current_price=468_000)
+    )
+
+    assert result.market_label is None

@@ -74,6 +74,10 @@ _PERCENTILE_SQL = """
 SELECT
     COUNT(*)                                              AS sample_size,
     COUNT(DISTINCT shop_id)                               AS shop_count,
+    -- The dataset spans more than one Shopee market, and a median that mixes
+    -- them is a reference to nowhere. Carried through so the UI can name the
+    -- market instead of implying the seller's own.
+    ARRAY_AGG(DISTINCT country_code)                      AS country_codes,
     MIN(price)                                            AS min_price,
     PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY price)   AS p25,
     PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY price)   AS median,
@@ -83,7 +87,7 @@ SELECT
     -- distribution exactly rather than interpolated between quartiles.
     ARRAY_AGG(price ORDER BY price)                       AS prices
 FROM (
-    SELECT DISTINCT p.shop_id, p.item_id, p.price
+    SELECT DISTINCT p.country_code, p.shop_id, p.item_id, p.price
     FROM {schema}.products p
     JOIN {schema}.product_categories pc
           ON  pc.country_code = p.country_code
@@ -112,6 +116,9 @@ class PriceReference:
     p75: int
     max_price: int
     source: ObservedSource
+    #: Shopee markets the sample covers ("id", "vn", …). More than one entry
+    #: means the percentiles blend markets and should be read with care.
+    countries: tuple[str, ...] = ()
     #: Every observed price, ascending. Empty when a snapshot predates this
     #: field — `percentile_of` then declines to answer rather than guessing.
     prices: tuple[int, ...] = ()
@@ -134,6 +141,7 @@ class PriceReference:
             "p75": self.p75,
             "max_price": self.max_price,
             "source": self.source,
+            "countries": list(self.countries),
             "prices": list(self.prices),
         }
 
@@ -193,6 +201,7 @@ def _row_to_reference(category: str, row: Any, source: ObservedSource) -> PriceR
         p75=int(round(float(row.p75))),
         max_price=int(row.max_price),
         source=source,
+        countries=tuple(sorted(str(c) for c in (row.country_codes or ()))),
         prices=tuple(int(p) for p in (row.prices or ())),
     )
 
@@ -253,6 +262,7 @@ def _load_snapshot() -> dict[str, PriceReference]:
                     p75=int(entry["p75"]),
                     max_price=int(entry["max_price"]),
                     source="btc_snapshot",
+                    countries=tuple(entry.get("countries", ())),
                     prices=tuple(int(p) for p in entry.get("prices", ())),
                 )
         except (OSError, ValueError, KeyError) as exc:
