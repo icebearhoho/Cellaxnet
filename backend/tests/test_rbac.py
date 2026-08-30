@@ -87,7 +87,13 @@ async def test_slashless_router_root_keeps_admin_authorization(admin_headers):
 
 
 @pytest.mark.asyncio
-async def test_dynamic_pricing_admits_seller_but_rejects_buyer(buyer_headers):
+async def test_dynamic_pricing_is_admin_only(buyer_headers, admin_headers):
+    """Pricing stays behind the admin gate.
+
+    An earlier revision let any seller price their own catalogue. Upstream
+    narrowed it back to admins, leaving content-generator and seller-coach as
+    the tenant-safe seller tools, so a seller token must be rejected here.
+    """
     seller_token = create_access_token(
         "9",
         extra={"role": "seller", "email": "seller@test.dev", "name": "Seller"},
@@ -98,13 +104,13 @@ async def test_dynamic_pricing_admits_seller_but_rejects_buyer(buyer_headers):
         anon = await ac.post("/api/v1/dynamic-pricing/", json=body)
         buyer = await ac.post("/api/v1/dynamic-pricing/", json=body, headers=buyer_headers)
         seller = await ac.post("/api/v1/dynamic-pricing/", json=body, headers=seller_headers)
+        admin = await ac.post("/api/v1/dynamic-pricing/", json=body, headers=admin_headers)
 
     assert anon.status_code == 401
     assert buyer.status_code == 403
-    # No workspace header in this isolated RBAC test, so validation stops at
-    # 422. The important regression is that a seller passed the role gate.
-    assert seller.status_code == 422
-    assert seller.json()["error"]["message"] == "Thiếu workspace đang hoạt động."
+    assert seller.status_code == 403
+    # Admin clears the role gate; the body may still fail later validation.
+    assert admin.status_code not in (401, 403)
 
 
 @pytest.mark.asyncio
