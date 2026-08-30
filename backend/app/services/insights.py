@@ -246,12 +246,16 @@ class _CostFloor:
 
 
 def _cost_floor(req: PricingRequest) -> _CostFloor | None:
-    """Cheapest price that clears `min_margin_pct` *after* commission.
+    """Cheapest price whose profit is `min_margin_pct` of the *sticker price*.
 
-    Revenue keeps only ``1 - commission``, and the margin is taken on revenue,
-    so the floor solves ``(p·(1-c) - cost) / (p·(1-c)) = m`` for p. Selling at
-    the market median is worthless advice if the channel's cut turns it into a
-    loss, which is exactly what a seller cannot see from the median alone.
+    Margin here is profit over the price the buyer pays, the same basis
+    market.py's floor uses, so both features answer "20%" identically. The
+    channel's cut is a cost like any other, which puts every deduction on one
+    side: ``p - c·p - cost = m·p`` → ``p = cost / (1 - c - m)``.
+
+    Solving instead for a margin on post-commission revenue — ``p·(1-c)`` —
+    yields a lower floor that quietly under-delivers: at 5% commission and a
+    requested 20%, the seller keeps 19% of what the buyer paid.
     """
     if req.unit_cost is None:
         return None
@@ -263,9 +267,11 @@ def _cost_floor(req: PricingRequest) -> _CostFloor | None:
             commission_pct = float(definition.get("commission_pct", 0.0))
             channel_name = definition.get("name")
 
-    keep = max(1.0 - commission_pct / 100.0, 0.01)
-    margin = max(1.0 - req.min_margin_pct / 100.0, 0.01)
-    floor = req.unit_cost / (keep * margin)
+    # Commission and margin together can exceed the price (a 40% margin on a
+    # 5% channel is fine; 90% is not). Clamping keeps the floor finite and
+    # positive — the schema caps margin at 90, so this is a guard, not a path.
+    keep = max(1.0 - (commission_pct + req.min_margin_pct) / 100.0, 0.01)
+    floor = req.unit_cost / keep
     return _CostFloor(
         floor=int(-(-floor // 100) * 100),  # round up: rounding down breaks the floor
         channel_name=channel_name,
@@ -274,9 +280,9 @@ def _cost_floor(req: PricingRequest) -> _CostFloor | None:
 
 
 def _net_margin_pct(price: int, cost: int, commission_pct: float) -> float:
-    """Margin on revenue actually kept at `price`, after commission."""
-    revenue = price * (1.0 - commission_pct / 100.0)
-    return round((revenue - cost) / revenue * 100.0, 1) if revenue > 0 else 0.0
+    """Profit at `price`, after commission and cost, as a share of that price."""
+    profit = price * (1.0 - commission_pct / 100.0) - cost
+    return round(profit / price * 100.0, 1) if price > 0 else 0.0
 
 
 #: Shopee runs a separate marketplace per country, at its own price level. The

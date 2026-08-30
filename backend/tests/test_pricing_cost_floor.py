@@ -1,9 +1,10 @@
 """The margin floor under a price recommendation.
 
 Following the market is only useful while it still pays. These tests pin the
-part that is easy to get subtly wrong: the channel takes its cut off revenue,
-so a floor computed from cost and margin alone is too low, and a seller who
-trusts it sells at a loss on every order.
+part that is easy to get subtly wrong: the channel's commission is a deduction
+from the same sticker price the margin is measured against, so a floor built
+from cost and margin alone is too low and quietly under-delivers on every
+order.
 """
 
 from __future__ import annotations
@@ -55,10 +56,12 @@ async def test_commission_raises_the_floor() -> None:
 
 @pytest.mark.asyncio
 async def test_the_floor_delivers_the_margin_it_promises() -> None:
-    """Priced at the floor, what the seller keeps must be the margin asked for.
+    """Priced at the floor, profit must be the requested share of that price.
 
-    This is the assertion that catches a markup-vs-margin mix-up: 80,000₫ at a
-    30% margin is ~114,286₫, not the 104,000₫ a markup on cost would give.
+    Margin is taken on the sticker price, matching market.py, so commission is
+    just another deduction: cost / (1 - commission - margin). Solving instead
+    for a margin on post-commission revenue lands ~1.3 points low here, which
+    a seller would never spot from the number alone.
     """
     result = await insights.recommend_price(
         PricingRequest(product_name="X", category="Mỹ phẩm", current_price=90_000,
@@ -66,8 +69,23 @@ async def test_the_floor_delivers_the_margin_it_promises() -> None:
     )
 
     assert result.price_floor is not None
-    revenue = result.price_floor * (1 - 0.05)
-    assert (revenue - 80_000) / revenue == pytest.approx(0.30, abs=0.01)
+    profit = result.price_floor * (1 - 0.05) - 80_000
+    assert profit / result.price_floor == pytest.approx(0.30, abs=0.01)
+
+
+@pytest.mark.asyncio
+async def test_worked_example_cost_520k_shopee_20pct() -> None:
+    """A hand-checkable case: 520,000₫ at 5% commission and a 20% margin.
+
+    520,000 / (1 - 0.05 - 0.20) = 693,333₫, rounded up to the next 100₫.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=600_000,
+                       unit_cost=520_000, min_margin_pct=20, channel="shopee")
+    )
+
+    assert result.price_floor == 693_400
+    assert result.margin_pct_at_recommended == pytest.approx(20.0, abs=0.1)
 
 
 @pytest.mark.asyncio

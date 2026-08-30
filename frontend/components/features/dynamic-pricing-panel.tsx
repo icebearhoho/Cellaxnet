@@ -54,6 +54,10 @@ const CHANNELS = [
   { id: "own", label: "Cửa hàng riêng", fee: "2%" },
 ] as const;
 
+/** Quick margin marks. 20% is the default: below that a marketplace fee plus
+ *  ads and returns can erase the profit entirely. */
+const MARGIN_PRESETS = [10, 15, 20, 25, 30] as const;
+
 type Category = (typeof CATEGORIES)[number];
 
 const CATEGORY_META = {
@@ -132,7 +136,7 @@ export function DynamicPricingPanel() {
   const [category, setCategory] = useState<Category>("Mỹ phẩm");
   const [price, setPrice] = useState("450000");
   const [cost, setCost] = useState("");
-  const [margin, setMargin] = useState(30);
+  const [margin, setMargin] = useState(20);
   const [channel, setChannel] = useState<string>("shopee");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PricingResult | null>(null);
@@ -378,15 +382,37 @@ export function DynamicPricingPanel() {
                       id={marginId}
                       type="range"
                       min={5}
-                      max={70}
-                      step={5}
+                      max={40}
+                      step={1}
                       value={margin}
                       onChange={(event) => setMargin(Number(event.target.value))}
                       className="mt-2 w-full accent-warning"
                     />
-                    <p className="mt-1.5 text-xs leading-5 text-text-muted">
-                      Tính trên giá bán: bán {VND.format(100000)} với biên {margin}% thì bạn giữ lại{" "}
-                      {VND.format(Math.round(100000 * margin / 100))}.
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {MARGIN_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setMargin(preset)}
+                          className={cn(
+                            "rounded-md border px-2 py-0.5 text-xs tnum transition-colors",
+                            margin === preset
+                              ? "border-warning bg-warning/10 text-warning"
+                              : "border-border text-text-muted hover:bg-surface-2",
+                          )}
+                        >
+                          {preset}%
+                        </button>
+                      ))}
+                    </div>
+                    {/* Naming what is *not* deducted matters more than what is:
+                        a seller reading "you keep 20%" will plan around it, and
+                        ads, vouchers, shipping support and returns come out of
+                        that 20% without ever appearing here. */}
+                    <p className="mt-2 text-xs leading-5 text-text-muted">
+                      Lợi nhuận sau giá vốn và phí sàn, tính trên giá bán. Chưa trừ quảng cáo,
+                      voucher, phí đóng gói, vận chuyển shop hỗ trợ hay hoàn hàng — hãy để biên
+                      cao hơn mức tối thiểu bạn cần.
                     </p>
                   </div>
 
@@ -661,7 +687,7 @@ export function DynamicPricingPanel() {
                       </span>
                       {result.margin_pct_at_recommended !== null && (
                         <span className="text-xs text-text-muted">
-                          Biên tại giá đề xuất:{" "}
+                          Lợi nhuận tại giá đề xuất:{" "}
                           <span className="tnum font-medium text-success">
                             {result.margin_pct_at_recommended}%
                           </span>
@@ -669,7 +695,7 @@ export function DynamicPricingPanel() {
                       )}
                       {result.channel_name && (
                         <span className="text-xs text-text-dim">
-                          đã trừ phí {result.channel_name} {result.channel_commission_pct}%
+                          sau giá vốn và phí {result.channel_name} {result.channel_commission_pct}%
                         </span>
                       )}
                     </div>
