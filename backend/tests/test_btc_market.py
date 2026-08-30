@@ -100,6 +100,8 @@ async def test_rationale_states_which_data_it_used(monkeypatch) -> None:
     )
 
     assert "Shopee" in observed.rationale and "4 nhà bán" in observed.rationale
+    # Vietnamese thousands separator, not Python's default comma.
+    assert "67.900₫" in observed.rationale
     assert "mô phỏng" in simulated.rationale
     assert "Shopee" not in simulated.rationale
 

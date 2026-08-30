@@ -234,6 +234,11 @@ async def detect_fake(req: FakeReviewRequest) -> FakeReviewResponse:
 # #02 Dynamic Pricing — comps-median baseline (same idea as
 # dynamic_pricing/src/02_recommend.py, using the demo catalog as comps).
 # ---------------------------------------------------------------------------
+def _vnd(amount: int) -> str:
+    """Vietnamese money formatting: 67.900₫, not the 67,900₫ Python defaults to."""
+    return f"{amount:,}".replace(",", ".") + "₫"
+
+
 @dataclass(frozen=True)
 class _PriceStats:
     """Percentiles plus where they came from, so the caller can label them."""
@@ -290,7 +295,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     else:
         shops = f" của {stats.shop_count} nhà bán" if stats.shop_count else ""
         basis = (
-            f"trung vị {stats.median:,}₫ từ {stats.sample_size} sản phẩm {req.category}"
+            f"trung vị {_vnd(stats.median)} từ {stats.sample_size} sản phẩm {req.category}"
             f"{shops} quan sát được trên Shopee (T7/2026)"
         )
 
@@ -301,13 +306,13 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         cur = req.current_price
         if cur > median * 1.3:
             recommended = round((cur + median * 1.1) / 2)
-            rationale = f"{cur:,}₫ cao hơn nhiều so với {basis} — đề xuất giảm để cạnh tranh hơn."
+            rationale = f"{_vnd(cur)} cao hơn nhiều so với {basis} — đề xuất giảm để cạnh tranh hơn."
         elif cur < median * 0.7:
             recommended = round((cur + median * 0.9) / 2)
-            rationale = f"{cur:,}₫ thấp hơn nhiều so với {basis} — có thể đang bán dưới giá, đề xuất tăng."
+            rationale = f"{_vnd(cur)} thấp hơn nhiều so với {basis} — có thể đang bán dưới giá, đề xuất tăng."
         else:
             recommended = round((cur + median) / 2)
-            rationale = f"{cur:,}₫ đã sát {basis} — chỉ cần tinh chỉnh nhẹ."
+            rationale = f"{_vnd(cur)} đã sát {basis} — chỉ cần tinh chỉnh nhẹ."
 
     return PricingResponse(
         recommended_price=int(recommended), low=int(min(p25, recommended)),
