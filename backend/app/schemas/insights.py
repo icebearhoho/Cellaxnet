@@ -118,6 +118,10 @@ class PricingResponse(BaseModel):
     #: Gap between the current price and the recommendation, for the headline.
     change_vnd: int | None = None
     change_pct: float | None = None
+    #: True when the suggestion is a large move from the current price. The
+    #: market says where the price could sit; nothing here says buyers will
+    #: follow it there, so a big jump is worth taking in steps.
+    large_move: bool = False
     #: True when no cost was supplied: the price can be placed against the
     #: market, but nothing here checked whether it earns anything.
     margin_unverified: bool = False

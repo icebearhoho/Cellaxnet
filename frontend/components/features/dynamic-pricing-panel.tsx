@@ -417,7 +417,7 @@ export function DynamicPricingPanel() {
                 <div className="mt-4 space-y-4 border-t border-border pt-4">
                   <div>
                     <label htmlFor={marginId} className="flex items-center justify-between text-sm font-medium text-text">
-                      <span>Biên lợi nhuận mong muốn</span>
+                      <span>Biên lợi nhuận tối thiểu</span>
                       <span className="tnum text-warning">{margin}%</span>
                     </label>
                     <input
@@ -598,6 +598,21 @@ export function DynamicPricingPanel() {
                   <p className="tnum mt-2 text-3xl font-semibold tracking-tight text-text sm:text-4xl">
                     {VND.format(result.recommended_price)}
                   </p>
+
+                  {/* The market says where the price could sit; nothing here
+                      says buyers will follow it there. A 51% jump deserves the
+                      caveat, and a midpoint to try it from. */}
+                  {result.large_move && submitted?.currentPrice && (
+                    <p className="mt-3 flex items-start gap-1.5 rounded-md bg-info/10 px-3 py-2 text-xs leading-5 text-info">
+                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      Mức điều chỉnh khá lớn ({result.change_pct && result.change_pct > 0 ? "+" : ""}
+                      {result.change_pct}%). Có thể thử{" "}
+                      <span className="tnum font-medium">
+                        {VND.format(Math.round((submitted.currentPrice + result.recommended_price) / 2000) * 1000)}
+                      </span>{" "}
+                      trước để xem phản ứng của khách trước khi đi hết mức đề xuất.
+                    </p>
+                  )}
 
                   {/* Silence is the dangerous case here: without a cost the
                       price is placed against competitors and nothing has

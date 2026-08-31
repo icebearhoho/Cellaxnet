@@ -474,3 +474,46 @@ async def test_a_cost_makes_the_recommendation_profit_checked() -> None:
     assert result.margin_unverified is False
     assert result.margin_pct_at_recommended is not None
     assert not any("chưa kiểm tra được" in r for r in result.reasons)
+
+
+@pytest.mark.asyncio
+async def test_a_large_move_is_flagged_as_one() -> None:
+    """The market says where the price could sit, not that buyers follow it.
+
+    Going from 183,000₫ to 277,000₫ is a 51% rise with no conversion history
+    behind it, so it is worth naming as a big step rather than presenting it
+    like a 3% correction.
+    """
+    big = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=100_000,
+                       unit_cost=80_000, min_margin_pct=35, channel="shopee")
+    )
+    small = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=190_000,
+                       unit_cost=80_000, min_margin_pct=35, channel="shopee")
+    )
+
+    assert big.large_move is True
+    assert small.large_move is False
+
+
+@pytest.mark.asyncio
+async def test_no_current_price_means_no_move_to_flag() -> None:
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", unit_cost=80_000,
+                       min_margin_pct=35, channel="shopee")
+    )
+
+    assert result.large_move is False
+
+
+@pytest.mark.asyncio
+async def test_reference_labels_share_one_vocabulary() -> None:
+    """They are points on a distribution, not three rival recommendations, so
+    they are named after where they sit rather than what they achieve."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000)
+    )
+
+    labels = [s.label for s in result.strategies]
+    assert labels == ["Nhóm giá thấp", "Trung vị thị trường", "Nhóm giá cao"]

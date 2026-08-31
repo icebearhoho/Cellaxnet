@@ -188,6 +188,9 @@ export type PricingResult = {
   direction: "raise" | "lower" | "keep" | "new";
   change_vnd: number | null;
   change_pct: number | null;
+  /** A large move from the current price — worth taking in steps, since the
+   *  market says where the price could sit, not that buyers will follow. */
+  large_move: boolean;
   /** No cost supplied, so nothing checked whether the price earns anything. */
   margin_unverified: boolean;
   /** Margin and per-unit profit at the current price, for the before/after. */

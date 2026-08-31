@@ -318,10 +318,13 @@ _StrategyKey = Literal["volume", "balanced", "margin"]
 #: models how quantity responds to price. Selling at p75 to two buyers earns
 #: less than selling at the median to a hundred, so calling p75 "maximum
 #: profit" states as fact what would need demand elasticity to know.
+#: One vocabulary across the three, so they read as points on a distribution
+#: rather than as three competing recommendations. "Giá cạnh tranh" was an
+#: interpretation of p25; "nhóm giá thấp" is what the number actually says.
 _STRATEGY_SPEC: tuple[tuple[_StrategyKey, str, str], ...] = (
-    ("volume", "Giá cạnh tranh", "Rẻ hơn khoảng 3/4 sản phẩm trên thị trường"),
-    ("balanced", "Ngang thị trường", "Sát mặt bằng chung của các sản phẩm tương tự"),
-    ("margin", "Giá cao", "Chỉ khoảng 1/4 thị trường bán đắt hơn mức này"),
+    ("volume", "Nhóm giá thấp", "Rẻ hơn khoảng 3/4 sản phẩm trên thị trường"),
+    ("balanced", "Trung vị thị trường", "Sát mặt bằng chung của các sản phẩm tương tự"),
+    ("margin", "Nhóm giá cao", "Chỉ khoảng 1/4 thị trường bán đắt hơn mức này"),
 )
 
 
@@ -603,6 +606,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         reasons=reasons,
         direction=direction, change_vnd=change_vnd, change_pct=change_pct,
         margin_unverified=req.unit_cost is None,
+        large_move=change_pct is not None and abs(change_pct) >= 25,
         margin_pct_now=margin_now,
         profit_per_unit_now=profit_now, profit_per_unit_at_recommended=profit_rec,
         strategies=_strategies(stats, cost_floor, req.unit_cost),
