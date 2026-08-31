@@ -368,3 +368,37 @@ async def test_strategy_names_describe_position_not_outcome() -> None:
     labels = " ".join(s.label for s in result.strategies)
     assert "Tối đa lợi nhuận" not in labels
     assert "Tăng doanh số" not in labels
+
+
+@pytest.mark.asyncio
+async def test_the_reasons_walk_from_market_to_floor_to_price() -> None:
+    """"Why 223,000₫ and not 210,000₫" is the question a price invites."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000,
+                       unit_cost=120_000, min_margin_pct=35, channel="shopee")
+    )
+
+    joined = " ".join(result.reasons)
+    assert "trung vị" in joined
+    assert "mức thấp nhất" in joined.lower()
+    assert "Biên lợi nhuận" in joined
+    assert len(result.reasons) >= 3
+
+
+@pytest.mark.asyncio
+async def test_a_floor_lifted_option_is_not_called_a_market_price() -> None:
+    """That number came from the seller's own costs, not from competitors.
+
+    Leaving "Giá cạnh tranh" on it would credit the market for a floor, and a
+    seller would read it as evidence about rivals rather than about themselves.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000,
+                       unit_cost=120_000, min_margin_pct=35, channel="shopee")
+    )
+
+    lifted = [s for s in result.strategies if s.lifted_by_floor]
+    assert lifted, "this cost should lift the cheap option onto the floor"
+    for strategy in lifted:
+        assert strategy.label == "Giá tối thiểu"
+        assert "cạnh tranh" not in strategy.label

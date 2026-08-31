@@ -181,6 +181,8 @@ export type PricingResult = {
   market_p75: number | null;
   /** Share of observed products at or below the seller's current price. */
   price_percentile: number | null;
+  /** The steps behind the price, in the order they constrained it. */
+  reasons: string[];
   /** Raise, lower or keep — the headline verdict. */
   direction: "raise" | "lower" | "keep";
   change_vnd: number | null;

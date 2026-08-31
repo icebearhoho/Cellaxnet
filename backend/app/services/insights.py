@@ -351,6 +351,12 @@ def _strategies(
             _net_margin_pct(price, unit_cost, cost_floor.commission_pct)
             if cost_floor is not None and unit_cost is not None else None
         )
+        if lifted:
+            # No longer a market position: this is the cost floor wearing the
+            # cheap option's slot, and calling it "competitive" would credit
+            # the market for a number that came from the seller's own costs.
+            label = "Giá tối thiểu"
+            goal = "Mức thấp nhất còn giữ được biên lợi nhuận mục tiêu"
         out.append(PriceStrategy(
             key=key, label=label, goal=goal, price=price, margin_pct=margin,
             percentile=stats.percentile_of(price) if stats.percentile_of else None,
@@ -540,12 +546,46 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             )
             profit_now = int(round(req.current_price * keep - req.unit_cost))
 
+    # The chain that produced the number, in the order it was constrained.
+    reasons: list[str] = []
+    if req.current_price:
+        side = "thấp hơn" if req.current_price < median else "cao hơn"
+        reasons.append(
+            f"Giá hiện tại {_vnd(req.current_price)} đang {side} trung vị thị trường "
+            f"{_vnd(int(median))}."
+        )
+    if cost_floor is not None:
+        fee = f" sau phí {cost_floor.channel_name}" if cost_floor.channel_name else ""
+        reasons.append(
+            f"Với giá vốn {_vnd(req.unit_cost or 0)} và mục tiêu biên "
+            f"{req.min_margin_pct:g}%{fee}, mức thấp nhất là {_vnd(cost_floor.floor)}."
+        )
+    if runway_days is not None and action == "clearance":
+        reasons.append(
+            f"Tồn kho còn đủ bán khoảng {runway_days:.0f} ngày nên đề xuất "
+            "hạ giá để quay vòng vốn."
+        )
+    if median:
+        gap = round((recommended - median) / median * 100)
+        where = f"vẫn thấp hơn trung vị thị trường khoảng {abs(gap)}%" if gap < 0 else (
+            f"cao hơn trung vị thị trường khoảng {gap}%" if gap > 0
+            else "ngang với trung vị thị trường"
+        )
+        reasons.append(f"Mức đề xuất {_vnd(int(recommended))} {where}.")
+    if margin_at_rec is not None and margin_now is not None:
+        reasons.append(
+            f"Biên lợi nhuận tăng từ {margin_now:g}% lên {margin_at_rec:g}%."
+            if margin_at_rec > margin_now else
+            f"Biên lợi nhuận giảm từ {margin_now:g}% xuống {margin_at_rec:g}%."
+        )
+
     return PricingResponse(
         recommended_price=int(recommended), low=int(min(p25, recommended)),
         high=int(max(p75, recommended)), category_median=int(median),
         sample_size=stats.sample_size, rationale=rationale,
         market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
         stock_runway_days=runway_days, price_action=action,
+        reasons=reasons,
         direction=direction, change_vnd=change_vnd, change_pct=change_pct,
         margin_pct_now=margin_now,
         profit_per_unit_now=profit_now, profit_per_unit_at_recommended=profit_rec,

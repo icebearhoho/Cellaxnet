@@ -6,6 +6,7 @@ import {
   BarChart3,
   Calculator,
   Check,
+  ChevronDown,
   ChevronsUpDown,
   CircleDollarSign,
   Database,
@@ -168,6 +169,7 @@ export function DynamicPricingPanel() {
   const [cost, setCost] = useState("");
   const [margin, setMargin] = useState(20);
   const [marginTouched, setMarginTouched] = useState(false);
+  const [showStrategies, setShowStrategies] = useState(false);
   const [channel, setChannel] = useState<string>("shopee");
   const [stockUnits, setStockUnits] = useState("");
   const [dailySales, setDailySales] = useState("");
@@ -729,62 +731,47 @@ export function DynamicPricingPanel() {
                   </div>
                 )}
 
-                <dl className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-info/20 bg-info/[0.035] p-4">
-                    <dt className="flex flex-col gap-2 text-xs text-text-muted">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-info/10 text-info">
-                        <CircleDollarSign className="h-4 w-4" aria-hidden="true" />
-                      </span>
-                      Giá hiện tại
-                    </dt>
-                    <dd className="tnum mt-2 text-sm font-semibold text-text">
-                      {submitted?.currentPrice ? VND.format(submitted.currentPrice) : "Chưa nhập"}
-                    </dd>
+                {/* The chain that produced the price. A number a seller cannot
+                    trace reads as a guess, and "why 223,000₫ and not 210,000₫"
+                    is the first thing they will ask. */}
+                {result.reasons.length > 0 && (
+                  <div className="rounded-lg border border-border bg-surface-2/40 px-5 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                      Vì sao là {VND.format(result.recommended_price)}?
+                    </p>
+                    <ul className="mt-3 space-y-2">
+                      {result.reasons.map((reason) => (
+                        <li key={reason} className="flex gap-2 text-sm leading-6 text-text-muted">
+                          <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
+                          <span>{reason}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="rounded-lg border border-success/20 bg-success/[0.035] p-4">
-                    <dt className="flex flex-col gap-2 text-xs text-text-muted">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-success/10 text-success">
-                        <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                      </span>
-                      Trung vị danh mục
-                    </dt>
-                    <dd className="mt-2">
-                      <span className="tnum text-sm font-semibold text-text">
-                        {VND.format(result.category_median)}
-                      </span>
-                      <span className="tnum ml-1.5 text-xs text-text-dim">
-                        /{result.sample_size} SP
-                      </span>
-                      <SourceBadge
-                        source={result.data_source}
-                        shopCount={result.shop_count}
-                        marketLabel={result.market_label}
-                      />
-                    </dd>
-                  </div>
-                  <div className="rounded-lg border border-warning/20 bg-warning/[0.035] p-4">
-                    <dt className="flex flex-col gap-2 text-xs text-text-muted">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-warning/10 text-warning">
-                        <MoveHorizontal className="h-4 w-4" aria-hidden="true" />
-                      </span>
-                      Biên giá tham khảo
-                    </dt>
-                    <dd className="tnum mt-2 text-sm font-semibold text-text">
-                      {VND.format(result.low)} – {VND.format(result.high)}
-                    </dd>
-                  </div>
-                </dl>
+                )}
 
                 {/* Pricing is a choice, and one number hides that. Three real
                     market positions make the trade visible: cheaper sells
                     faster, dearer earns more per unit. */}
                 {result.strategies.length > 0 && (
                   <div>
-                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    {/* Collapsed by default: these are evidence for the
+                        recommendation, not four recommendations. Shown at once
+                        they made the reader ask which number was the answer. */}
+                    <button
+                      type="button"
+                      onClick={() => setShowStrategies((v) => !v)}
+                      aria-expanded={showStrategies}
+                      className="flex items-center gap-2 text-xs font-medium text-text-muted transition-colors hover:text-text"
+                    >
                       <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                      Chọn hướng định giá
-                    </p>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      Các mức giá tham khảo khác
+                      <ChevronDown
+                        className={cn("h-3.5 w-3.5 transition-transform", showStrategies && "rotate-180")}
+                        aria-hidden="true"
+                      />
+                    </button>
+                    <div className={cn("mt-3 grid gap-2 sm:grid-cols-3", !showStrategies && "hidden")}>
                       {result.strategies.map((s) => {
                         const chosen = s.price === result.recommended_price;
                         return (

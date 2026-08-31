@@ -90,7 +90,9 @@ class PriceStrategy(BaseModel):
     #: Share of observed products priced at or below this, when known.
     percentile: int | None = None
     #: True when the margin floor lifted this option off its quartile — the
-    #: strategy cannot be had at that price without selling at a loss.
+    #: strategy cannot be had at that price without selling at a loss. The
+    #: label changes with it: a lifted option is a cost floor, not a market
+    #: position, and naming it after the market would misattribute the number.
     lifted_by_floor: bool = False
 
 
@@ -132,6 +134,10 @@ class PricingResponse(BaseModel):
     #: Three positions in the market, cheapest first. Same product, same
     #: floor — what changes is which end of the market it sits at.
     strategies: list[PriceStrategy] = []
+    #: The steps behind the recommendation, in the order they constrain it.
+    #: "Why 223,000₫ and not 210,000₫" is the question a price invites, and a
+    #: verdict that cannot answer it reads as a guess.
+    reasons: list[str] = []
     #: Days the stock lasts at the current rate; None without stock figures.
     stock_runway_days: float | None = None
     #: "clearance" when slow stock pulled the price down, "margin" when the
