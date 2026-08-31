@@ -434,16 +434,27 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             f"{shops} quan sát được trên {_market_label(stats.countries)} (T7/2026)"
         )
 
-    # The target is a property of the market, not of what the seller happens to
-    # charge today. Averaging the two — the previous rule — made the answer
-    # chase its own output: 183,000₫ produced 223,000₫, which produced
-    # 258,000₫, and so on up to the median, so a seller who accepted the advice
-    # was told to raise again on the next visit.
+    # Anchored to the market rather than to what the seller charges today.
+    # Averaging the two — the original rule — made the answer chase its own
+    # output: 183,000₫ produced 223,000₫, then 258,000₫, and so on up to the
+    # median, so accepting the advice produced more advice.
     #
-    # Sitting a little under the median is deliberate: the reference is a
-    # handful of shops, and against that much uncertainty the cheaper side of
-    # the estimate is the safer error.
+    # Slightly under the median: the reference is a handful of shops, and
+    # against that uncertainty the cheaper side is the safer error.
     recommended = round(median * 0.95)
+
+    # Cost still shapes the answer, not only veto it. A product costing
+    # 150,000₫ and one costing 90,000₫ should not be priced identically just
+    # because both floors sit under the market — the dearer one has less room
+    # and belongs higher up the range. Keeping a margin of headroom above the
+    # floor stays stable, because it depends on cost and market, never on the
+    # current price.
+    cost_floor = _cost_floor(req)
+    if cost_floor is not None:
+        recommended = max(recommended, round(cost_floor.floor * 1.12))
+        # Never past the top of the observed range: above p75 the reference has
+        # too little to say, and the floor below still applies.
+        recommended = min(recommended, max(p75, cost_floor.floor))
 
     if req.current_price is None:
         rationale = f"Chưa có giá hiện tại — lấy {basis}."
@@ -475,14 +486,19 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
 
     # The floor outranks the market: undercutting the competition at a loss is
     # not a cheaper price, it is a slower way to lose money.
-    cost_floor = _cost_floor(req)
-    floor_above_market = False
+    # A statement about the floor and the market, not about the suggestion:
+    # when cost demands more than the market pays, the seller needs to know
+    # that whatever the recommendation ended up being.
+    floor_above_market = cost_floor is not None and median < cost_floor.floor
     margin_at_rec: float | None = None
     if cost_floor is not None:
         assert req.unit_cost is not None  # _cost_floor returns None without it
-        if recommended < cost_floor.floor:
-            recommended = cost_floor.floor
-            floor_above_market = median < cost_floor.floor
+        recommended = max(recommended, cost_floor.floor)
+        if floor_above_market:
+            # Keyed on the floor beating the market, not on the floor beating
+            # the suggestion: the headroom rule may already have lifted the
+            # price past the floor, and the seller still needs to know the
+            # market cannot pay what this product costs.
             fee = (
                 f" sau phí {cost_floor.channel_name} {cost_floor.commission_pct:g}%"
                 if cost_floor.channel_name else ""
@@ -540,6 +556,21 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             f"Với giá vốn {_vnd(req.unit_cost or 0)} và mục tiêu biên "
             f"{req.min_margin_pct:g}%{fee}, mức thấp nhất là {_vnd(cost_floor.floor)}."
         )
+    if cost_floor is not None:
+        # Which constraint is actually binding. Without this a seller who
+        # raises their cost and sees the same price assumes the field was
+        # ignored, when the truth is that the market is still the tighter one.
+        if recommended <= round(median * 0.95) + 1:
+            reasons.append(
+                "Giá vốn hiện còn thấp so với mặt bằng thị trường, nên mức đề xuất "
+                "được quyết định bởi giá thị trường."
+            )
+        else:
+            reasons.append(
+                "Giá vốn cao nên mức đề xuất phải nhích lên so với mặt bằng thị trường "
+                "để giữ được biên lợi nhuận."
+            )
+
     if median:
         gap = round((recommended - median) / median * 100)
         where = f"vẫn thấp hơn trung vị thị trường khoảng {abs(gap)}%" if gap < 0 else (

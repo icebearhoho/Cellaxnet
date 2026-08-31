@@ -377,3 +377,55 @@ async def test_the_target_is_the_market_not_the_current_price() -> None:
     assert cheap.recommended_price == dear.recommended_price
     assert cheap.direction == "raise"
     assert dear.direction == "lower"
+
+
+@pytest.mark.asyncio
+async def test_a_dearer_product_is_priced_higher() -> None:
+    """Cost shapes the price, it does not merely veto it.
+
+    Anchoring purely to the market made every product with a floor below the
+    median get the same suggestion, so a seller who corrected their cost saw
+    nothing move and assumed the field was ignored.
+    """
+    cheap = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Thời trang", unit_cost=90_000,
+                       min_margin_pct=49, channel="shopee")
+    )
+    dear = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Thời trang", unit_cost=150_000,
+                       min_margin_pct=49, channel="shopee")
+    )
+
+    assert dear.recommended_price > cheap.recommended_price
+    assert dear.price_floor is not None and cheap.price_floor is not None
+    assert dear.recommended_price >= dear.price_floor
+
+
+@pytest.mark.asyncio
+async def test_the_reasons_name_the_binding_constraint() -> None:
+    """When cost is low the market decides, and the panel has to say so —
+    otherwise an unchanged price reads as an ignored input."""
+    market_bound = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Thời trang", unit_cost=20_000,
+                       min_margin_pct=30, channel="shopee")
+    )
+    cost_bound = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Thời trang", unit_cost=150_000,
+                       min_margin_pct=49, channel="shopee")
+    )
+
+    assert any("quyết định bởi giá thị trường" in r for r in market_bound.reasons)
+    assert any("Giá vốn cao" in r for r in cost_bound.reasons)
+
+
+@pytest.mark.asyncio
+async def test_cost_never_pushes_past_the_top_of_the_market() -> None:
+    """Above p75 the reference has too little to say, so the floor governs
+    alone rather than the headroom rule compounding on top of it."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Thời trang", unit_cost=250_000,
+                       min_margin_pct=49, channel="shopee")
+    )
+
+    assert result.price_floor is not None
+    assert result.recommended_price == max(result.market_p75 or 0, result.price_floor)
