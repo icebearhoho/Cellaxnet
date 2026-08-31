@@ -161,7 +161,9 @@ function markerPosition(value: number, low: number, high: number): number {
 export function DynamicPricingPanel() {
   const [name, setName] = useState("Serum Vitamin C 15%");
   const [category, setCategory] = useState<Category>("Mỹ phẩm");
-  const [price, setPrice] = useState("450000");
+  // Empty, not pre-filled: a seeded price is submitted as if the seller typed
+  // it, and the whole point of the field is their own number.
+  const [price, setPrice] = useState("");
   const [cost, setCost] = useState("");
   const [margin, setMargin] = useState(20);
   const [marginTouched, setMarginTouched] = useState(false);
