@@ -167,6 +167,7 @@ export function DynamicPricingPanel() {
   const [margin, setMargin] = useState(20);
   const [marginTouched, setMarginTouched] = useState(false);
   const [showStrategies, setShowStrategies] = useState(false);
+  const [showReasons, setShowReasons] = useState(false);
   const [channel, setChannel] = useState<string>("shopee");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PricingResult | null>(null);
@@ -584,46 +585,19 @@ export function DynamicPricingPanel() {
               <div className="space-y-5" aria-live="polite">
                 {/* The verdict, then what it buys. A seller who reads only the
                     first line should already know what to do. */}
-                <div className={cn(
-                  "rounded-lg border p-5 sm:p-6",
-                  result.direction === "raise" ? "border-success/30 bg-success/[0.04]"
-                    : result.direction === "lower" ? "border-warning/30 bg-warning/[0.04]"
-                    : "border-border bg-surface-2/40",
-                )}>
-                  <p className={cn(
-                    "text-xs font-semibold uppercase tracking-wider",
-                    result.direction === "raise" ? "text-success"
-                      : result.direction === "lower" ? "text-warning"
-                      : "text-text-muted",
-                  )}>
-                    {result.direction === "raise" ? "Nên tăng giá"
-                      : result.direction === "lower" ? "Nên giảm giá"
-                      : result.direction === "new"
-                        ? (result.margin_unverified ? "Giá tham khảo theo thị trường" : "Giá đề xuất cho sản phẩm mới")
-                        : "Giá hiện tại đã hợp lý"}
+                {/* Neutral now that the heading no longer names a direction:
+                    a green card above a plain "Giá đề xuất" was signalling
+                    something the words no longer said. */}
+                <div className="rounded-lg border border-accent/25 bg-accent/[0.03] p-5 sm:p-6">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-accent">
+                    Giá đề xuất
                   </p>
 
-                  <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="tnum text-3xl font-semibold tracking-tight text-text sm:text-4xl">
-                      {VND.format(result.recommended_price)}
-                    </span>
-                    {submitted?.currentPrice && result.change_pct !== null && (
-                      <span className="tnum text-sm text-text-muted">
-                        từ {VND.format(submitted.currentPrice)}
-                        {result.change_vnd !== null && (
-                          <span className={cn(
-                            "ml-2 font-medium",
-                            result.change_vnd > 0 ? "text-success" : "text-warning",
-                          )}>
-                            {result.change_vnd > 0 ? "+" : ""}{VND.format(result.change_vnd)}
-                            {" "}({result.change_pct > 0 ? "+" : ""}{result.change_pct}%)
-                          </span>
-                        )}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-3 text-sm leading-6 text-text-muted">{result.rationale}</p>
+                  {/* The move is in the impact table below, where it sits
+                      beside what it does to margin. */}
+                  <p className="tnum mt-2 text-3xl font-semibold tracking-tight text-text sm:text-4xl">
+                    {VND.format(result.recommended_price)}
+                  </p>
 
                   {/* Silence is the dangerous case here: without a cost the
                       price is placed against competitors and nothing has
@@ -693,10 +667,22 @@ export function DynamicPricingPanel() {
                     is the first thing they will ask. */}
                 {result.reasons.length > 0 && (
                   <div className="rounded-lg border border-border bg-surface-2/40 px-5 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                      Vì sao là {VND.format(result.recommended_price)}?
-                    </p>
-                    <ul className="mt-3 space-y-2">
+                    {/* Collapsed: the reasoning answers a question, and a
+                        reader who is not asking it should not have to scroll
+                        past four lines of arithmetic to reach the rest. */}
+                    <button
+                      type="button"
+                      onClick={() => setShowReasons((v) => !v)}
+                      aria-expanded={showReasons}
+                      className="flex w-full items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted transition-colors hover:text-text"
+                    >
+                      <span>Vì sao là {VND.format(result.recommended_price)}?</span>
+                      <ChevronDown
+                        className={cn("h-3.5 w-3.5 shrink-0 transition-transform", showReasons && "rotate-180")}
+                        aria-hidden="true"
+                      />
+                    </button>
+                    <ul className={cn("mt-3 space-y-2", !showReasons && "hidden")}>
                       {result.reasons.map((reason) => (
                         <li key={reason} className="flex gap-2 text-sm leading-6 text-text-muted">
                           <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
