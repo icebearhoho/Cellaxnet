@@ -168,10 +168,83 @@ def risk_portfolio() -> dict:
     rows.sort(key=lambda r: r["value_at_stake_vnd"], reverse=True)
     return {
         "customers": rows,
+        "groups": _action_groups(rows),
         "total": len(rows),
         "needs_action_count": sum(1 for r in rows if r["lead_band"] == "high"),
         "total_at_stake_vnd": sum(r["value_at_stake_vnd"] for r in rows),
     }
+
+
+#: Groups defined by the work they imply, not by severity. Severity alone put
+#: 48 customers in one "medium" bucket needing two different things — an email
+#: for the 30 drifting away, a size guide for the 18 likely to send an order
+#: back — so a single suggested action for that bucket would be wrong for one
+#: of them. Keyed on (lead_kind, lead_band), which is what decides the action.
+_ACTION_GROUPS: tuple[dict, ...] = (
+    {
+        "key": "win_back",
+        "label": "Cần giữ chân gấp",
+        "tone": "danger",
+        "traits": "Khách giá trị cao đang có dấu hiệu rời đi — mất họ là mất cả quan hệ, không chỉ một đơn.",
+        "action": "Gửi ưu đãi giữ chân (giảm giá hoặc miễn phí vận chuyển) ngay tuần này.",
+        "match": lambda r: r["lead_kind"] == "churn" and r["lead_band"] == "high",
+    },
+    {
+        "key": "nurture",
+        "label": "Nên nhắc lại",
+        "tone": "warning",
+        "traits": "Tần suất mua đang chậm lại nhưng chưa rời hẳn — còn kịp kéo về.",
+        "action": "Gửi email gợi ý sản phẩm theo lịch sử mua của từng khách.",
+        "match": lambda r: r["lead_kind"] == "churn" and r["lead_band"] == "medium",
+    },
+    {
+        "key": "size_help",
+        "label": "Cần tư vấn trước khi giao",
+        "tone": "warning",
+        "traits": "Đơn có nguy cơ bị trả lại: hàng phụ thuộc size, mua vội, hoặc khách mua lần đầu.",
+        "action": "Kèm bảng size và hướng dẫn sử dụng vào phiếu giao hàng.",
+        "match": lambda r: r["lead_kind"] == "return" and r["lead_band"] in {"high", "medium"},
+    },
+    {
+        "key": "steady",
+        "label": "Ổn định",
+        "tone": "success",
+        "traits": "Mua đều, không có tín hiệu bất thường.",
+        "action": "Chưa cần can thiệp — tiếp tục chăm sóc như hiện tại.",
+        "match": lambda r: True,
+    },
+)
+
+
+def _action_groups(rows: list[dict]) -> list[dict]:
+    """Assign each customer to the first group that claims them.
+
+    Order matters: the groups are tried top to bottom and "steady" matches
+    anything, so it must stay last as the catch-all.
+    """
+    counts: dict[str, int] = {g["key"]: 0 for g in _ACTION_GROUPS}
+    stakes: dict[str, int] = {g["key"]: 0 for g in _ACTION_GROUPS}
+
+    for row in rows:
+        for group in _ACTION_GROUPS:
+            if group["match"](row):
+                row["group_key"] = group["key"]
+                counts[group["key"]] += 1
+                stakes[group["key"]] += row["value_at_stake_vnd"]
+                break
+
+    return [
+        {
+            "key": g["key"],
+            "label": g["label"],
+            "tone": g["tone"],
+            "traits": g["traits"],
+            "action": g["action"],
+            "count": counts[g["key"]],
+            "value_at_stake_vnd": stakes[g["key"]],
+        }
+        for g in _ACTION_GROUPS
+    ]
 
 
 async def journey_sessions() -> dict:

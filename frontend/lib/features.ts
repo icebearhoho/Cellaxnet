@@ -333,9 +333,24 @@ export type RiskRow = {
   /** Money exposed if this goes unhandled — lifetime value for churn, the
    *  order for a return. This is what the queue is sorted by. */
   value_at_stake_vnd: number;
+  /** Which action group this customer fell into. */
+  group_key: string;
 };
+/** A cohort defined by the work it implies, not by severity: one group, one
+ *  suggested action that is correct for everyone in it. */
+export type RiskGroup = {
+  key: string;
+  label: string;
+  tone: "danger" | "warning" | "success";
+  traits: string;
+  action: string;
+  count: number;
+  value_at_stake_vnd: number;
+};
+
 export type RiskPortfolio = {
   customers: RiskRow[];
+  groups: RiskGroup[];
   total: number;
   needs_action_count: number;
   total_at_stake_vnd: number;

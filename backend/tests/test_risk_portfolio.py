@@ -87,3 +87,45 @@ def test_advice_is_written_in_the_language_of_the_ui() -> None:
         assert not any(
             word in action for word in ("Send", "Nurture", "Proactively", "Include")
         ), action
+
+
+def test_every_customer_lands_in_exactly_one_group() -> None:
+    data = portfolio.risk_portfolio()
+    counts = {g["key"]: g["count"] for g in data["groups"]}
+
+    assert sum(counts.values()) == data["total"]
+    assert all(r.get("group_key") in counts for r in data["customers"])
+
+
+def test_a_group_implies_one_action_not_a_severity_band() -> None:
+    """Severity alone put 48 customers in one bucket needing two different
+    things — an email for those drifting away, a size guide for those likely to
+    return an order. Grouping by the work makes the header action correct for
+    everyone under it.
+
+    Only the groups that ask for work are checked: "steady" exists to say
+    nothing is needed, and its members carry two equivalent phrasings of that.
+    """
+    data = portfolio.risk_portfolio()
+    by_group: dict[str, set[str]] = {}
+    for row in data["customers"]:
+        if row["lead_action"] and row["group_key"] != "steady":
+            by_group.setdefault(row["group_key"], set()).add(row["lead_action"])
+
+    assert by_group, "some group should ask for work"
+    for key, actions in by_group.items():
+        assert len(actions) == 1, f"{key} mixes {len(actions)} actions"
+
+
+def test_the_urgent_group_is_the_smallest_one() -> None:
+    """A queue where everything is urgent is not a queue."""
+    data = portfolio.risk_portfolio()
+    urgent = next(g for g in data["groups"] if g["key"] == "win_back")
+
+    assert 0 < urgent["count"] < data["total"] * 0.1
+
+
+def test_group_stakes_add_up_to_the_headline() -> None:
+    data = portfolio.risk_portfolio()
+
+    assert sum(g["value_at_stake_vnd"] for g in data["groups"]) == data["total_at_stake_vnd"]
