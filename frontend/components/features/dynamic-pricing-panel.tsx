@@ -410,7 +410,7 @@ export function DynamicPricingPanel() {
               </div>
               <p id={`${costId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
                 Không có giá vốn, hệ thống chỉ so được với thị trường — không biết mức giá
-                đề xuất có đảm bảo lợi nhuận hay không.
+                tham khảo có đảm bảo lợi nhuận hay không.
               </p>
 
               {cost && (
@@ -504,7 +504,7 @@ export function DynamicPricingPanel() {
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
               {!busy && <Calculator className="h-4 w-4" aria-hidden="true" />}
-              {busy ? "Đang lấy dữ liệu giá…" : result ? "Cập nhật đề xuất" : "Xem giá đề xuất"}
+              {busy ? "Đang lấy dữ liệu giá…" : result ? "Cập nhật giá tham khảo" : "Xem giá tham khảo"}
             </Button>
 
             <p className="text-center text-xs text-text-dim">
@@ -551,7 +551,7 @@ export function DynamicPricingPanel() {
                 <div className="flex gap-3">
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger" aria-hidden="true" />
                   <div>
-                    <p className="font-medium text-text">Không thể lấy giá đề xuất</p>
+                    <p className="font-medium text-text">Không thể lấy giá tham khảo</p>
                     <p className="mt-1 text-sm leading-6 text-text-muted">{error}</p>
                     <Button type="button" variant="secondary" size="sm" className="mt-4 rounded-lg" onClick={() => run()}>
                       <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> Thử lại
@@ -568,12 +568,12 @@ export function DynamicPricingPanel() {
                   <div>
                     <p className="text-sm font-medium text-text">Chưa có kết quả</p>
                     <p className="mt-1 text-sm leading-6 text-text-muted">
-                      Điền thông tin sản phẩm và chọn “Xem giá đề xuất”.
+                      Điền thông tin sản phẩm và chọn “Xem giá tham khảo”.
                     </p>
                   </div>
                 </div>
                 <dl className="divide-y divide-border px-5">
-                  {["Giá đề xuất", "Khoảng giá tham khảo", "Trung vị danh mục"].map((label) => (
+                  {["Giá tham khảo", "Khoảng giá thị trường", "Trung vị danh mục"].map((label) => (
                     <div key={label} className="flex items-center justify-between gap-4 py-4">
                       <dt className="text-sm text-text-muted">{label}</dt>
                       <dd className="tnum text-sm font-medium text-text-dim">—</dd>
@@ -586,11 +586,11 @@ export function DynamicPricingPanel() {
                 {/* The verdict, then what it buys. A seller who reads only the
                     first line should already know what to do. */}
                 {/* Neutral now that the heading no longer names a direction:
-                    a green card above a plain "Giá đề xuất" was signalling
+                    a green card above a plain "Giá tham khảo" was signalling
                     something the words no longer said. */}
                 <div className="rounded-lg border border-accent/25 bg-accent/[0.03] p-5 sm:p-6">
                   <p className="text-xs font-semibold uppercase tracking-wider text-accent">
-                    Giá đề xuất
+                    Giá tham khảo
                   </p>
 
                   {/* The move is in the impact table below, where it sits
@@ -610,7 +610,7 @@ export function DynamicPricingPanel() {
                       <span className="tnum font-medium">
                         {VND.format(Math.round((submitted.currentPrice + result.recommended_price) / 2000) * 1000)}
                       </span>{" "}
-                      trước để xem phản ứng của khách trước khi đi hết mức đề xuất.
+                      trước để xem phản ứng của khách trước khi đi hết mức tham khảo.
                     </p>
                   )}
 
@@ -644,7 +644,7 @@ export function DynamicPricingPanel() {
                         <tr className="border-b border-border text-2xs uppercase tracking-wider text-text-dim">
                           <th className="px-4 py-2 text-left font-medium">Nếu áp dụng</th>
                           <th className="px-4 py-2 text-right font-medium">Hiện tại</th>
-                          <th className="px-4 py-2 text-right font-medium">Đề xuất</th>
+                          <th className="px-4 py-2 text-right font-medium">Tham khảo</th>
                         </tr>
                       </thead>
                       <tbody className="tnum">

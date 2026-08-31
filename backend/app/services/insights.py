@@ -509,7 +509,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             rationale = (
                 f"{basis[0].upper()}{basis[1:]} thấp hơn giá vốn cho phép. Để giữ biên "
                 f"{req.min_margin_pct:g}%{fee}, giá thấp nhất là {_vnd(cost_floor.floor)} — "
-                f"đề xuất giữ ở mức này thay vì chạy theo thị trường."
+                f"nên giữ ở mức này thay vì chạy theo thị trường."
             )
         margin_at_rec = _net_margin_pct(
             int(recommended), req.unit_cost, cost_floor.commission_pct
@@ -565,7 +565,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         # anything. A seller whose cost is 230,000₫ would be advised to sell
         # at a loss with no warning.
         reasons.append(
-            "Chưa có giá vốn nên mức đề xuất chỉ dựa trên thị trường — "
+            "Chưa có giá vốn nên mức tham khảo chỉ dựa trên thị trường — "
             "chưa kiểm tra được có đảm bảo lợi nhuận hay không."
         )
 
@@ -575,12 +575,12 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         # ignored, when the truth is that the market is still the tighter one.
         if recommended <= round(median * 0.95) + 1:
             reasons.append(
-                "Giá vốn hiện còn thấp so với mặt bằng thị trường, nên mức đề xuất "
+                "Giá vốn hiện còn thấp so với mặt bằng thị trường, nên mức tham khảo "
                 "được quyết định bởi giá thị trường."
             )
         else:
             reasons.append(
-                "Giá vốn cao nên mức đề xuất phải nhích lên so với mặt bằng thị trường "
+                "Giá vốn cao nên mức tham khảo phải nhích lên so với mặt bằng thị trường "
                 "để giữ được biên lợi nhuận."
             )
 
@@ -590,7 +590,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             f"cao hơn trung vị thị trường khoảng {gap}%" if gap > 0
             else "ngang với trung vị thị trường"
         )
-        reasons.append(f"Mức đề xuất {_vnd(int(recommended))} {where}.")
+        reasons.append(f"Mức tham khảo {_vnd(int(recommended))} {where}.")
     if margin_at_rec is not None and margin_now is not None:
         reasons.append(
             f"Biên lợi nhuận tăng từ {margin_now:g}% lên {margin_at_rec:g}%."
