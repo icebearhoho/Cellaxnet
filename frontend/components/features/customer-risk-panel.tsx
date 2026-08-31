@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, RefreshCw, UserMinus, Search, MessageCircle, Ruler } from "lucide-react";
+import { Loader2, RefreshCw, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,23 +9,18 @@ import {
   getRiskPortfolio,
   type RiskPortfolio,
   type RiskRow,
-  type RiskBand,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
-/* Phần 1 — Bảng điều phối: ai cần cứu trước, vì lý do gì              */
+/* Hàng đợi xử lý: ai cần can thiệp trước, và làm gì                    */
 /* ------------------------------------------------------------------ */
 
-/** Ba loại rủi ro, kèm việc cần làm khi loại đó ở mức cao.
+/** Mức khẩn của một khách — cũng là nhóm họ thuộc về.
  *
- *  Mỗi loại có một màu riêng (violet / xanh / hổ phách) để ba cột trong bảng
- *  phân biệt được ngay từ cái liếc đầu tiên. Đậm nhạt trong cùng một màu mới
- *  là mức độ: cao thì đặc và có chữ đậm, thấp thì mờ hẳn đi. Tách vai trò như
- *  vậy để "cột nào" và "gấp đến đâu" không tranh nhau cùng một tín hiệu. */
-
-/** Mức rủi ro của một khách = mức *nặng nhất* trong ba loại họ đang dính.
- *  Nhờ vậy mỗi khách thuộc đúng một nhóm, ba nhóm cộng lại bằng tổng số khách. */
+ *  Lấy theo rủi ro dẫn dắt (rời bỏ hoặc hoàn trả), nên mỗi khách nằm đúng một
+ *  nhóm và ba nhóm cộng lại bằng tổng số khách. Ba ô phần trăm ở đầu bảng
+ *  chính là ba nhóm này, bấm vào để lọc danh sách bên dưới. */
 type RiskLevel = "high" | "medium" | "low";
 
 function levelOf(row: RiskRow): RiskLevel {
@@ -50,10 +45,12 @@ const SPREAD_LEVELS = [
 ];
 
 function RiskSpread({
-  spread, total,
+  spread, total, focus, onFocus,
 }: {
   spread: { high: number; medium: number; low: number };
   total: number;
+  focus: RiskLevel | "all";
+  onFocus: (level: RiskLevel | "all") => void;
 }) {
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
 
@@ -101,26 +98,43 @@ function RiskSpread({
 
       {/* Ba ô bằng nhau, mỗi ô nền nhạt theo màu nhóm — nhãn và số canh giữa
           nên ba cột thẳng hàng nhau theo cả chiều ngang lẫn dọc. */}
+      {/* The three shares are the list's own filters. Reading "3% at risk" and
+          then hunting for those customers elsewhere is a step the number itself
+          can take. Selecting one narrows the table; selecting it again clears. */}
       <div className="mt-3 grid grid-cols-3 gap-2">
-        {SPREAD_LEVELS.map((lv, i) => (
-          <div
-            key={lv.key}
-            className={cn(
-              "flex flex-col items-center gap-1.5 rounded-lg border px-2 py-3",
-              lv.cell,
-            )}
-          >
-            <div className="flex items-center gap-1.5">
-              <span className={cn("h-2 w-2 shrink-0 rounded-full", lv.dot)} aria-hidden="true" />
-              <span className="truncate text-2xs font-medium uppercase tracking-wider text-text-muted">
-                {lv.label}
-              </span>
-            </div>
-            <div className={cn("tnum text-2xl font-semibold leading-none tracking-tight", lv.text)}>
-              {wholePct[i]}%
-            </div>
-          </div>
-        ))}
+        {SPREAD_LEVELS.map((lv, i) => {
+          const active = focus === lv.key;
+          return (
+            <button
+              key={lv.key}
+              type="button"
+              onClick={() => onFocus(active ? "all" : lv.key)}
+              aria-pressed={active}
+              className={cn(
+                "flex flex-col items-center gap-1.5 rounded-lg border px-2 py-3 text-center",
+                "transition-colors hover:brightness-[0.97] focus-visible:outline-none",
+                "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1",
+                "focus-visible:ring-offset-bg-alt",
+                lv.cell,
+                active && "ring-2 ring-current",
+                active ? lv.text : undefined,
+              )}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className={cn("h-2 w-2 shrink-0 rounded-full", lv.dot)} aria-hidden="true" />
+                <span className="truncate text-2xs font-medium uppercase tracking-wider text-text-muted">
+                  {lv.label}
+                </span>
+              </div>
+              <div className={cn("tnum text-2xl font-semibold leading-none tracking-tight", lv.text)}>
+                {wholePct[i]}%
+              </div>
+              <div className="tnum text-2xs text-text-dim">
+                {spread[lv.key]} khách
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -224,9 +238,16 @@ function RiskPortfolioTable() {
         ) : (
           <div className="space-y-5">
             {/* Phân bố mức rủi ro trên toàn bộ khách hàng */}
-            <RiskSpread spread={spread} total={portfolio.total} />
+            <RiskSpread
+              spread={spread}
+              total={portfolio.total}
+              focus={focus}
+              onFocus={setFocus}
+            />
 
-            {/* Bảng tra cứu — lọc theo mức rủi ro, cùng ba nhóm với dashboard */}
+            {/* Clearing the filter and searching. The three shares above do the
+                filtering, so repeating them as chips here would be two controls
+                for one job. */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="inline-flex flex-wrap gap-1.5">
                 <button
@@ -239,27 +260,12 @@ function RiskPortfolioTable() {
                 >
                   Tất cả {rows.length}
                 </button>
-                {SPREAD_LEVELS.map((lv) => (
-                  <button
-                    key={lv.key}
-                    type="button"
-                    onClick={() => setFocus(lv.key)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                      focus === lv.key ? lv.chip : "bg-surface-2 text-text-muted hover:text-text",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "h-2 w-2 shrink-0 rounded-full",
-                        focus === lv.key ? lv.dot : "bg-current opacity-40",
-                      )}
-                      aria-hidden="true"
-                    />
-                    {lv.label}
-                    <span className="tnum opacity-70">{spread[lv.key]}</span>
-                  </button>
-                ))}
+                {focus !== "all" && (
+                  <span className="inline-flex items-center rounded-full bg-surface-2 px-3 py-1.5 text-xs text-text-muted">
+                    Đang lọc: {SPREAD_LEVELS.find((lv) => lv.key === focus)?.label}
+                    <span className="tnum ml-1.5 opacity-70">{spread[focus as RiskLevel]}</span>
+                  </span>
+                )}
               </div>
               <div className="relative sm:w-64">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-dim" />
@@ -284,7 +290,6 @@ function RiskPortfolioTable() {
                     <thead>
                       <tr className="border-b border-border text-2xs uppercase tracking-wider text-text-dim">
                         <th className="py-2 pr-3 font-medium">Khách hàng</th>
-                        <th className="border-l border-border/60 px-3 py-2 font-medium">Vấn đề</th>
                         <th className="border-l border-border/60 px-3 py-2 font-medium">Nên làm</th>
                         <th className="border-l border-border/60 px-3 py-2 text-right font-medium">
                           Giá trị có nguy cơ
@@ -323,38 +328,27 @@ function RiskPortfolioTable() {
                             </div>
                           </td>
 
-                          {/* The risk, named, with the score as supporting detail
-                              rather than the headline — a percentage cannot be
-                              acted on, a reason can. */}
+                          {/* Action first. The risk keeps a one-word chip so the
+                              advice is traceable — "send a win-back offer" with
+                              no cause is guesswork — but the driver text is gone:
+                              a seller acts on the instruction, not the diagnosis. */}
                           <td className="border-l border-border/60 px-3 py-3 align-top">
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <div className="text-xs leading-5 text-text">
+                              {c.lead_action ?? "—"}
+                            </div>
+                            {c.lead_label && (
                               <span
                                 className={cn(
-                                  "rounded-md px-1.5 py-0.5 text-2xs font-medium",
+                                  "mt-1.5 inline-block rounded-md px-1.5 py-0.5 text-2xs font-medium",
                                   level === "high" ? "bg-danger/10 text-danger"
                                     : level === "medium" ? "bg-warning/10 text-warning"
                                     : "bg-surface-3 text-text-dim",
                                 )}
                               >
-                                {c.lead_label ?? "—"}
+                                {c.lead_label}
+                                {c.lead_risk !== null && ` ${Math.round(c.lead_risk * 100)}%`}
                               </span>
-                              {c.lead_risk !== null && (
-                                <span className="tnum text-2xs text-text-dim">
-                                  {Math.round(c.lead_risk * 100)}%
-                                </span>
-                              )}
-                            </div>
-                            {c.lead_reason && (
-                              <div className="mt-1 text-2xs leading-4 text-text-muted">
-                                {c.lead_reason}
-                              </div>
                             )}
-                          </td>
-
-                          <td className="border-l border-border/60 px-3 py-3 align-top">
-                            <span className="text-xs leading-5 text-text-muted">
-                              {c.lead_action ?? "—"}
-                            </span>
                           </td>
 
                           <td className="border-l border-border/60 px-3 py-3 text-right align-top">
