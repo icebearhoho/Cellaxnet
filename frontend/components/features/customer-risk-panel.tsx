@@ -166,7 +166,6 @@ function RiskPortfolioTable() {
                       <span className="min-w-0 truncate text-xs text-text-muted" title={g.label}>
                         {g.label}
                       </span>
-                      <span className="tnum ml-auto text-xs text-text-dim">{g.count}</span>
                     </li>
                   ))}
                 </ul>
