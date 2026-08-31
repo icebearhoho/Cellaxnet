@@ -193,11 +193,6 @@ export type PricingResult = {
   profit_per_unit_at_recommended: number | null;
   /** Three market positions, cheapest first. */
   strategies: PriceStrategy[];
-  /** Days the stock lasts at the current rate; null without stock figures. */
-  stock_runway_days: number | null;
-  /** "clearance" when slow stock pulled the price down, "margin" when the
-   *  floor held it up. */
-  price_action: "clearance" | "margin" | null;
   /** Lowest price that still clears the margin after commission; null without a cost. */
   price_floor: number | null;
   margin_pct_at_recommended: number | null;
@@ -219,10 +214,6 @@ export type PricingCost = {
   unitCost?: number;
   minMarginPct?: number;
   channel?: string;
-  /** Units on hand and how fast they sell — together they give the runway
-   *  that decides whether stock is worth clearing. */
-  stockUnits?: number;
-  dailySales?: number;
 };
 
 export async function recommendPrice(
@@ -238,8 +229,6 @@ export async function recommendPrice(
       // Only sent alongside a cost — the backend default applies otherwise.
       ...(cost?.unitCost ? { min_margin_pct: cost.minMarginPct ?? 20 } : {}),
       channel: cost?.channel ?? null,
-      stock_units: cost?.stockUnits ?? null,
-      daily_sales: cost?.dailySales ?? null,
     });
     return { ok: true, data: response.data as PricingResult };
   } catch (error) {

@@ -46,11 +46,6 @@ class FakeReviewResponse(BaseModel):
 #: observed median must never be presented as a simulated one, or the reverse.
 PriceSource = Literal["demo", "btc_live", "btc_snapshot"]
 
-#: Which force last moved the price: slow stock pulling it down, or the margin
-#: floor holding it up. The floor always wins when both apply.
-PriceAction = Literal["clearance", "margin"]
-
-
 class PricingRequest(BaseModel):
     product_name: str = Field(min_length=1, max_length=200)
     category: Literal["Thời trang", "Mỹ phẩm", "Phụ kiện"]
@@ -64,11 +59,6 @@ class PricingRequest(BaseModel):
     min_margin_pct: float = Field(default=20.0, ge=0, le=90)
     #: Selling channel, for its commission. Unknown ids fall back to no fee.
     channel: str | None = Field(default=None, max_length=32)
-    #: Units on hand and the rate they sell at. Together they say how long the
-    #: stock will last, which is what decides whether to clear it — a discount
-    #: on stock that turns over in a fortnight just gives away margin.
-    stock_units: int | None = Field(default=None, ge=0)
-    daily_sales: float | None = Field(default=None, ge=0)
 
 
 class PriceStrategy(BaseModel):
@@ -138,11 +128,6 @@ class PricingResponse(BaseModel):
     #: "Why 223,000₫ and not 210,000₫" is the question a price invites, and a
     #: verdict that cannot answer it reads as a guess.
     reasons: list[str] = []
-    #: Days the stock lasts at the current rate; None without stock figures.
-    stock_runway_days: float | None = None
-    #: "clearance" when slow stock pulled the price down, "margin" when the
-    #: floor held it up, None when neither applied.
-    price_action: PriceAction | None = None
     #: Shopee market(s) the reference came from, already localised —
     #: "Shopee Indonesia" rather than a bare "Shopee" the reader will take
     #: to mean their own.

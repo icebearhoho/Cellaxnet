@@ -27,10 +27,9 @@ from app.schemas.insights import (
     FakeReviewResponse,
     InventoryAlertRequest,
     InventoryAlertResponse,
-    PriceAction,
     PriceDirection,
-    PriceStrategy,
     PriceSource,
+    PriceStrategy,
     PricingRequest,
     PricingResponse,
     RegretRequest,
@@ -467,28 +466,6 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             placement = f"đắt hơn {percentile}% sản phẩm đang bán"
         rationale += f" Mức giá này {placement}."
 
-    # Stock that will not clear for months is capital sitting still, and the
-    # lever for that is price. The discount is deliberately modest — this is a
-    # nudge toward turnover, not a fire sale — and the floor below still wins.
-    runway_days: float | None = None
-    action: PriceAction | None = None
-    if req.stock_units is not None and req.daily_sales:
-        runway_days = round(req.stock_units / req.daily_sales, 1)
-        if runway_days >= 90:
-            recommended = round(recommended * 0.85)
-            action = "clearance"
-            rationale += (
-                f" Tồn kho còn đủ bán khoảng {runway_days:.0f} ngày — đề xuất giảm thêm 15% "
-                "để quay vòng vốn."
-            )
-        elif runway_days >= 60:
-            recommended = round(recommended * 0.92)
-            action = "clearance"
-            rationale += (
-                f" Tồn kho còn đủ bán khoảng {runway_days:.0f} ngày — đề xuất giảm thêm 8% "
-                "để đẩy nhanh tốc độ bán."
-            )
-
     # The floor outranks the market: undercutting the competition at a loss is
     # not a cheaper price, it is a slower way to lose money.
     cost_floor = _cost_floor(req)
@@ -497,11 +474,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     if cost_floor is not None:
         assert req.unit_cost is not None  # _cost_floor returns None without it
         if recommended < cost_floor.floor:
-            # Clearance may have pushed the price under the floor. Turnover is
-            # worth less than the margin it would cost, so the floor stands and
-            # the row says the floor is what is being quoted.
             recommended = cost_floor.floor
-            action = "margin"
             floor_above_market = median < cost_floor.floor
             fee = (
                 f" sau phí {cost_floor.channel_name} {cost_floor.commission_pct:g}%"
@@ -560,11 +533,6 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             f"Với giá vốn {_vnd(req.unit_cost or 0)} và mục tiêu biên "
             f"{req.min_margin_pct:g}%{fee}, mức thấp nhất là {_vnd(cost_floor.floor)}."
         )
-    if runway_days is not None and action == "clearance":
-        reasons.append(
-            f"Tồn kho còn đủ bán khoảng {runway_days:.0f} ngày nên đề xuất "
-            "hạ giá để quay vòng vốn."
-        )
     if median:
         gap = round((recommended - median) / median * 100)
         where = f"vẫn thấp hơn trung vị thị trường khoảng {abs(gap)}%" if gap < 0 else (
@@ -584,7 +552,6 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         high=int(max(p75, recommended)), category_median=int(median),
         sample_size=stats.sample_size, rationale=rationale,
         market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
-        stock_runway_days=runway_days, price_action=action,
         reasons=reasons,
         direction=direction, change_vnd=change_vnd, change_pct=change_pct,
         margin_pct_now=margin_now,
