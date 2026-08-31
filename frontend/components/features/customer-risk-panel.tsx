@@ -214,19 +214,6 @@ function RiskPortfolioTable() {
                   <p className={cn("mt-2 text-sm leading-6", TONE[active.tone].text)}>
                     {active.action}
                   </p>
-                  {/* A severity band can hold customers this instruction does
-                      not fit — the medium band mixes people drifting away with
-                      orders likely to come back. Saying who it covers beats
-                      letting the reader assume it covers everyone. */}
-                  {active.action_fits < active.count && (
-                    <p className="mt-2 text-xs leading-5 text-text-muted">
-                      Áp dụng cho <span className="tnum">{active.action_fits}</span>/
-                      <span className="tnum">{active.count}</span> khách trong nhóm
-                      {active.remainder_action
-                        ? `; ${active.count - active.action_fits} khách còn lại: ${active.remainder_action.toLowerCase()}`
-                        : "."}
-                    </p>
-                  )}
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
