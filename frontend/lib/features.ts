@@ -104,6 +104,31 @@ export async function analyzeSentiment(text: string, rating?: number): Promise<S
   return post<Sentiment>("/review-sentiment/", { text, rating: rating ?? null });
 }
 
+export type ScoredReview = {
+  author: string;
+  rating: number;
+  text: string;
+  days_ago: number | null;
+  sentiment: "positive" | "neutral" | "negative";
+  /** Submitted by a real buyer, as opposed to a seeded catalogue review. */
+  from_customers: boolean;
+};
+
+export type ProductReviews = {
+  product_id: string;
+  product_name: string;
+  total: number;
+  positive: number;
+  neutral: number;
+  negative: number;
+  avg_rating: number;
+  reviews: ScoredReview[];
+};
+
+export async function getProductReviews(productId: string): Promise<ProductReviews | null> {
+  return get<ProductReviews>(`/review-sentiment/products/${encodeURIComponent(productId)}`);
+}
+
 // --- #05 Fake Review ------------------------------------------------------
 export type FakeVerdict = { is_fake: boolean; confidence: number; signals: string[]; reason: string };
 

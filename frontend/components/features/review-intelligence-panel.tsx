@@ -1,178 +1,264 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Sparkles, ShieldAlert, ShieldCheck, Check, X, Inbox } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Check, ChevronsUpDown, Inbox, Loader2, MessageSquare, Search, Star, X,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
-  analyzeSentiment, detectFake, getReviewQueue, approveReview, rejectReview,
-  type Sentiment, type FakeVerdict, type ReviewQueueItem,
+  approveReview, getProductReviews, getReviewQueue, getStoreProducts, rejectReview,
+  type ProductReviews, type ReviewQueueItem, type ScoredReview, type StoreProduct,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
 
-const SAMPLES = [
-  { text: "Áo đẹp, vải mát, form chuẩn, giao hàng nhanh, rất hài lòng!", tag: "tích cực" },
-  { text: "Color is nice but it fades quickly, okay for the price.", tag: "trung tính" },
-  { text: "Poor quality, looks nothing like the photo, thin material. Disappointed.", tag: "tiêu cực" },
-  { text: "Amazing! Love it! Best product ever! Highly recommend to everyone!", tag: "nghi giả" },
-  { text: "Fits true to size, the linen is breathable and the stitching held up after three washes.", tag: "chi tiết thật" },
-  { text: "Shop bán hàng uy tín, giao nhanh, đóng gói đẹp", tag: "chung chung" },
+const TONE = {
+  positive: { label: "Tích cực", chip: "bg-success/10 text-success", dot: "bg-success" },
+  neutral: { label: "Trung tính", chip: "bg-warning/10 text-warning", dot: "bg-warning" },
+  negative: { label: "Tiêu cực", chip: "bg-danger/10 text-danger", dot: "bg-danger" },
+} as const;
+
+type Tone = keyof typeof TONE;
+
+const FILTERS = [
+  { key: "all" as const, label: "Tất cả" },
+  { key: "negative" as const, label: "Tiêu cực" },
+  { key: "neutral" as const, label: "Trung tính" },
+  { key: "positive" as const, label: "Tích cực" },
 ];
 
-const TONE: Record<string, { label: string; cls: string }> = {
-  positive: { label: "Tích cực", cls: "text-success" },
-  neutral: { label: "Trung tính", cls: "text-warning" },
-  negative: { label: "Tiêu cực", cls: "text-danger" },
-};
-
 export function ReviewIntelligencePanel() {
-  const [text, setText] = useState(SAMPLES[0].text);
-  const [rating, setRating] = useState<number>(5);
-  const [busy, setBusy] = useState(false);
-  const [sentiment, setSentiment] = useState<Sentiment | null>(null);
-  const [verdict, setVerdict] = useState<FakeVerdict | null>(null);
-  const [error, setError] = useState(false);
-
-  async function run() {
-    if (!text.trim() || busy) return;
-    setBusy(true);
-    setError(false);
-    const [s, v] = await Promise.all([analyzeSentiment(text, rating), detectFake(text, rating)]);
-    setError(s === null && v === null);
-    setSentiment(s);
-    setVerdict(v);
-    setBusy(false);
-  }
-
-  const tone = sentiment ? TONE[sentiment.sentiment] : null;
-  const fake = verdict?.is_fake;
-  const hasResult = sentiment || verdict;
-
   return (
-    <div className="space-y-4">
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-      <Card className="lg:col-span-7">
-        <CardHeader>
-          <div>
-            <CardTitle>Đánh giá của khách</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">
-              Dán review của khách — hệ thống phân loại cảm xúc và phát hiện review giả cùng lúc.
-            </p>
-          </div>
-          <Badge variant="muted">VN + EN</Badge>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={5}
-            className="w-full resize-none rounded-md border border-border bg-bg-alt px-3 py-2 text-sm text-text outline-none focus:border-accent"
-            placeholder="Nhập nội dung review…"
-          />
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="text-xs font-medium text-text-dim">Số sao</label>
-            <div className="inline-flex overflow-hidden rounded-md border border-border">
-              {[1, 2, 3, 4, 5].map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRating(r)}
-                  className={cn(
-                    "mono h-8 w-8 text-xs transition-colors",
-                    rating === r ? "bg-accent/15 text-accent" : "text-text-muted hover:text-text",
-                  )}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-            <Button onClick={run} disabled={busy} className="ml-auto">
-              {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-              Phân tích
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {SAMPLES.map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setText(s.text)}
-                title={s.text}
-                className="rounded-full border border-border bg-surface px-2.5 py-1 text-2xs text-text-muted hover:border-accent hover:text-text"
-              >
-                Mẫu {i + 1} · {s.tag}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="lg:col-span-5">
-        <CardHeader>
-          <CardTitle>Kết quả</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <p className="text-sm text-danger">Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.</p>
-          ) : !hasResult ? (
-            <p className="text-sm text-text-muted">Bấm Phân tích để xem cảm xúc và mức độ đáng tin của đánh giá.</p>
-          ) : (
-            <div className="space-y-5">
-              {sentiment && (
-                <div className="space-y-2 border-b border-border pb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-text-dim">Cảm xúc</span>
-                    <Badge variant="muted">Tin cậy {Math.round(sentiment.confidence * 100)}%</Badge>
-                  </div>
-                  <div className={cn("text-2xl font-semibold tracking-tight", tone?.cls)}>{tone?.label}</div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                    <div
-                      className="h-full rounded-full bg-accent transition-all"
-                      style={{ width: `${Math.round(sentiment.confidence * 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-text-muted">{sentiment.reason}</p>
-                </div>
-              )}
-
-              {verdict && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-text-dim">Độ đáng tin</span>
-                    <Badge variant="muted">Tin cậy {Math.round(verdict.confidence * 100)}%</Badge>
-                  </div>
-                  <div className={cn("flex items-center gap-2 text-2xl font-semibold tracking-tight",
-                    fake ? "text-danger" : "text-success")}>
-                    {fake ? <ShieldAlert className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
-                    {fake ? "Có dấu hiệu giả" : "Có vẻ đáng tin"}
-                  </div>
-                  <p className="text-sm text-text-muted">{verdict.reason}</p>
-                  {verdict.signals.length > 0 && (
-                    <div>
-                      <div className="text-xs font-medium text-text-dim">Dấu hiệu</div>
-                      <ul className="mt-2 space-y-1">
-                        {verdict.signals.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-text-muted">
-                            <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full",
-                              fake ? "bg-danger" : "bg-text-dim")} />
-                            {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-    <ReviewQueuePanel />
+    <div className="space-y-5">
+      <ProductReviewsPanel />
+      <ReviewQueuePanel />
     </div>
   );
 }
+
+function ProductReviewsPanel() {
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [productId, setProductId] = useState<string | null>(null);
+  const [data, setData] = useState<ProductReviews | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tone, setTone] = useState<"all" | Tone>("all");
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void getStoreProducts().then((response) => {
+      if (!active) return;
+      const list = response?.products ?? [];
+      setProducts(list);
+      setProductId((current) => current ?? list[0]?.id ?? null);
+    });
+    return () => { active = false; };
+  }, []);
+
+  const load = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    const result = await getProductReviews(id);
+    if (result) {
+      setData(result);
+    } else {
+      setData(null);
+      setError("Không lấy được đánh giá của sản phẩm này.");
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (productId) void load(productId);
+  }, [productId, load]);
+
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = data?.reviews ?? [];
+    if (tone !== "all") list = list.filter((r) => r.sentiment === tone);
+    if (q) {
+      list = list.filter(
+        (r) => r.text.toLowerCase().includes(q) || r.author.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [data, tone, query]);
+
+  useEffect(() => { setTone("all"); setQuery(""); }, [productId]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Đánh giá của khách hàng</CardTitle>
+        <p className="mt-1 text-xs text-text-muted">
+          Chọn một sản phẩm để đọc toàn bộ đánh giá, đã phân loại sẵn theo cảm xúc.
+        </p>
+      </CardHeader>
+
+      <CardContent className="space-y-5">
+        {/* The product is the unit. Scoring one pasted sentence answered a
+            question the seller could already answer; what they cannot do by
+            hand is read every review on a product and see the shape of it. */}
+        <div>
+          <label htmlFor="review-product" className="text-sm font-medium text-text">
+            Sản phẩm
+          </label>
+          <div className="relative mt-2">
+            <select
+              id="review-product"
+              value={productId ?? ""}
+              onChange={(e) => setProductId(e.target.value)}
+              disabled={products.length === 0}
+              className="h-10 w-full appearance-none rounded-lg border border-border bg-surface px-3 pr-9 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+            >
+              {products.length === 0 && <option>Đang tải danh sách sản phẩm…</option>}
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <ChevronsUpDown
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-dim"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+
+        {error ? (
+          <p className="text-sm text-danger" role="alert">{error}</p>
+        ) : loading || !data ? (
+          <p className="flex items-center gap-2 py-8 text-sm text-text-muted">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            Đang đọc đánh giá…
+          </p>
+        ) : data.total === 0 ? (
+          <p className="py-8 text-center text-sm text-text-muted">
+            Sản phẩm này chưa có đánh giá nào.
+          </p>
+        ) : (
+          <>
+            {/* The shape of the feedback, before any of the words. */}
+            <div className="grid gap-4 rounded-xl border border-border bg-bg-alt p-4 sm:grid-cols-[160px_1fr]">
+              <div className="flex items-center gap-3 border-b border-border pb-4 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-4">
+                <Star className="h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
+                <div>
+                  <p className="tnum text-2xl font-bold leading-none text-text">
+                    {data.avg_rating}
+                  </p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {data.total} đánh giá
+                  </p>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="flex h-3 w-full overflow-hidden rounded-full bg-surface-3">
+                  {(["positive", "neutral", "negative"] as const).map((key) =>
+                    data[key] > 0 ? (
+                      <span
+                        key={key}
+                        className={cn("h-full border-r-2 border-bg-alt last:border-r-0", TONE[key].dot)}
+                        style={{ width: `${(data[key] / data.total) * 100}%` }}
+                        aria-hidden="true"
+                      />
+                    ) : null,
+                  )}
+                </div>
+                <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
+                  {(["positive", "neutral", "negative"] as const).map((key) => (
+                    <li key={key} className="flex items-center gap-2 text-xs text-text-muted">
+                      <span className={cn("h-2.5 w-2.5 rounded-full", TONE[key].dot)} aria-hidden="true" />
+                      {TONE[key].label}
+                      <span className="tnum text-text-dim">{data[key]}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="inline-flex flex-wrap gap-1.5">
+                {FILTERS.map((f) => {
+                  const count = f.key === "all" ? data.total : data[f.key];
+                  return (
+                    <button
+                      key={f.key}
+                      type="button"
+                      onClick={() => setTone(f.key)}
+                      disabled={count === 0}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                        "disabled:cursor-not-allowed disabled:opacity-40",
+                        tone === f.key
+                          ? f.key === "all" ? "bg-accent/15 text-accent" : TONE[f.key].chip
+                          : "bg-surface-2 text-text-muted hover:text-text",
+                      )}
+                    >
+                      {f.label} <span className="tnum opacity-70">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="relative sm:w-56">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-dim" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Tìm trong đánh giá…"
+                  className="h-9 pl-9 text-xs"
+                  aria-label="Tìm trong đánh giá"
+                />
+              </div>
+            </div>
+
+            {shown.length === 0 ? (
+              <p className="py-8 text-center text-sm text-text-muted">
+                Không có đánh giá nào khớp bộ lọc này.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {shown.map((review, index) => (
+                  <ReviewRow key={`${review.author}-${index}`} review={review} />
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReviewRow({ review }: { review: ScoredReview }) {
+  const tone = TONE[review.sentiment];
+  return (
+    <li className="rounded-lg border border-border bg-surface-2/40 p-4">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <span className="text-sm font-medium text-text">{review.author}</span>
+        <span className="tnum flex items-center gap-0.5 text-xs text-warning">
+          {review.rating}
+          <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+        </span>
+        <span className={cn("rounded-md px-1.5 py-0.5 text-2xs font-medium", tone.chip)}>
+          {tone.label}
+        </span>
+        {review.from_customers && (
+          <span className="rounded-md bg-accent/10 px-1.5 py-0.5 text-2xs font-medium text-accent">
+            Khách gửi
+          </span>
+        )}
+        {review.days_ago !== null && (
+          <span className="tnum ml-auto text-2xs text-text-dim">
+            {review.days_ago} ngày trước
+          </span>
+        )}
+      </div>
+      <p className="mt-2 text-sm leading-6 text-text-muted">{review.text}</p>
+    </li>
+  );
+}
+
 
 function ReviewQueuePanel() {
   const [items, setItems] = useState<ReviewQueueItem[] | null>(null);
