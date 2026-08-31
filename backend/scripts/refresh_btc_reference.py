@@ -56,6 +56,8 @@ async def _collect() -> dict:
     return {
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "schema": settings.BTC_SCHEMA,
+        # Stamped so a snapshot can never be read as another market's.
+        "market": settings.BTC_MARKET,
         "price_window_vnd": [settings.BTC_PRICE_MIN_VND, settings.BTC_PRICE_MAX_VND],
         "categories": categories,
     }
@@ -72,7 +74,7 @@ async def main() -> int:
         print("BTC_DATABASE_URL is not set — nothing to query.", file=sys.stderr)
         return 2
 
-    print(f"Querying {settings.BTC_SCHEMA} ...")
+    print(f"Querying {settings.BTC_SCHEMA}, market={settings.BTC_MARKET} ...")
     payload = await _collect()
     await btc_market.close_btc_engine()
 

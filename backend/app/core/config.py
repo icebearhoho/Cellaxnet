@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     # engine, and every consumer must work when it is unset or unreachable.
     BTC_DATABASE_URL: str | None = None
     BTC_SCHEMA: str = "data_shopee"
+    #: Which Shopee marketplace the app prices against. The dataset spans more
+    #: than one, and each is a separate market at its own price level — an
+    #: Indonesian median is not a cheaper Vietnamese one. Every reference query
+    #: filters on this, so widening it needs a deliberate change here.
+    BTC_MARKET: str = "vn"
     #: Shopee stores a sentinel price (999,999,999) on some rows; anything
     #: outside this window is treated as missing rather than as a real price.
     BTC_PRICE_MIN_VND: int = 1_000

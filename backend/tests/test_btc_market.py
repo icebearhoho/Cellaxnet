@@ -39,14 +39,25 @@ def _reference(**over) -> btc_market.PriceReference:
     return btc_market.PriceReference(**{**base, **over})
 
 
-def test_fashion_and_accessories_are_not_mapped() -> None:
-    """The accessible rows carry no clothing, so those categories must not
-    resolve — borrowing a cosmetics median would be worse than the demo."""
+def test_the_vietnamese_market_prices_none_of_the_app_categories() -> None:
+    """The Vietnamese shops in reach sell confectionery, not what the app prices.
+
+    Cosmetics data exists in the dataset, but only under country_code "id".
+    Serving it to a Vietnamese seller would advise cutting prices by a quarter
+    to two-fifths toward a market they do not sell in, so no category resolves
+    here and all three fall back.
+    """
+    assert btc_market.supported_categories() == ()
+
+
+def test_another_market_maps_what_it_actually_carries(monkeypatch) -> None:
+    """The Indonesian rows do cover cosmetics — for a seller in that market."""
+    monkeypatch.setattr(settings, "BTC_MARKET", "id")
+
     supported = btc_market.supported_categories()
 
     assert "Mỹ phẩm" in supported
     assert "Thời trang" not in supported
-    assert "Phụ kiện" not in supported
 
 
 @pytest.mark.asyncio
@@ -109,10 +120,12 @@ async def test_rationale_states_which_data_it_used(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_unreachable_database_falls_back_to_the_snapshot(monkeypatch, tmp_path) -> None:
     """A demo must not drop back to synthetic numbers over someone else's outage."""
+    monkeypatch.setattr(settings, "BTC_MARKET", "id")
     snapshot = tmp_path / "btc_price_reference.json"
     snapshot.write_text(
         json.dumps({
             "generated_at": "2026-07-21T00:00:00+00:00",
+            "market": "id",
             "categories": {
                 "Mỹ phẩm": {
                     "sample_size": 141, "shop_count": 4, "min_price": 29_000,
@@ -139,9 +152,11 @@ async def test_unreachable_database_falls_back_to_the_snapshot(monkeypatch, tmp_
 @pytest.mark.asyncio
 async def test_a_sample_too_small_to_be_a_reference_is_ignored(monkeypatch, tmp_path) -> None:
     """Percentiles over a handful of rows describe the sample, not the market."""
+    monkeypatch.setattr(settings, "BTC_MARKET", "id")
     snapshot = tmp_path / "btc_price_reference.json"
     snapshot.write_text(
         json.dumps({
+            "market": "id",
             "categories": {
                 "Mỹ phẩm": {
                     "sample_size": 3, "shop_count": 1, "min_price": 29_000,
@@ -163,6 +178,7 @@ async def test_a_sample_too_small_to_be_a_reference_is_ignored(monkeypatch, tmp_
 
 @pytest.mark.asyncio
 async def test_missing_snapshot_file_is_not_an_error(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(settings, "BTC_MARKET", "id")
     monkeypatch.setattr(btc_market, "_SNAPSHOT_PATH", tmp_path / "absent.json")
 
     async def _no_live(_category: str):

@@ -40,30 +40,50 @@ log = get_logger("app.services.btc_market")
 #: "demo") because this module never produces a synthetic figure.
 ObservedSource = Literal["btc_live", "btc_snapshot"]
 
-#: Shop-level collections that hold cosmetics listings. `categories` mixes real
-#: product groupings ("SKINCARE") with merchandising tabs ("Giảm giá", "BEST
-#: SELLING"), and only the former describe what a product *is*, so the tabs are
-#: deliberately absent — a "discounted items" median prices a promotion, not a
-#: product class.
-_CATEGORY_GROUPS: dict[str, tuple[str, ...]] = {
-    "Mỹ phẩm": (
-        "SKINCARE",
-        "SHOP BY NEEDS",
-        "MAKE UP",
-        "Facial Cleanser",
-        "Moisturizer",
-        "Skin Care",
-        "LET IT GLOW",
-        "LVJ BODY CARE SERIES",
-        "LVJ HAIR CARE SERIES",
-        "Anti-jerawat",
-        "Mencerahkan kulit",
-        "🌸Skincare Bundle",
-    ),
-    # "Thời trang" and "Phụ kiện" are intentionally unmapped: the accessible
-    # rows carry no clothing or accessory listings, and substituting a grocery
-    # or cosmetics median would be worse than the demo catalogue it replaces.
+#: Shop collections usable as a price reference, per market. Keyed by the
+#: market the app serves, because Shopee runs a separate marketplace per
+#: country at its own price level: an Indonesian median is not a cheaper
+#: version of the Vietnamese one, it is a different market's answer.
+#:
+#: The accessible Vietnamese rows are confectionery, coffee and dairy — no
+#: cosmetics, no clothing, no accessories — so the three app categories have
+#: no Vietnamese reference and are deliberately absent. Cosmetics data does
+#: exist here, but only under country_code "id", and pricing a Vietnamese
+#: seller off it would advise cutting prices 24-43% toward a market they do
+#: not sell in.
+#:
+#: `categories` also mixes real product groupings ("SKINCARE") with
+#: merchandising tabs ("Giảm giá", "BEST SELLING"); only the former belong
+#: here, since a "discounted items" median prices a promotion, not a product.
+_CATEGORY_GROUPS: dict[str, dict[str, tuple[str, ...]]] = {
+    "vn": {
+        # Nothing yet: the Vietnamese shops in reach sell none of the three
+        # categories the app prices. Add entries here only alongside app
+        # categories that match what those shops actually list.
+    },
+    "id": {
+        "Mỹ phẩm": (
+            "SKINCARE",
+            "SHOP BY NEEDS",
+            "MAKE UP",
+            "Facial Cleanser",
+            "Moisturizer",
+            "Skin Care",
+            "LET IT GLOW",
+            "LVJ BODY CARE SERIES",
+            "LVJ HAIR CARE SERIES",
+            "Anti-jerawat",
+            "Mencerahkan kulit",
+            "🌸Skincare Bundle",
+        ),
+    },
 }
+
+
+def _groups_for(category: str) -> tuple[str, ...]:
+    """Collections to measure for `category` in the configured market."""
+    return _CATEGORY_GROUPS.get(settings.BTC_MARKET, {}).get(category, ())
+
 
 _SNAPSHOT_PATH = Path(__file__).resolve().parents[1] / "data" / "btc_price_reference.json"
 
@@ -97,7 +117,8 @@ FROM (
           ON  c.country_code = pc.country_code
           AND c.shop_id      = pc.shop_id
           AND c.category_id  = pc.category_id
-    WHERE p.price BETWEEN :price_min AND :price_max
+    WHERE p.country_code = :market
+      AND p.price BETWEEN :price_min AND :price_max
       AND c.display_name = ANY(:groups)
 ) t
 """
@@ -147,8 +168,8 @@ class PriceReference:
 
 
 def supported_categories() -> tuple[str, ...]:
-    """App categories the dataset can price. Others must fall back."""
-    return tuple(_CATEGORY_GROUPS)
+    """App categories the dataset can price *in the configured market*."""
+    return tuple(_CATEGORY_GROUPS.get(settings.BTC_MARKET, {}))
 
 
 # --------------------------------------------------------------------------- #
@@ -208,7 +229,7 @@ def _row_to_reference(category: str, row: Any, source: ObservedSource) -> PriceR
 
 async def _query_live(category: str) -> PriceReference | None:
     engine = _get_engine()
-    groups = _CATEGORY_GROUPS.get(category)
+    groups = _groups_for(category)
     if engine is None or not groups:
         return None
 
@@ -219,6 +240,7 @@ async def _query_live(category: str) -> PriceReference | None:
                 conn.execute(
                     sql,
                     {
+                        "market": settings.BTC_MARKET,
                         "groups": list(groups),
                         "price_min": settings.BTC_PRICE_MIN_VND,
                         "price_max": settings.BTC_PRICE_MAX_VND,
@@ -249,6 +271,15 @@ def _load_snapshot() -> dict[str, PriceReference]:
     if _SNAPSHOT_PATH.exists():
         try:
             raw = json.loads(_SNAPSHOT_PATH.read_text(encoding="utf-8"))
+            # A snapshot written for another marketplace is not a fallback for
+            # this one. Older files carry no market at all; refusing them is
+            # right too, since there is no way to tell which one they measured.
+            if raw.get("market") != settings.BTC_MARKET:
+                log.warning(
+                    "btc.snapshot_wrong_market",
+                    snapshot_market=raw.get("market"), expected=settings.BTC_MARKET,
+                )
+                return _snapshot
             for category, entry in raw.get("categories", {}).items():
                 if int(entry["sample_size"]) < settings.BTC_MIN_SAMPLE:
                     continue
@@ -277,7 +308,7 @@ async def price_reference(category: str) -> PriceReference | None:
     the snapshot covers an unreachable database. Returning None is a normal
     outcome — for an unmapped category it is the *only* correct one.
     """
-    if category not in _CATEGORY_GROUPS:
+    if not _groups_for(category):
         # Not a shortcut: an unmapped category has no honest reference at all,
         # so neither the live query nor the snapshot should be consulted.
         return None
