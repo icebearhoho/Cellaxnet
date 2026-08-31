@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, RefreshCw, Search, Lightbulb, ShieldAlert } from "lucide-react";
+import { Loader2, RefreshCw, Search, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,11 +38,6 @@ const TONE = {
     panel: "border-success/20 bg-success/[0.04]",
   },
 } as const;
-
-/** Compact currency: the headline is an order of magnitude, not an invoice. */
-const VND = new Intl.NumberFormat("vi-VN", {
-  style: "currency", currency: "VND", notation: "compact", maximumFractionDigits: 1,
-});
 
 const PAGE_SIZE = 12;
 
@@ -139,31 +134,14 @@ function RiskPortfolioTable() {
           <p className="text-sm text-text-muted">Không có khách hàng nào.</p>
         ) : (
           <div className="space-y-5">
-            {/* Money first. "120 customers" is already on the tabs; what the
-                seller cannot see anywhere else is how much of the book is
-                exposed, and how it splits across the four kinds of work. */}
-            <div className="grid gap-4 rounded-2xl border border-border bg-bg-alt p-4 lg:grid-cols-[240px_1fr] lg:p-5">
-              <div className="flex items-center gap-4 border-b border-border pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-5">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-danger/10 text-danger">
-                  <ShieldAlert className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-                    Giá trị có nguy cơ
-                  </p>
-                  <p className="tnum mt-1 text-3xl font-bold tracking-tight text-text">
-                    {VND.format(portfolio.total_at_stake_vnd)}
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    trên {portfolio.total} khách hàng
-                  </p>
-                </div>
-              </div>
-
+            {/* How the base splits across the four kinds of work. The customer
+                total moves up here so removing the figure beside it does not
+                take the denominator with it. */}
+            <div className="rounded-2xl border border-border bg-bg-alt p-4 lg:p-5">
               <div className="min-w-0">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-text">Phân bổ theo việc cần làm</p>
-                  <p className="text-xs text-text-muted">{groups.length} nhóm</p>
+                  <p className="tnum text-xs text-text-muted">{portfolio.total} khách hàng</p>
                 </div>
                 <div
                   className="mt-3 flex h-4 w-full overflow-hidden rounded-full bg-surface-3"
