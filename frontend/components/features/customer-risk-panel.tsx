@@ -134,13 +134,13 @@ function RiskPortfolioTable() {
           <p className="text-sm text-text-muted">Không có khách hàng nào.</p>
         ) : (
           <div className="space-y-5">
-            {/* How the base splits across the four kinds of work. The customer
-                total moves up here so removing the figure beside it does not
-                take the denominator with it. */}
+            {/* How the base splits across the three risk bands. The customer
+                total sits on this header so the bar always carries its own
+                denominator. */}
             <div className="rounded-2xl border border-border bg-bg-alt p-4 lg:p-5">
               <div className="min-w-0">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-text">Phân bổ theo việc cần làm</p>
+                  <p className="text-sm font-semibold text-text">Phân bổ rủi ro</p>
                   <p className="tnum text-xs text-text-muted">{portfolio.total} khách hàng</p>
                 </div>
                 <div
