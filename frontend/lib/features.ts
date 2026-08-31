@@ -322,9 +322,24 @@ export type RiskRow = {
   return_band: RiskBand;
   regret_risk: number | null;
   regret_band: RiskBand;
-  high_risk_count: number;
+  /** The risk worth acting on, with its reason and the action to take. Regret
+   *  never leads: it flags most of the base and so ranks nobody. */
+  lead_kind: "churn" | "return" | null;
+  lead_label: string | null;
+  lead_risk: number | null;
+  lead_band: RiskBand;
+  lead_reason: string | null;
+  lead_action: string | null;
+  /** Money exposed if this goes unhandled — lifetime value for churn, the
+   *  order for a return. This is what the queue is sorted by. */
+  value_at_stake_vnd: number;
 };
-export type RiskPortfolio = { customers: RiskRow[]; total: number; critical_count: number };
+export type RiskPortfolio = {
+  customers: RiskRow[];
+  total: number;
+  needs_action_count: number;
+  total_at_stake_vnd: number;
+};
 
 export type RiskPortfolioResponse =
   | { ok: true; data: RiskPortfolio }

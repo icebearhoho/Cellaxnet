@@ -459,24 +459,24 @@ def score_churn(req: ChurnRequest) -> ChurnResponse:
 
     drivers = []
     if req.recency_days > 60:
-        drivers.append(f"No purchase in {req.recency_days} days")
+        drivers.append(f"Không mua hàng {req.recency_days} ngày")
     if req.frequency_orders <= 1:
-        drivers.append("Very few past orders")
+        drivers.append("Rất ít đơn trước đây")
     if req.sessions_last_month <= 1:
-        drivers.append("Barely browsing lately")
+        drivers.append("Gần đây hầu như không vào xem")
     if req.cart_abandon_rate > 0.5:
-        drivers.append(f"Abandons {req.cart_abandon_rate:.0%} of carts")
+        drivers.append(f"Bỏ giỏ hàng {req.cart_abandon_rate:.0%} số lần")
     if req.trend == "declining":
-        drivers.append("Activity trending down")
+        drivers.append("Mức độ hoạt động đang giảm")
     if not drivers:
-        drivers.append("Healthy, active buying pattern")
+        drivers.append("Vẫn mua đều, không có dấu hiệu bất thường")
 
     action = (
-        "Send a win-back offer (discount or free shipping) before they churn."
+        "Gửi ưu đãi giữ chân (giảm giá hoặc miễn phí vận chuyển) trước khi khách rời đi."
         if band == "high" else
-        "Nurture with a personalized recommendation email."
+        "Gửi email gợi ý sản phẩm phù hợp để kéo khách quay lại."
         if band == "medium" else
-        "No action needed — keep delighting as usual."
+        "Chưa cần can thiệp — tiếp tục chăm sóc như hiện tại."
     )
     return ChurnResponse(
         churn_risk=round(risk, 2), risk_band=cast(_RiskBandLit, band), drivers=drivers, retention_action=action,
@@ -515,24 +515,24 @@ def score_return(req: ReturnRequest) -> ReturnResponse:
 
     drivers = []
     if req.size_related:
-        drivers.append("Sizing-sensitive item (clothing/shoes) — fit risk")
+        drivers.append("Hàng phụ thuộc size (quần áo/giày) — dễ không vừa")
     if req.discount_pct >= 30:
-        drivers.append(f"Heavy discount ({req.discount_pct:.0f}%) — possible impulse buy")
+        drivers.append(f"Giảm giá sâu ({req.discount_pct:.0f}%) — có thể mua bốc đồng")
     if req.is_new_customer:
-        drivers.append("First-time customer — no purchase history to gauge fit")
+        drivers.append("Khách mua lần đầu — chưa có lịch sử để đối chiếu")
     if req.reviews_read == 0:
-        drivers.append("Bought without reading any reviews")
+        drivers.append("Mua mà không đọc đánh giá nào")
     if req.price_vnd >= 1_000_000:
-        drivers.append("High-value item — more room for buyer's remorse")
+        drivers.append("Đơn giá trị cao — dễ đắn đo sau khi mua")
     if not drivers:
-        drivers.append("Low-risk profile")
+        drivers.append("Hồ sơ ít rủi ro")
 
     action = (
-        "Proactively send sizing guidance + easy-return reminder before shipping."
+        "Chủ động gửi hướng dẫn chọn size và nhắc chính sách đổi trả trước khi giao."
         if band == "high" else
-        "Include a size chart / usage tip in the packing slip."
+        "Kèm bảng size hoặc hướng dẫn sử dụng trong phiếu giao hàng."
         if band == "medium" else
-        "No special handling needed."
+        "Không cần xử lý gì đặc biệt."
     )
     return ReturnResponse(return_risk=round(risk, 2), risk_band=cast(_RiskBandLit, band), drivers=drivers, action=action)
 
@@ -566,17 +566,17 @@ def score_regret(req: RegretRequest) -> RegretResponse:
 
     drivers = []
     if req.decision_time_seconds < 60:
-        drivers.append("Decided in under a minute — impulsive")
+        drivers.append("Quyết định dưới một phút — mua bốc đồng")
     if req.revisit_count == 0:
-        drivers.append("Bought without comparing alternatives")
+        drivers.append("Mua mà không so sánh lựa chọn khác")
     if req.purchase_hour in _LATE_NIGHT_HOURS:
-        drivers.append("Purchased late at night — lower self-control window")
+        drivers.append("Mua lúc đêm khuya — khả năng tự kiểm soát thấp hơn")
     if req.used_discount:
-        drivers.append("Purchase driven mainly by a discount")
+        drivers.append("Mua chủ yếu vì có khuyến mãi")
     if req.price_vnd >= 1_000_000:
-        drivers.append("High-value purchase — more room for regret")
+        drivers.append("Đơn giá trị cao — dễ hối hận hơn")
     if not drivers:
-        drivers.append("Deliberate, well-considered purchase")
+        drivers.append("Quyết định mua có cân nhắc kỹ")
 
     if band == "high":
         msg = "Cảm ơn bạn đã mua hàng! Nếu sản phẩm chưa phù hợp, hãy xem chính sách đổi trả của cửa hàng hoặc liên hệ hỗ trợ nhé 💛"

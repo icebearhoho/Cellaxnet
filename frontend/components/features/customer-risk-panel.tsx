@@ -23,75 +23,26 @@ import { cn } from "@/lib/utils";
  *  phân biệt được ngay từ cái liếc đầu tiên. Đậm nhạt trong cùng một màu mới
  *  là mức độ: cao thì đặc và có chữ đậm, thấp thì mờ hẳn đi. Tách vai trò như
  *  vậy để "cột nào" và "gấp đến đâu" không tranh nhau cùng một tín hiệu. */
-const RISKS = [
-  {
-    key: "churn" as const,
-    label: "Rời bỏ",
-    riskField: "churn_risk" as const,
-    bandField: "churn_band" as const,
-    icon: UserMinus,
-    action: "Gửi ưu đãi giữ chân",
-    why: "Lâu chưa quay lại mua",
-    bar: { high: "bg-[hsl(var(--series-1))]", medium: "bg-[hsl(var(--series-1)/0.55)]", low: "bg-[hsl(var(--series-1)/0.25)]" },
-    text: { high: "text-[hsl(var(--series-1))]", medium: "text-[hsl(var(--series-1)/0.85)]", low: "text-text-dim" },
-  },
-  {
-    key: "return" as const,
-    label: "Hoàn trả",
-    riskField: "return_risk" as const,
-    bandField: "return_band" as const,
-    icon: Ruler,
-    action: "Nhắn tư vấn size",
-    why: "Đơn dễ bị trả lại",
-    bar: { high: "bg-[hsl(var(--series-2))]", medium: "bg-[hsl(var(--series-2)/0.55)]", low: "bg-[hsl(var(--series-2)/0.25)]" },
-    text: { high: "text-[hsl(var(--series-2))]", medium: "text-[hsl(var(--series-2)/0.85)]", low: "text-text-dim" },
-  },
-  {
-    key: "regret" as const,
-    label: "Hối hận",
-    riskField: "regret_risk" as const,
-    bandField: "regret_band" as const,
-    icon: MessageCircle,
-    action: "Gửi tin trấn an",
-    why: "Mua vội, dễ đổi ý",
-    bar: { high: "bg-[hsl(var(--series-3))]", medium: "bg-[hsl(var(--series-3)/0.55)]", low: "bg-[hsl(var(--series-3)/0.25)]" },
-    text: { high: "text-[hsl(var(--series-3))]", medium: "text-[hsl(var(--series-3)/0.85)]", low: "text-text-dim" },
-  },
-];
-type RiskDef = (typeof RISKS)[number];
-
-/** Điểm rủi ro: thanh + số, tô theo màu của chính loại rủi ro đó. Mức thấp
- *  để nhạt hẳn nên mắt trượt qua được — chỗ đậm mới là chỗ đáng dừng lại. */
-function RiskScore({ value, band, risk }: { value: number | null; band: RiskBand; risk: RiskDef }) {
-  if (value === null || !band) return <span className="text-2xs text-text-dim">—</span>;
-  const pct = Math.round(value * 100);
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-2 w-14 overflow-hidden rounded-full bg-surface-3">
-        <div
-          className={cn("h-full rounded-full transition-[width]", risk.bar[band])}
-          style={{ width: `${Math.max(pct, 3)}%` }}
-        />
-      </div>
-      <span className={cn("tnum text-xs", risk.text[band], band === "high" && "font-semibold")}>
-        {pct}%
-      </span>
-    </div>
-  );
-}
 
 /** Mức rủi ro của một khách = mức *nặng nhất* trong ba loại họ đang dính.
  *  Nhờ vậy mỗi khách thuộc đúng một nhóm, ba nhóm cộng lại bằng tổng số khách. */
 type RiskLevel = "high" | "medium" | "low";
 
 function levelOf(row: RiskRow): RiskLevel {
-  const bands = RISKS.map((r) => row[r.bandField]);
-  return bands.includes("high") ? "high" : bands.includes("medium") ? "medium" : "low";
+  // The leading risk decides the row. Taking the worst of all three let regret
+  // — which flags most of the customer base — mark 62% of it as urgent.
+  return row.lead_band === "high" ? "high" : row.lead_band === "medium" ? "medium" : "low";
 }
 
 /** Phân bố toàn bộ khách hàng theo mức rủi ro nặng nhất họ đang dính.
  *  Thanh xếp chồng cho thấy tỉ lệ, ba ô bên dưới ghi phần trăm từng nhóm.
  *  Số khách tuyệt đối nằm ở tổng góc phải và trên các nút lọc bên dưới. */
+/** Compact currency: a queue of twenty rows has no room for full VND figures,
+ *  and the exact đồng is never the decision — the order of magnitude is. */
+const VND = new Intl.NumberFormat("vi-VN", {
+  style: "currency", currency: "VND", notation: "compact", maximumFractionDigits: 1,
+});
+
 const SPREAD_LEVELS = [
   { key: "high" as const, label: "Rủi ro cao", bar: "bg-danger", dot: "bg-danger", text: "text-danger", chip: "bg-danger/10 text-danger", cell: "border-danger/20 bg-danger/[0.05]" },
   { key: "medium" as const, label: "Trung bình", bar: "bg-warning", dot: "bg-warning", text: "text-warning", chip: "bg-warning/10 text-warning", cell: "border-warning/20 bg-warning/[0.05]" },
@@ -105,6 +56,25 @@ function RiskSpread({
   total: number;
 }) {
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
+
+  // Rounding each share on its own let 61.7 / 15.8 / 22.5 print as 62 / 16 / 23,
+  // which sums to 101 and undermines every other number on the page. Largest
+  // remainder hands the leftover point to whoever lost the most to rounding.
+  const wholePct = (() => {
+    const raw = SPREAD_LEVELS.map((lv) => pct(spread[lv.key]));
+    const floors = raw.map(Math.floor);
+    let left = Math.round(raw.reduce((a, b) => a + b, 0)) - floors.reduce((a, b) => a + b, 0);
+    const order = raw
+      .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+      .sort((a, b) => b.frac - a.frac);
+    const out = [...floors];
+    for (const { i } of order) {
+      if (left <= 0) break;
+      out[i] += 1;
+      left -= 1;
+    }
+    return out;
+  })();
 
   return (
     <div className="rounded-xl border border-border bg-bg-alt/60 p-4">
@@ -132,7 +102,7 @@ function RiskSpread({
       {/* Ba ô bằng nhau, mỗi ô nền nhạt theo màu nhóm — nhãn và số canh giữa
           nên ba cột thẳng hàng nhau theo cả chiều ngang lẫn dọc. */}
       <div className="mt-3 grid grid-cols-3 gap-2">
-        {SPREAD_LEVELS.map((lv) => (
+        {SPREAD_LEVELS.map((lv, i) => (
           <div
             key={lv.key}
             className={cn(
@@ -147,7 +117,7 @@ function RiskSpread({
               </span>
             </div>
             <div className={cn("tnum text-2xl font-semibold leading-none tracking-tight", lv.text)}>
-              {Math.round(pct(spread[lv.key]))}%
+              {wholePct[i]}%
             </div>
           </div>
         ))}
@@ -211,19 +181,13 @@ function RiskPortfolioTable() {
           (r.last_order_no ?? "").toLowerCase().includes(q),
       );
     }
-    // Xếp cao → trung bình → an toàn, cùng nhóm thì ai dính nhiều loại cao hơn
-    // lên trước, rồi mới đến điểm rủi ro nặng nhất. Bảng đọc từ trên xuống là
-    // đúng thứ tự cần xử lý.
+    // Urgency first, then money. A seller works down this list in order, so a
+    // large sum on a calm customer must not outrank an urgent smaller one.
     const RANK: Record<RiskLevel, number> = { high: 0, medium: 1, low: 2 };
-    const rank = (r: RiskRow) => RANK[levelOf(r)];
-    const peak = (r: RiskRow) =>
-      Math.max(...RISKS.map((risk) => r[risk.riskField] ?? 0));
-
     return [...list].sort(
       (a, b) =>
-        rank(a) - rank(b) ||
-        b.high_risk_count - a.high_risk_count ||
-        peak(b) - peak(a),
+        RANK[levelOf(a)] - RANK[levelOf(b)] ||
+        b.value_at_stake_vnd - a.value_at_stake_vnd,
     );
   }, [rows, focus, query]);
 
@@ -320,39 +284,29 @@ function RiskPortfolioTable() {
                     <thead>
                       <tr className="border-b border-border text-2xs uppercase tracking-wider text-text-dim">
                         <th className="py-2 pr-3 font-medium">Khách hàng</th>
-                        {RISKS.map((r) => (
-                          <th
-                            key={r.key}
-                            className="border-l border-border/60 px-3 py-2 font-medium"
-                          >
-                            <span className={cn("inline-flex items-center gap-1.5", r.text.high)}>
-                              <r.icon className="h-3 w-3" />
-                              {r.label}
-                            </span>
-                          </th>
-                        ))}
+                        <th className="border-l border-border/60 px-3 py-2 font-medium">Vấn đề</th>
+                        <th className="border-l border-border/60 px-3 py-2 font-medium">Nên làm</th>
+                        <th className="border-l border-border/60 px-3 py-2 text-right font-medium">
+                          Giá trị có nguy cơ
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {visible.map((c) => {
-                        // Cùng ba nhóm với dashboard phía trên, nên vạch trái
-                        // đọc được ngay là khách này thuộc nhóm nào.
-                        const bands = RISKS.map((r) => c[r.bandField]);
-                        const level = bands.includes("high") ? "high"
-                          : bands.includes("medium") ? "medium" : "low";
+                        const level = levelOf(c);
                         return (
                         <tr
                           key={c.id}
                           className={cn(
                             "border-b border-border/50 last:border-0 transition-colors hover:bg-bg-alt",
-                            c.high_risk_count >= 2 && "bg-danger/[0.04]",
+                            level === "high" && "bg-danger/[0.04]",
                           )}
                         >
-                          <td className="py-3 pr-3">
-                            <div className="flex items-center gap-2.5">
+                          <td className="py-3 pr-3 align-top">
+                            <div className="flex items-start gap-2.5">
                               <span
                                 className={cn(
-                                  "h-8 w-1 shrink-0 rounded-full",
+                                  "mt-0.5 h-8 w-1 shrink-0 rounded-full",
                                   level === "high" ? "bg-danger"
                                     : level === "medium" ? "bg-warning"
                                     : "bg-success/40",
@@ -368,11 +322,49 @@ function RiskPortfolioTable() {
                               </div>
                             </div>
                           </td>
-                          {RISKS.map((r) => (
-                            <td key={r.key} className="border-l border-border/60 px-3 py-3">
-                              <RiskScore value={c[r.riskField]} band={c[r.bandField]} risk={r} />
-                            </td>
-                          ))}
+
+                          {/* The risk, named, with the score as supporting detail
+                              rather than the headline — a percentage cannot be
+                              acted on, a reason can. */}
+                          <td className="border-l border-border/60 px-3 py-3 align-top">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span
+                                className={cn(
+                                  "rounded-md px-1.5 py-0.5 text-2xs font-medium",
+                                  level === "high" ? "bg-danger/10 text-danger"
+                                    : level === "medium" ? "bg-warning/10 text-warning"
+                                    : "bg-surface-3 text-text-dim",
+                                )}
+                              >
+                                {c.lead_label ?? "—"}
+                              </span>
+                              {c.lead_risk !== null && (
+                                <span className="tnum text-2xs text-text-dim">
+                                  {Math.round(c.lead_risk * 100)}%
+                                </span>
+                              )}
+                            </div>
+                            {c.lead_reason && (
+                              <div className="mt-1 text-2xs leading-4 text-text-muted">
+                                {c.lead_reason}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="border-l border-border/60 px-3 py-3 align-top">
+                            <span className="text-xs leading-5 text-text-muted">
+                              {c.lead_action ?? "—"}
+                            </span>
+                          </td>
+
+                          <td className="border-l border-border/60 px-3 py-3 text-right align-top">
+                            <div className="tnum text-sm font-medium text-text">
+                              {VND.format(c.value_at_stake_vnd)}
+                            </div>
+                            <div className="tnum text-2xs text-text-dim">
+                              trên {VND.format(c.lifetime_value_vnd)}
+                            </div>
+                          </td>
                         </tr>
                         );
                       })}

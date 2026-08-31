@@ -61,9 +61,63 @@ def regret_portfolio() -> dict:
             "high_risk_count": sum(1 for r in rows if r["risk_band"] == "high")}
 
 
+#: Regret scores cluster: on the demo customer base 72 of 120 land in the
+#: "high" band and the distribution jumps from 0.20 straight to 0.65, so the
+#: score separates almost nobody. It stays as supporting detail on a row the
+#: other two scores already flagged, and never lifts a customer into the list
+#: on its own — otherwise it alone would mark 60% of the base as urgent.
+_LEAD_RISKS = ("churn", "return")
+
+
+def _lead_risk(churn: dict | None, ret: dict | None, regret: dict | None) -> dict | None:
+    """The risk that should drive this row, with its own reason and action.
+
+    Ranked by what it costs the seller to ignore: losing the customer outright
+    beats losing one order, and both beat a soft-satisfaction signal.
+    """
+    candidates = []
+    if churn:
+        candidates.append({
+            "kind": "churn",
+            "label": "Nguy cơ rời bỏ",
+            "risk": churn["churn_risk"],
+            "band": churn["risk_band"],
+            "reason": (churn.get("drivers") or [None])[0],
+            "action": churn.get("retention_action"),
+        })
+    if ret:
+        candidates.append({
+            "kind": "return",
+            "label": "Nguy cơ hoàn trả",
+            "risk": ret["return_risk"],
+            "band": ret["risk_band"],
+            "reason": (ret.get("drivers") or [None])[0],
+            "action": ret.get("action"),
+        })
+    if regret:
+        candidates.append({
+            "kind": "regret",
+            "label": "Nguy cơ hối hận",
+            "risk": regret["regret_risk"],
+            "band": regret["risk_band"],
+            "reason": (regret.get("drivers") or [None])[0],
+            "action": regret.get("reassurance_message"),
+        })
+
+    actionable = [c for c in candidates if c["kind"] in _LEAD_RISKS]
+    if not actionable:
+        return None
+    return max(actionable, key=lambda c: c["risk"])
+
+
 def risk_portfolio() -> dict:
-    """#04+#10+#15 combined — one row per customer with all three risk scores,
-    joined on customer id (all three scan the same store.all_customers() list).
+    """#04+#10+#15 as a work queue: one row per customer, ordered by what is
+    at stake, carrying the reason and the action rather than three raw scores.
+
+    Three scores side by side read as if they add up. They do not — churn is
+    about the customer's future, return is about one order, regret is about how
+    a single purchase felt — so the row leads with whichever risk is most
+    expensive to ignore and says what to do about it.
     """
     churn_by_id = {r["id"]: r for r in churn_portfolio()["customers"]}
     return_by_id = {r["id"]: r for r in return_portfolio()["orders"]}
@@ -75,29 +129,48 @@ def risk_portfolio() -> dict:
         churn = churn_by_id.get(cid)
         ret = return_by_id.get(cid)
         regret = regret_by_id.get(cid)
-        high_count = sum(
-            1 for r in (churn, ret, regret) if r and r["risk_band"] == "high"
-        )
+        lead = _lead_risk(churn, ret, regret)
+        ltv = c.get("lifetime_value_vnd", 0)
+
+        # What walking away actually costs. Churn puts the whole relationship
+        # at stake; a return only puts that order at stake.
+        if lead and lead["kind"] == "churn":
+            at_stake = int(round(ltv * lead["risk"]))
+        elif lead and lead["kind"] == "return":
+            at_stake = int(round((ret or {}).get("order_value_vnd", 0) * lead["risk"]))
+        else:
+            at_stake = 0
+
         rows.append({
             "id": cid,
             "customer": c["name"],
             "last_order_no": c.get("last_order_no"),
             "last_product": c.get("last_product"),
-            "lifetime_value_vnd": c.get("lifetime_value_vnd", 0),
+            "lifetime_value_vnd": ltv,
             "preferred_channel": c.get("preferred_channel"),
+            "lead_kind": lead["kind"] if lead else None,
+            "lead_label": lead["label"] if lead else None,
+            "lead_risk": lead["risk"] if lead else None,
+            "lead_band": lead["band"] if lead else None,
+            "lead_reason": lead["reason"] if lead else None,
+            "lead_action": lead["action"] if lead else None,
+            "value_at_stake_vnd": at_stake,
             "churn_risk": churn["churn_risk"] if churn else None,
             "churn_band": churn["risk_band"] if churn else None,
             "return_risk": ret["return_risk"] if ret else None,
             "return_band": ret["risk_band"] if ret else None,
             "regret_risk": regret["regret_risk"] if regret else None,
             "regret_band": regret["risk_band"] if regret else None,
-            "high_risk_count": high_count,
         })
-    rows.sort(key=lambda x: x["high_risk_count"], reverse=True)
+
+    # Money at stake, not score: a 0.62 risk on a 4.7M customer outranks a 0.66
+    # on a 330k one, and that is the order a seller should work the list in.
+    rows.sort(key=lambda r: r["value_at_stake_vnd"], reverse=True)
     return {
         "customers": rows,
         "total": len(rows),
-        "critical_count": sum(1 for r in rows if r["high_risk_count"] >= 2),
+        "needs_action_count": sum(1 for r in rows if r["lead_band"] == "high"),
+        "total_at_stake_vnd": sum(r["value_at_stake_vnd"] for r in rows),
     }
 
 
