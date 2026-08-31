@@ -28,6 +28,7 @@ from app.schemas.insights import (
     InventoryAlertRequest,
     InventoryAlertResponse,
     PriceAction,
+    PriceStrategy,
     PriceSource,
     PricingRequest,
     PricingResponse,
@@ -305,6 +306,51 @@ def _market_label(countries: tuple[str, ...]) -> str:
     return " + ".join(named)
 
 
+_StrategyKey = Literal["volume", "balanced", "margin"]
+
+#: The three positions, described by what the seller gets rather than by the
+#: statistic behind them. "p25" means nothing to a seller; "a quarter of the
+#: market is cheaper than this" is the same fact they can act on.
+_STRATEGY_SPEC: tuple[tuple[_StrategyKey, str, str], ...] = (
+    ("volume", "Tăng doanh số", "Giá cạnh tranh — rẻ hơn khoảng 3/4 thị trường"),
+    ("balanced", "Cân bằng", "Ngang mặt bằng chung của thị trường"),
+    ("margin", "Tối đa lợi nhuận", "Giá cao — chỉ 1/4 thị trường đắt hơn"),
+)
+
+
+def _strategies(
+    stats: _PriceStats,
+    cost_floor: _CostFloor | None,
+    unit_cost: int | None,
+) -> list[PriceStrategy]:
+    """Price the same product at three points in its own market.
+
+    A single recommendation hides that pricing is a choice. These make the
+    trade explicit — cheaper sells faster, dearer earns more per unit — while
+    the floor still applies to all three: an option that cannot be sold at a
+    profit is not an option, so it is lifted and says so.
+    """
+    out: list[PriceStrategy] = []
+    for (key, label, goal), raw in zip(
+        _STRATEGY_SPEC, (stats.p25, stats.median, stats.p75), strict=True
+    ):
+        price = int(raw)
+        lifted = False
+        if cost_floor is not None and price < cost_floor.floor:
+            price = cost_floor.floor
+            lifted = True
+        margin = (
+            _net_margin_pct(price, unit_cost, cost_floor.commission_pct)
+            if cost_floor is not None and unit_cost is not None else None
+        )
+        out.append(PriceStrategy(
+            key=key, label=label, goal=goal, price=price, margin_pct=margin,
+            percentile=stats.percentile_of(price) if stats.percentile_of else None,
+            lifted_by_floor=lifted,
+        ))
+    return out
+
+
 def _vnd(amount: int) -> str:
     """Vietnamese money formatting: 67.900₫, not the 67,900₫ Python defaults to."""
     return f"{amount:,}".replace(",", ".") + "₫"
@@ -462,6 +508,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         sample_size=stats.sample_size, rationale=rationale,
         market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
         stock_runway_days=runway_days, price_action=action,
+        strategies=_strategies(stats, cost_floor, req.unit_cost),
         market_label=_market_label(stats.countries) if stats.source != "demo" else None,
         price_floor=cost_floor.floor if cost_floor else None,
         margin_pct_at_recommended=margin_at_rec,

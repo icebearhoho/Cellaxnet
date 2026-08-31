@@ -71,6 +71,29 @@ class PricingRequest(BaseModel):
     daily_sales: float | None = Field(default=None, ge=0)
 
 
+class PriceStrategy(BaseModel):
+    """One way to price this product, with what it costs and buys.
+
+    The three sit at the market's own quartiles rather than at arbitrary
+    percentages off a single number: p25 is where a quarter of the market is
+    cheaper, p75 where a quarter is dearer, so each option is a real position
+    among competitors instead of a discount invented for the UI.
+    """
+
+    key: Literal["volume", "balanced", "margin"]
+    label: str
+    #: What the seller is buying with this price, in their terms.
+    goal: str
+    price: int
+    #: Margin on revenue after commission; None when no cost was supplied.
+    margin_pct: float | None = None
+    #: Share of observed products priced at or below this, when known.
+    percentile: int | None = None
+    #: True when the margin floor lifted this option off its quartile — the
+    #: strategy cannot be had at that price without selling at a loss.
+    lifted_by_floor: bool = False
+
+
 class PricingResponse(BaseModel):
     recommended_price: int
     low: int
@@ -91,6 +114,9 @@ class PricingResponse(BaseModel):
     #: Margin on revenue actually achieved at `recommended_price`, after
     #: commission — the number to check before accepting the suggestion.
     margin_pct_at_recommended: float | None = None
+    #: Three positions in the market, cheapest first. Same product, same
+    #: floor — what changes is which end of the market it sits at.
+    strategies: list[PriceStrategy] = []
     #: Days the stock lasts at the current rate; None without stock figures.
     stock_runway_days: float | None = None
     #: "clearance" when slow stock pulled the price down, "margin" when the

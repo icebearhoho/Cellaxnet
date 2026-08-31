@@ -157,6 +157,20 @@ export async function predictSegmentation(
  *  figures differently, so a seller always knows which one they are acting on. */
 export type PriceSource = "demo" | "btc_live" | "btc_snapshot";
 
+/** One way to price the product: a real position in its market, with what it
+ *  costs and buys. */
+export type PriceStrategy = {
+  key: "volume" | "balanced" | "margin";
+  label: string;
+  goal: string;
+  price: number;
+  margin_pct: number | null;
+  percentile: number | null;
+  /** The margin floor lifted this option off its quartile — the strategy is
+   *  not available at that price without selling at a loss. */
+  lifted_by_floor: boolean;
+};
+
 export type PricingResult = {
   recommended_price: number; low: number; high: number;
   category_median: number; sample_size: number; rationale: string;
@@ -167,6 +181,8 @@ export type PricingResult = {
   market_p75: number | null;
   /** Share of observed products at or below the seller's current price. */
   price_percentile: number | null;
+  /** Three market positions, cheapest first. */
+  strategies: PriceStrategy[];
   /** Days the stock lasts at the current rate; null without stock figures. */
   stock_runway_days: number | null;
   /** "clearance" when slow stock pulled the price down, "margin" when the

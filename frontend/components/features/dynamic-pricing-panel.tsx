@@ -729,6 +729,62 @@ export function DynamicPricingPanel() {
                   </div>
                 </dl>
 
+                {/* Pricing is a choice, and one number hides that. Three real
+                    market positions make the trade visible: cheaper sells
+                    faster, dearer earns more per unit. */}
+                {result.strategies.length > 0 && (
+                  <div>
+                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                      <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                      Chọn hướng định giá
+                    </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      {result.strategies.map((s) => {
+                        const chosen = s.price === result.recommended_price;
+                        return (
+                          <div
+                            key={s.key}
+                            className={cn(
+                              "rounded-lg border p-4",
+                              chosen
+                                ? "border-accent bg-accent/[0.05]"
+                                : "border-border bg-surface-2/40",
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={cn(
+                                "text-xs font-medium",
+                                chosen ? "text-accent" : "text-text",
+                              )}>
+                                {s.label}
+                              </span>
+                              {chosen && (
+                                <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-2xs font-medium text-accent">
+                                  Đề xuất
+                                </span>
+                              )}
+                            </div>
+                            <p className="tnum mt-2 text-lg font-semibold text-text">
+                              {VND.format(s.price)}
+                            </p>
+                            <p className="mt-1 text-2xs leading-4 text-text-muted">{s.goal}</p>
+                            {s.margin_pct !== null && (
+                              <p className="mt-2 text-2xs text-text-dim">
+                                Lợi nhuận <span className="tnum text-success">{s.margin_pct}%</span>
+                              </p>
+                            )}
+                            {s.lifted_by_floor && (
+                              <p className="mt-1.5 text-2xs leading-4 text-warning">
+                                Đã nâng lên giá sàn — không bán thấp hơn được.
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {result.market_p25 !== null && result.market_p75 !== null && (
                   <div className="rounded-lg border border-border bg-surface-2/40 px-5 py-4">
                     <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">

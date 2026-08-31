@@ -214,3 +214,68 @@ async def test_no_stock_figures_means_no_clearance_verdict() -> None:
 
     assert result.stock_runway_days is None
     assert result.price_action is None
+
+
+@pytest.mark.asyncio
+async def test_three_strategies_sit_at_the_market_quartiles() -> None:
+    """Pricing is a choice, and the options are real market positions.
+
+    p25 / median / p75 come from the reference itself, so "cheaper than three
+    quarters of the market" is a fact about competitors rather than a discount
+    invented for the screen.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000)
+    )
+
+    assert [s.key for s in result.strategies] == ["volume", "balanced", "margin"]
+    assert [s.price for s in result.strategies] == [
+        result.market_p25, result.category_median, result.market_p75,
+    ]
+
+
+@pytest.mark.asyncio
+async def test_a_strategy_that_cannot_be_sold_at_a_profit_is_lifted() -> None:
+    """An option below the floor is not an option.
+
+    With a cost that rules out the cheaper end, those strategies move up to the
+    floor and say so — quietly quoting a losing price would be worse than
+    offering fewer choices.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=180_000, min_margin_pct=35, channel="shopee")
+    )
+
+    lifted = [s for s in result.strategies if s.lifted_by_floor]
+    assert lifted, "a high cost should push the cheap end up to the floor"
+    for strategy in result.strategies:
+        assert strategy.price >= (result.price_floor or 0)
+    for strategy in lifted:
+        assert strategy.price == result.price_floor
+
+
+@pytest.mark.asyncio
+async def test_strategy_margins_are_reported_after_commission() -> None:
+    """The margin beside each option is what the seller keeps at that price."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=50_000, min_margin_pct=20, channel="shopee")
+    )
+
+    margins = [s.margin_pct for s in result.strategies]
+    assert all(m is not None for m in margins)
+    # Dearer options keep more per unit; that is the trade being offered.
+    assert margins == sorted(margins)
+
+
+@pytest.mark.asyncio
+async def test_strategies_need_no_cost_to_be_offered() -> None:
+    """Without a cost there is no margin to show, but the positions still hold."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Thời trang", current_price=400_000)
+    )
+
+    assert len(result.strategies) == 3
+    assert all(s.margin_pct is None for s in result.strategies)
+    assert all(not s.lifted_by_floor for s in result.strategies)
