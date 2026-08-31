@@ -434,19 +434,26 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             f"{shops} quan sát được trên {_market_label(stats.countries)} (T7/2026)"
         )
 
+    # The target is a property of the market, not of what the seller happens to
+    # charge today. Averaging the two — the previous rule — made the answer
+    # chase its own output: 183,000₫ produced 223,000₫, which produced
+    # 258,000₫, and so on up to the median, so a seller who accepted the advice
+    # was told to raise again on the next visit.
+    #
+    # Sitting a little under the median is deliberate: the reference is a
+    # handful of shops, and against that much uncertainty the cheaper side of
+    # the estimate is the safer error.
+    recommended = round(median * 0.95)
+
     if req.current_price is None:
-        recommended = median
         rationale = f"Chưa có giá hiện tại — lấy {basis}."
     else:
         cur = req.current_price
-        if cur > median * 1.3:
-            recommended = round((cur + median * 1.1) / 2)
+        if cur > median * 1.15:
             rationale = f"{_vnd(cur)} cao hơn nhiều so với {basis} — đề xuất giảm để cạnh tranh hơn."
-        elif cur < median * 0.7:
-            recommended = round((cur + median * 0.9) / 2)
+        elif cur < median * 0.85:
             rationale = f"{_vnd(cur)} thấp hơn nhiều so với {basis} — có thể đang bán dưới giá, đề xuất tăng."
         else:
-            recommended = round((cur + median) / 2)
             rationale = f"{_vnd(cur)} đã sát {basis} — chỉ cần tinh chỉnh nhẹ."
 
     # Where the seller actually sits. A gap to the median says how far; the

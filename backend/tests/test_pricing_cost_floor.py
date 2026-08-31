@@ -340,3 +340,40 @@ async def test_a_floor_lifted_option_is_not_called_a_market_price() -> None:
     for strategy in lifted:
         assert strategy.label == "Giá tối thiểu"
         assert "cạnh tranh" not in strategy.label
+
+
+@pytest.mark.asyncio
+async def test_accepting_the_advice_does_not_produce_more_advice() -> None:
+    """The recommendation must be stable under its own output.
+
+    The rule used to average the current price with the median, so each
+    accepted suggestion moved the input closer to the median and produced a
+    fresh one: 183,000₫ → 223,000₫ → 258,000₫ → 275,000₫, raising a seller's
+    price four times toward a target they could have been given at once.
+    """
+    price = 183_000
+    seen = []
+    for _ in range(4):
+        result = await insights.recommend_price(
+            PricingRequest(product_name="X", category="Mỹ phẩm", current_price=price,
+                           unit_cost=120_000, min_margin_pct=35, channel="shopee")
+        )
+        seen.append(result.recommended_price)
+        price = result.recommended_price
+
+    assert len(set(seen)) == 1, f"suggestion drifted: {seen}"
+
+
+@pytest.mark.asyncio
+async def test_the_target_is_the_market_not_the_current_price() -> None:
+    """Same product, same market, same answer — wherever the seller starts."""
+    cheap = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=100_000)
+    )
+    dear = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=900_000)
+    )
+
+    assert cheap.recommended_price == dear.recommended_price
+    assert cheap.direction == "raise"
+    assert dear.direction == "lower"
