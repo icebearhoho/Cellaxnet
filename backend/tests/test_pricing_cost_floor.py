@@ -152,3 +152,65 @@ async def test_own_storefront_is_cheaper_than_a_marketplace() -> None:
     shopee = await insights.recommend_price(PricingRequest(**args, channel="shopee"))
 
     assert own.price_floor < shopee.price_floor
+
+
+@pytest.mark.asyncio
+async def test_stock_that_turns_over_quickly_is_left_alone() -> None:
+    """Discounting stock that clears in three weeks just gives away margin."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       stock_units=100, daily_sales=5)
+    )
+
+    assert result.stock_runway_days == 20
+    assert result.price_action is None
+
+
+@pytest.mark.asyncio
+async def test_slow_stock_is_discounted_in_two_steps() -> None:
+    """Sixty days earns a nudge, ninety a firmer one — capital sitting still
+    costs more the longer it sits."""
+    mild = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       stock_units=130, daily_sales=2)
+    )
+    deep = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       stock_units=120, daily_sales=1)
+    )
+
+    assert mild.price_action == "clearance"
+    assert deep.price_action == "clearance"
+    assert deep.recommended_price < mild.recommended_price
+    assert "quay vòng vốn" in deep.rationale
+
+
+@pytest.mark.asyncio
+async def test_the_margin_floor_outranks_clearance() -> None:
+    """Turnover is worth less than the margin it would cost.
+
+    Slow stock and a cost that leaves no room point opposite ways; the floor
+    wins, and the response says so rather than quoting a clearance price it
+    then overrode.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=250_000, min_margin_pct=50, channel="shopee",
+                       stock_units=120, daily_sales=1)
+    )
+
+    assert result.stock_runway_days == 120
+    assert result.price_action == "margin"
+    assert result.recommended_price == result.price_floor
+
+
+@pytest.mark.asyncio
+async def test_no_stock_figures_means_no_clearance_verdict() -> None:
+    """The rule is opt-in: without both numbers there is no runway to judge."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       stock_units=500)
+    )
+
+    assert result.stock_runway_days is None
+    assert result.price_action is None

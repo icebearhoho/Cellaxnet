@@ -414,6 +414,9 @@ def _build() -> dict:
     # Recompute product velocity/trend from those exact order lines. This makes
     # Product Graph, Copilot, inventory runway and dashboard explain the same
     # commerce history instead of independent random sales counters.
+    # Its own generator: drawing from `rng` here would shift every later value
+    # in the catalogue and change unrelated fixtures.
+    stock_rng = random.Random(3031)
     for product in products:
         period_units = [0, 0, 0, 0]
         for order in orders:
@@ -430,6 +433,23 @@ def _build() -> dict:
         product["daily_sales"] = round(max(0.1, period_units[-1] / 45), 2)
         change = (period_units[-1] - period_units[-2]) / max(period_units[-2], 1)
         product["trend"] = "rising" if change >= 0.15 else ("cooling" if change <= -0.15 else "stable")
+
+        # Stock was sized against the sales rate the catalogue *invented*
+        # (4-30 a day), but daily_sales is now derived from real orders and
+        # runs far lower. Left alone the two disagree by orders of magnitude —
+        # a median runway of 2,032 days, nothing ever "low" — which makes
+        # every runway-driven feature (Autopilot, inventory alerts, clearance
+        # rules) read a number that means nothing. Re-derive the level from the
+        # rate it will be divided by, keeping the intended ok/low/out mix.
+        if product["stock_status"] == "out":
+            product["stock"] = 0
+        else:
+            runway_days = (
+                stock_rng.randint(4, 12) if product["stock_status"] == "low"
+                else stock_rng.randint(20, 110)
+            )
+            product["stock"] = max(1, round(product["daily_sales"] * runway_days))
+
         if product["stock"] == 0:
             product["stock_status"] = "out"
         elif product["stock"] / product["daily_sales"] <= 14:

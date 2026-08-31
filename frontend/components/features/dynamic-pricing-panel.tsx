@@ -16,6 +16,7 @@ import {
   Lightbulb,
   Loader2,
   MoveHorizontal,
+  PackageSearch,
   RefreshCw,
   Search,
   ShieldCheck,
@@ -111,6 +112,8 @@ type PricingQuery = {
   unitCost?: number;
   minMarginPct: number;
   channel: string;
+  stockUnits?: number;
+  dailySales?: number;
 };
 
 const VND = new Intl.NumberFormat("vi-VN", {
@@ -168,6 +171,8 @@ export function DynamicPricingPanel() {
   const [margin, setMargin] = useState(20);
   const [marginTouched, setMarginTouched] = useState(false);
   const [channel, setChannel] = useState<string>("shopee");
+  const [stockUnits, setStockUnits] = useState("");
+  const [dailySales, setDailySales] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PricingResult | null>(null);
   const [submitted, setSubmitted] = useState<PricingQuery | null>(null);
@@ -179,6 +184,8 @@ export function DynamicPricingPanel() {
   const priceId = useId();
   const costId = useId();
   const marginId = useId();
+  const stockId = useId();
+  const salesId = useId();
 
   useEffect(() => {
     let active = true;
@@ -222,6 +229,10 @@ export function DynamicPricingPanel() {
 
   const currentPrice = parsePrice(price);
   const unitCost = parsePrice(cost);
+  const stockCount = parsePrice(stockUnits);
+  const salesRate = dailySales ? Number(dailySales) : undefined;
+  const runwayDays =
+    stockCount !== undefined && salesRate ? stockCount / salesRate : null;
   const isDirty = Boolean(
     result && submitted && (
       submitted.name !== name.trim()
@@ -231,6 +242,8 @@ export function DynamicPricingPanel() {
       || submitted.unitCost !== unitCost
       || submitted.minMarginPct !== margin
       || submitted.channel !== channel
+      || submitted.stockUnits !== stockCount
+      || submitted.dailySales !== salesRate
     ),
   );
 
@@ -249,12 +262,14 @@ export function DynamicPricingPanel() {
     try {
       const response = await recommendPrice(productName, category, currentPrice, {
         unitCost, minMarginPct: margin, channel,
+        stockUnits: stockCount, dailySales: salesRate,
       });
       if (response.ok) {
         setResult(response.data);
         setSubmitted({
           name: productName, category, currentPrice,
           unitCost, minMarginPct: margin, channel,
+          stockUnits: stockCount, dailySales: salesRate,
         });
         return;
       }
@@ -485,6 +500,49 @@ export function DynamicPricingPanel() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Stock only matters as a rate: 500 units is a fortnight for
+                      one product and half a year for another, and only the
+                      second is worth discounting. */}
+                  <div>
+                    <span className="text-sm font-medium text-text">
+                      Tồn kho <span className="font-normal text-text-muted">(không bắt buộc)</span>
+                    </span>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <div>
+                        <label htmlFor={stockId} className="text-xs text-text-muted">
+                          Số lượng còn
+                        </label>
+                        <Input
+                          id={stockId}
+                          value={stockUnits}
+                          onChange={(e) => setStockUnits(e.target.value.replace(/\D/g, ""))}
+                          placeholder="120"
+                          inputMode="numeric"
+                          className="mt-1 h-9 rounded-lg text-xs tnum"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={salesId} className="text-xs text-text-muted">
+                          Bán mỗi ngày
+                        </label>
+                        <Input
+                          id={salesId}
+                          value={dailySales}
+                          onChange={(e) => setDailySales(e.target.value.replace(/[^\d.]/g, ""))}
+                          placeholder="2"
+                          inputMode="decimal"
+                          className="mt-1 h-9 rounded-lg text-xs tnum"
+                        />
+                      </div>
+                    </div>
+                    {runwayDays !== null && (
+                      <p className="mt-2 text-xs leading-5 text-text-muted">
+                        Đủ bán khoảng <span className="tnum">{runwayDays.toFixed(0)}</span> ngày
+                        {runwayDays >= 60 && " — hàng quay vòng chậm, hệ thống sẽ đề xuất giảm giá."}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -713,6 +771,32 @@ export function DynamicPricingPanel() {
                         <span className="tnum font-medium text-accent">{result.price_percentile}%</span>{" "}
                         trong {result.sample_size} sản phẩm quan sát được.
                       </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Why the price moved off the market number. Without this the
+                    suggestion just looks lower than the median for no reason. */}
+                {result.price_action && (
+                  <div
+                    className={cn(
+                      "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border px-4 py-3 text-xs",
+                      result.price_action === "clearance"
+                        ? "border-info/30 bg-info/[0.05] text-info"
+                        : "border-warning/30 bg-warning/[0.05] text-warning",
+                    )}
+                  >
+                    <PackageSearch className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {result.price_action === "clearance" ? (
+                      <span>
+                        Đề xuất <strong>xả hàng</strong>: tồn kho đủ bán{" "}
+                        <span className="tnum">{result.stock_runway_days?.toFixed(0)}</span> ngày.
+                      </span>
+                    ) : (
+                      <span>
+                        Hàng quay vòng chậm nhưng <strong>giá vốn không cho phép giảm</strong> —
+                        giữ ở giá sàn để không lỗ.
+                      </span>
                     )}
                   </div>
                 )}
