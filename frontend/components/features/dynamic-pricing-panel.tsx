@@ -54,9 +54,36 @@ const CHANNELS = [
   { id: "own", label: "Cửa hàng riêng", fee: "2%" },
 ] as const;
 
-/** Quick margin marks. 20% is the default: below that a marketplace fee plus
- *  ads and returns can erase the profit entirely. */
-const MARGIN_PRESETS = [10, 15, 20, 25, 30] as const;
+/** Industry gross-margin references, by category.
+ *
+ *  Retail apparel runs a 50-70% gross margin (Inditex 57-60%, Nike 43-50%,
+ *  ASOS 45-50%, Vietnamese labels 50-65%) precisely because rent, staffing and
+ *  chain operations come out of it afterwards. Beauty sits lower on a single
+ *  SKU but carries heavier marketing.
+ *
+ *  These are *references*, not defaults: the slider here measures margin after
+ *  cost and marketplace fee but before ads, vouchers and operations, so a
+ *  seller matching the industry number is not left with the industry's profit.
+ *  `hint` says which end of that they are aiming at. */
+const MARGIN_GUIDES: Record<string, { marks: number[]; hint: number; note: string }> = {
+  "Thời trang": {
+    marks: [30, 40, 50, 60],
+    hint: 50,
+    note: "Biên gộp ngành thời trang bán lẻ thường 50–65%",
+  },
+  "Mỹ phẩm": {
+    marks: [25, 35, 45, 55],
+    hint: 35,
+    note: "Mỹ phẩm biên gộp cao nhưng chi phí marketing lớn",
+  },
+  "Phụ kiện": {
+    marks: [25, 35, 45, 55],
+    hint: 40,
+    note: "Phụ kiện thường có biên gộp 40–55%",
+  },
+};
+
+const DEFAULT_GUIDE = { marks: [10, 20, 30, 40], hint: 20, note: "" };
 
 type Category = (typeof CATEGORIES)[number];
 
@@ -137,6 +164,7 @@ export function DynamicPricingPanel() {
   const [price, setPrice] = useState("450000");
   const [cost, setCost] = useState("");
   const [margin, setMargin] = useState(20);
+  const [marginTouched, setMarginTouched] = useState(false);
   const [channel, setChannel] = useState<string>("shopee");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PricingResult | null>(null);
@@ -180,6 +208,15 @@ export function DynamicPricingPanel() {
     setProductPickerOpen(false);
     setError(null);
   }
+
+  // Industry reference for whichever category is selected. Switching category
+  // moves the suggested mark with it, but only until the seller sets a margin
+  // themselves — after that their number stands.
+  const guide = MARGIN_GUIDES[category] ?? DEFAULT_GUIDE;
+
+  useEffect(() => {
+    if (!marginTouched) setMargin(guide.hint);
+  }, [guide.hint, marginTouched]);
 
   const currentPrice = parsePrice(price);
   const unitCost = parsePrice(cost);
@@ -382,34 +419,43 @@ export function DynamicPricingPanel() {
                       id={marginId}
                       type="range"
                       min={5}
-                      max={40}
+                      max={70}
                       step={1}
                       value={margin}
-                      onChange={(event) => setMargin(Number(event.target.value))}
+                      onChange={(event) => {
+                        setMargin(Number(event.target.value));
+                        setMarginTouched(true);
+                      }}
                       className="mt-2 w-full accent-warning"
                     />
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {MARGIN_PRESETS.map((preset) => (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {guide.marks.map((mark) => (
                         <button
-                          key={preset}
+                          key={mark}
                           type="button"
-                          onClick={() => setMargin(preset)}
+                          onClick={() => { setMargin(mark); setMarginTouched(true); }}
                           className={cn(
                             "rounded-md border px-2 py-0.5 text-xs tnum transition-colors",
-                            margin === preset
+                            margin === mark
                               ? "border-warning bg-warning/10 text-warning"
                               : "border-border text-text-muted hover:bg-surface-2",
                           )}
                         >
-                          {preset}%
+                          {mark}%
+                          {mark === guide.hint && (
+                            <span className="ml-1 text-2xs opacity-70">ngành</span>
+                          )}
                         </button>
                       ))}
                     </div>
+                    {guide.note && (
+                      <p className="mt-2 text-xs leading-5 text-text-dim">{guide.note}</p>
+                    )}
                     {/* Naming what is *not* deducted matters more than what is:
                         a seller reading "you keep 20%" will plan around it, and
                         ads, vouchers, shipping support and returns come out of
                         that 20% without ever appearing here. */}
-                    <p className="mt-2 text-xs leading-5 text-text-muted">
+                    <p className="mt-1.5 text-xs leading-5 text-text-muted">
                       Lợi nhuận sau giá vốn và phí sàn, tính trên giá bán. Chưa trừ quảng cáo,
                       voucher, phí đóng gói, vận chuyển shop hỗ trợ hay hoàn hàng — hãy để biên
                       cao hơn mức tối thiểu bạn cần.
