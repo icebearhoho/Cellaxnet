@@ -97,30 +97,37 @@ def test_every_customer_lands_in_exactly_one_group() -> None:
     assert all(r.get("group_key") in counts for r in data["customers"])
 
 
-def test_a_group_implies_one_action_not_a_severity_band() -> None:
-    """Severity alone put 48 customers in one bucket needing two different
-    things — an email for those drifting away, a size guide for those likely to
-    return an order. Grouping by the work makes the header action correct for
-    everyone under it.
+def test_the_header_action_reports_who_it_actually_covers() -> None:
+    """Severity bands do not imply one piece of work.
 
-    Only the groups that ask for work are checked: "steady" exists to say
-    nothing is needed, and its members carry two equivalent phrasings of that.
+    The medium band mixes customers drifting away (email them) with orders
+    likely to come back (send sizing help), so its header action fits some but
+    not all of them. Publishing that count keeps the advice honest — the
+    alternative is one instruction silently applied to 48 people.
     """
     data = portfolio.risk_portfolio()
-    by_group: dict[str, set[str]] = {}
-    for row in data["customers"]:
-        if row["lead_action"] and row["group_key"] != "steady":
-            by_group.setdefault(row["group_key"], set()).add(row["lead_action"])
 
-    assert by_group, "some group should ask for work"
-    for key, actions in by_group.items():
-        assert len(actions) == 1, f"{key} mixes {len(actions)} actions"
+    for group in data["groups"]:
+        assert 0 < group["action_fits"] <= group["count"], group["label"]
+
+    medium = next(g for g in data["groups"] if g["key"] == "medium")
+    assert medium["action_fits"] < medium["count"], (
+        "the medium band should be the one where a single action falls short"
+    )
 
 
-def test_the_urgent_group_is_the_smallest_one() -> None:
+def test_bands_that_need_no_work_are_fully_covered() -> None:
+    """"Nothing to do" applies to everyone in the band, whatever their risk."""
+    data = portfolio.risk_portfolio()
+    low = next(g for g in data["groups"] if g["key"] == "low")
+
+    assert low["action_fits"] == low["count"]
+
+
+def test_the_urgent_band_is_the_smallest_one() -> None:
     """A queue where everything is urgent is not a queue."""
     data = portfolio.risk_portfolio()
-    urgent = next(g for g in data["groups"] if g["key"] == "win_back")
+    urgent = next(g for g in data["groups"] if g["key"] == "high")
 
     assert 0 < urgent["count"] < data["total"] * 0.1
 

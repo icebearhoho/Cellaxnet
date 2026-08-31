@@ -182,34 +182,68 @@ def risk_portfolio() -> dict:
 #: of them. Keyed on (lead_kind, lead_band), which is what decides the action.
 _ACTION_GROUPS: tuple[dict, ...] = (
     {
-        "key": "win_back",
-        "label": "Cần giữ chân gấp",
+        "key": "high",
+        "label": "Rủi ro cao",
         "tone": "danger",
         "action": "Gửi ưu đãi giữ chân (giảm giá hoặc miễn phí vận chuyển) ngay tuần này.",
-        "match": lambda r: r["lead_kind"] == "churn" and r["lead_band"] == "high",
+        "fits_kind": "churn",
+        "match": lambda r: r["lead_band"] == "high",
     },
     {
-        "key": "nurture",
-        "label": "Nên nhắc lại",
+        "key": "medium",
+        "label": "Trung bình",
         "tone": "warning",
         "action": "Gửi email gợi ý sản phẩm theo lịch sử mua của từng khách.",
-        "match": lambda r: r["lead_kind"] == "churn" and r["lead_band"] == "medium",
+        "fits_kind": "churn",
+        "match": lambda r: r["lead_band"] == "medium",
     },
     {
-        "key": "size_help",
-        "label": "Cần tư vấn trước khi giao",
-        "tone": "warning",
-        "action": "Kèm bảng size và hướng dẫn sử dụng vào phiếu giao hàng.",
-        "match": lambda r: r["lead_kind"] == "return" and r["lead_band"] in {"high", "medium"},
-    },
-    {
-        "key": "steady",
-        "label": "Ổn định",
+        "key": "low",
+        "label": "An toàn",
         "tone": "success",
         "action": "Chưa cần can thiệp — tiếp tục chăm sóc như hiện tại.",
+        # Nothing to do either way, so the advice fits the whole band.
+        "fits_kind": None,
         "match": lambda r: True,
     },
 )
+
+
+#: What the customers a band's header action does not fit still need. Keyed by
+#: their lead risk, so the note describes the actual remainder rather than a
+#: guess baked into the UI.
+_REMAINDER_ACTION = {
+    "return": "Kèm bảng size và hướng dẫn sử dụng vào phiếu giao hàng.",
+    "churn": "Gửi email gợi ý sản phẩm theo lịch sử mua của từng khách.",
+}
+
+
+def _remainder_action(rows: list[dict], group: dict) -> str | None:
+    """Advice for the part of the band the header action leaves out."""
+    if group["fits_kind"] is None:
+        return None
+    kinds = {
+        r["lead_kind"] for r in rows
+        if r.get("group_key") == group["key"] and r["lead_kind"] != group["fits_kind"]
+    }
+    if len(kinds) != 1:
+        return None
+    return _REMAINDER_ACTION.get(kinds.pop())
+
+
+def _action_coverage(rows: list[dict], group: dict) -> int:
+    """How many of the band the header's action actually fits.
+
+    Severity bands do not imply one piece of work: the medium band mixes
+    customers drifting away (email them) with orders likely to come back (send
+    sizing help). The header names the majority action, so the count it covers
+    travels with it — a seller can see a remainder exists rather than applying
+    one instruction to all 48.
+    """
+    members = [r for r in rows if r.get("group_key") == group["key"]]
+    if group["fits_kind"] is None:
+        return len(members)
+    return sum(1 for r in members if r["lead_kind"] == group["fits_kind"])
 
 
 def _action_groups(rows: list[dict]) -> list[dict]:
@@ -236,6 +270,8 @@ def _action_groups(rows: list[dict]) -> list[dict]:
             "tone": g["tone"],
             "action": g["action"],
             "count": counts[g["key"]],
+            "action_fits": _action_coverage(rows, g),
+            "remainder_action": _remainder_action(rows, g),
             "value_at_stake_vnd": stakes[g["key"]],
         }
         for g in _ACTION_GROUPS

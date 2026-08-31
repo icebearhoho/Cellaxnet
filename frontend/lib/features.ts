@@ -344,6 +344,11 @@ export type RiskGroup = {
   tone: "danger" | "warning" | "success";
   action: string;
   count: number;
+  /** How many of the band the action actually fits. Severity does not imply
+   *  one piece of work, so this can be smaller than `count`. */
+  action_fits: number;
+  /** What the rest of the band needs instead; null when the action fits all. */
+  remainder_action: string | null;
   value_at_stake_vnd: number;
 };
 
