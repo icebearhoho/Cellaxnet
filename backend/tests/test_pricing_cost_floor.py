@@ -70,22 +70,24 @@ async def test_the_floor_delivers_the_margin_it_promises() -> None:
 
     assert result.price_floor is not None
     profit = result.price_floor * (1 - 0.05) - 80_000
-    assert profit / result.price_floor == pytest.approx(0.30, abs=0.01)
+    assert profit / result.price_floor >= 0.30
 
 
 @pytest.mark.asyncio
 async def test_worked_example_cost_520k_shopee_20pct() -> None:
     """A hand-checkable case: 520,000₫ at 5% commission and a 20% margin.
 
-    520,000 / (1 - 0.05 - 0.20) = 693,333₫, rounded up to the next 100₫.
+    520,000 / (1 - 0.05 - 0.20) = 693,333₫, rounded up to the next 1,000₫.
     """
     result = await insights.recommend_price(
         PricingRequest(product_name="X", category="Mỹ phẩm", current_price=600_000,
                        unit_cost=520_000, min_margin_pct=20, channel="shopee")
     )
 
-    assert result.price_floor == 693_400
-    assert result.margin_pct_at_recommended == pytest.approx(20.0, abs=0.1)
+    assert result.price_floor == 694_000
+    # Rounding up lands at or just above the request, never below it.
+    assert result.margin_pct_at_recommended is not None
+    assert 20.0 <= result.margin_pct_at_recommended <= 20.3
 
 
 @pytest.mark.asyncio
@@ -279,3 +281,90 @@ async def test_strategies_need_no_cost_to_be_offered() -> None:
     assert len(result.strategies) == 3
     assert all(s.margin_pct is None for s in result.strategies)
     assert all(not s.lifted_by_floor for s in result.strategies)
+
+
+@pytest.mark.asyncio
+async def test_the_verdict_is_one_word() -> None:
+    """A seller reads the direction before any number, so it has to be right."""
+    under = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=100_000)
+    )
+    over = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=600_000)
+    )
+
+    assert under.direction == "raise"
+    assert under.change_vnd is not None and under.change_vnd > 0
+    assert over.direction == "lower"
+    assert over.change_vnd is not None and over.change_vnd < 0
+
+
+@pytest.mark.asyncio
+async def test_a_move_too_small_to_matter_says_keep() -> None:
+    """Advising a 1% change on a reference price is worse than saying nothing."""
+    priced_at_median = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000)
+    )
+    nudged = await insights.recommend_price(
+        PricingRequest(
+            product_name="X", category="Mỹ phẩm",
+            current_price=priced_at_median.recommended_price,
+        )
+    )
+
+    assert nudged.direction == "keep"
+
+
+@pytest.mark.asyncio
+async def test_the_price_is_rounded_to_thousands() -> None:
+    """The inputs are references; 222,900₫ implies precision they do not have."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000)
+    )
+
+    assert result.recommended_price % 1000 == 0
+
+
+@pytest.mark.asyncio
+async def test_rounding_never_drops_below_the_floor() -> None:
+    """Rounding down through the floor would undo the guarantee it makes."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=100_000,
+                       unit_cost=190_000, min_margin_pct=35, channel="shopee")
+    )
+
+    assert result.price_floor is not None
+    assert result.recommended_price >= result.price_floor
+
+
+@pytest.mark.asyncio
+async def test_impact_shows_what_changes_per_unit() -> None:
+    """"You keep 41% instead of 29%" is the reason to act on the advice."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000,
+                       unit_cost=120_000, min_margin_pct=35, channel="shopee")
+    )
+
+    assert result.margin_pct_now is not None
+    assert result.margin_pct_at_recommended is not None
+    assert result.profit_per_unit_now is not None
+    assert result.profit_per_unit_at_recommended is not None
+    # Raising the price raises both, and the pair has to move together.
+    assert result.profit_per_unit_at_recommended > result.profit_per_unit_now
+    assert result.margin_pct_at_recommended > result.margin_pct_now
+
+
+@pytest.mark.asyncio
+async def test_strategy_names_describe_position_not_outcome() -> None:
+    """Total profit is quantity x margin, and nothing here models quantity.
+
+    Naming the top quartile "maximum profit" would assert what the system
+    cannot know: it may sell to nobody at that price.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000)
+    )
+
+    labels = " ".join(s.label for s in result.strategies)
+    assert "Tối đa lợi nhuận" not in labels
+    assert "Tăng doanh số" not in labels

@@ -94,6 +94,11 @@ class PriceStrategy(BaseModel):
     lifted_by_floor: bool = False
 
 
+#: What the seller should do, as one word. The screen leads with this: a
+#: recommendation nobody can act on in three seconds is a report, not advice.
+PriceDirection = Literal["raise", "lower", "keep"]
+
+
 class PricingResponse(BaseModel):
     recommended_price: int
     low: int
@@ -114,6 +119,16 @@ class PricingResponse(BaseModel):
     #: Margin on revenue actually achieved at `recommended_price`, after
     #: commission — the number to check before accepting the suggestion.
     margin_pct_at_recommended: float | None = None
+    #: Raise, lower or keep — the headline verdict.
+    direction: PriceDirection = "keep"
+    #: Gap between the current price and the recommendation, for the headline.
+    change_vnd: int | None = None
+    change_pct: float | None = None
+    #: Margin at the *current* price, so the panel can show what changes.
+    margin_pct_now: float | None = None
+    #: Profit per unit after cost and commission, now and at the suggestion.
+    profit_per_unit_now: int | None = None
+    profit_per_unit_at_recommended: int | None = None
     #: Three positions in the market, cheapest first. Same product, same
     #: floor — what changes is which end of the market it sits at.
     strategies: list[PriceStrategy] = []

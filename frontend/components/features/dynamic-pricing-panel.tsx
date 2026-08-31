@@ -3,7 +3,6 @@
 import { type FormEvent, useEffect, useId, useState } from "react";
 import {
   AlertCircle,
-  BadgeDollarSign,
   BarChart3,
   Calculator,
   Check,
@@ -13,7 +12,6 @@ import {
   Droplets,
   FlaskConical,
   Gem,
-  Lightbulb,
   Loader2,
   MoveHorizontal,
   PackageSearch,
@@ -638,50 +636,98 @@ export function DynamicPricingPanel() {
               </div>
             ) : (
               <div className="space-y-5" aria-live="polite">
-                <div className="rounded-lg border border-accent/20 bg-accent/[0.025] p-5 sm:p-6">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <p className="flex items-center gap-2 text-sm font-medium text-text-muted">
-                        <BadgeDollarSign className="h-4 w-4 text-accent" aria-hidden="true" /> Giá bán đề xuất
-                      </p>
-                      <p className="tnum mt-2 text-3xl font-semibold tracking-tight text-accent-deep sm:text-4xl">
-                        {VND.format(result.recommended_price)}
-                      </p>
-                    </div>
-                    {priceDelta !== null && Number.isFinite(priceDelta) && (
-                      <span className={cn(
-                        "rounded-md px-2.5 py-1.5 text-sm font-semibold tnum",
-                        priceDelta > 0
-                          ? "bg-success/10 text-success"
-                          : priceDelta < 0
-                            ? "bg-warning/10 text-warning"
-                            : "bg-surface-2 text-text-muted",
-                      )}>
-                        {priceDelta > 0 ? "+" : ""}{priceDelta}% so với giá hiện tại
+                {/* The verdict, then what it buys. A seller who reads only the
+                    first line should already know what to do. */}
+                <div className={cn(
+                  "rounded-lg border p-5 sm:p-6",
+                  result.direction === "raise" ? "border-success/30 bg-success/[0.04]"
+                    : result.direction === "lower" ? "border-warning/30 bg-warning/[0.04]"
+                    : "border-border bg-surface-2/40",
+                )}>
+                  <p className={cn(
+                    "text-xs font-semibold uppercase tracking-wider",
+                    result.direction === "raise" ? "text-success"
+                      : result.direction === "lower" ? "text-warning"
+                      : "text-text-muted",
+                  )}>
+                    {result.direction === "raise" ? "Nên tăng giá"
+                      : result.direction === "lower" ? "Nên giảm giá"
+                      : "Giá hiện tại đã hợp lý"}
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="tnum text-3xl font-semibold tracking-tight text-text sm:text-4xl">
+                      {VND.format(result.recommended_price)}
+                    </span>
+                    {submitted?.currentPrice && result.change_pct !== null && (
+                      <span className="tnum text-sm text-text-muted">
+                        từ {VND.format(submitted.currentPrice)}
+                        {result.change_vnd !== null && (
+                          <span className={cn(
+                            "ml-2 font-medium",
+                            result.change_vnd > 0 ? "text-success" : "text-warning",
+                          )}>
+                            {result.change_vnd > 0 ? "+" : ""}{VND.format(result.change_vnd)}
+                            {" "}({result.change_pct > 0 ? "+" : ""}{result.change_pct}%)
+                          </span>
+                        )}
                       </span>
                     )}
                   </div>
 
-                  <div className="mt-7" aria-label={`Khoảng giá từ ${VND.format(result.low)} đến ${VND.format(result.high)}`}>
-                    <div className="relative h-2 rounded-full bg-accent/15">
-                      <span
-                        className="absolute top-1/2 h-5 w-0.5 -translate-y-1/2 bg-warning"
-                        style={{ left: `${medianPosition}%` }}
-                        aria-hidden="true"
-                      />
-                      <span
-                        className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-accent shadow-sm"
-                        style={{ left: `${recommendedPosition}%` }}
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="mt-3 grid grid-cols-3 text-xs text-text-muted">
-                      <span className="tnum">{VND.format(result.low)}</span>
-                      <span className="text-center">Trung vị</span>
-                      <span className="tnum text-right">{VND.format(result.high)}</span>
-                    </div>
-                  </div>
+                  <p className="mt-3 text-sm leading-6 text-text-muted">{result.rationale}</p>
+
+                  {result.price_floor !== null && (
+                    <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-text-dim">
+                      <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      Không nên bán dưới {VND.format(result.price_floor)} nếu muốn giữ biên{" "}
+                      {submitted?.minMarginPct}%
+                      {result.channel_name && ` sau phí ${result.channel_name}`}.
+                    </p>
+                  )}
                 </div>
+
+                {/* What changes if they act. Per-unit only — total profit would
+                    need a demand model this system does not have. */}
+                {result.margin_pct_now !== null && result.profit_per_unit_now !== null && (
+                  <div className="overflow-x-auto rounded-lg border border-border">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-2xs uppercase tracking-wider text-text-dim">
+                          <th className="px-4 py-2 text-left font-medium">Nếu áp dụng</th>
+                          <th className="px-4 py-2 text-right font-medium">Hiện tại</th>
+                          <th className="px-4 py-2 text-right font-medium">Đề xuất</th>
+                        </tr>
+                      </thead>
+                      <tbody className="tnum">
+                        <tr className="border-b border-border/50">
+                          <td className="px-4 py-2.5 text-text-muted">Giá bán</td>
+                          <td className="px-4 py-2.5 text-right">{VND.format(submitted?.currentPrice ?? 0)}</td>
+                          <td className="px-4 py-2.5 text-right font-medium text-text">
+                            {VND.format(result.recommended_price)}
+                          </td>
+                        </tr>
+                        <tr className="border-b border-border/50">
+                          <td className="px-4 py-2.5 text-text-muted">Lãi mỗi sản phẩm</td>
+                          <td className="px-4 py-2.5 text-right">{VND.format(result.profit_per_unit_now)}</td>
+                          <td className="px-4 py-2.5 text-right font-medium text-success">
+                            {VND.format(result.profit_per_unit_at_recommended ?? 0)}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 text-text-muted">Biên lợi nhuận</td>
+                          <td className="px-4 py-2.5 text-right">{result.margin_pct_now}%</td>
+                          <td className="px-4 py-2.5 text-right font-medium text-success">
+                            {result.margin_pct_at_recommended}%
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p className="border-t border-border px-4 py-2 text-2xs text-text-dim">
+                      Sau giá vốn và phí sàn, chưa tính quảng cáo, voucher hay chi phí vận hành.
+                    </p>
+                  </div>
+                )}
 
                 <dl className="grid grid-cols-3 gap-3">
                   <div className="rounded-lg border border-info/20 bg-info/[0.035] p-4">
@@ -857,52 +903,6 @@ export function DynamicPricingPanel() {
                   </div>
                 )}
 
-                {result.price_floor !== null && (
-                  <div
-                    className={cn(
-                      "rounded-lg border px-5 py-4",
-                      result.floor_above_market
-                        ? "border-danger/30 bg-danger/[0.05]"
-                        : "border-border bg-surface-2/40",
-                    )}
-                  >
-                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
-                      <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Giá sàn an toàn
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <span className="tnum text-lg font-semibold text-text">
-                        {VND.format(result.price_floor)}
-                      </span>
-                      {result.margin_pct_at_recommended !== null && (
-                        <span className="text-xs text-text-muted">
-                          Lợi nhuận tại giá đề xuất:{" "}
-                          <span className="tnum font-medium text-success">
-                            {result.margin_pct_at_recommended}%
-                          </span>
-                        </span>
-                      )}
-                      {result.channel_name && (
-                        <span className="text-xs text-text-dim">
-                          sau giá vốn và phí {result.channel_name} {result.channel_commission_pct}%
-                        </span>
-                      )}
-                    </div>
-                    {result.floor_above_market && (
-                      <p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-danger">
-                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        Trung vị thị trường thấp hơn giá vốn của bạn — bán theo thị trường sẽ lỗ.
-                        Cân nhắc giảm giá nhập hoặc chọn sản phẩm khác thay vì hạ giá.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="rounded-lg border border-warning/20 bg-warning/[0.035] px-5 py-4">
-                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-warning">
-                    <Lightbulb className="h-4 w-4" aria-hidden="true" /> Cơ sở đề xuất
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-text-muted">{result.rationale}</p>
-                </div>
               </div>
             )}
           </div>

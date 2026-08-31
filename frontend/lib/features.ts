@@ -181,6 +181,14 @@ export type PricingResult = {
   market_p75: number | null;
   /** Share of observed products at or below the seller's current price. */
   price_percentile: number | null;
+  /** Raise, lower or keep — the headline verdict. */
+  direction: "raise" | "lower" | "keep";
+  change_vnd: number | null;
+  change_pct: number | null;
+  /** Margin and per-unit profit at the current price, for the before/after. */
+  margin_pct_now: number | null;
+  profit_per_unit_now: number | null;
+  profit_per_unit_at_recommended: number | null;
   /** Three market positions, cheapest first. */
   strategies: PriceStrategy[];
   /** Days the stock lasts at the current rate; null without stock figures. */

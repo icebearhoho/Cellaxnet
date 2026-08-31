@@ -28,6 +28,7 @@ from app.schemas.insights import (
     InventoryAlertRequest,
     InventoryAlertResponse,
     PriceAction,
+    PriceDirection,
     PriceStrategy,
     PriceSource,
     PricingRequest,
@@ -275,7 +276,9 @@ def _cost_floor(req: PricingRequest) -> _CostFloor | None:
     keep = max(1.0 - (commission_pct + req.min_margin_pct) / 100.0, 0.01)
     floor = req.unit_cost / keep
     return _CostFloor(
-        floor=int(-(-floor // 100) * 100),  # round up: rounding down breaks the floor
+        # Up to the next thousand: rounding down would break the guarantee, and
+        # the floor sits beside a recommendation quoted in thousands.
+        floor=int(-(-floor // 1000) * 1000),
         channel_name=channel_name,
         commission_pct=commission_pct,
     )
@@ -308,13 +311,18 @@ def _market_label(countries: tuple[str, ...]) -> str:
 
 _StrategyKey = Literal["volume", "balanced", "margin"]
 
-#: The three positions, described by what the seller gets rather than by the
-#: statistic behind them. "p25" means nothing to a seller; "a quarter of the
-#: market is cheaper than this" is the same fact they can act on.
+#: The three positions, named for where they sit in the market rather than for
+#: what they are supposed to achieve.
+#:
+#: They were "Tăng doanh số" and "Tối đa lợi nhuận", which claim outcomes this
+#: system cannot predict: total profit is quantity × margin, and nothing here
+#: models how quantity responds to price. Selling at p75 to two buyers earns
+#: less than selling at the median to a hundred, so calling p75 "maximum
+#: profit" states as fact what would need demand elasticity to know.
 _STRATEGY_SPEC: tuple[tuple[_StrategyKey, str, str], ...] = (
-    ("volume", "Tăng doanh số", "Giá cạnh tranh — rẻ hơn khoảng 3/4 thị trường"),
-    ("balanced", "Cân bằng", "Ngang mặt bằng chung của thị trường"),
-    ("margin", "Tối đa lợi nhuận", "Giá cao — chỉ 1/4 thị trường đắt hơn"),
+    ("volume", "Giá cạnh tranh", "Rẻ hơn khoảng 3/4 sản phẩm trên thị trường"),
+    ("balanced", "Ngang thị trường", "Sát mặt bằng chung của các sản phẩm tương tự"),
+    ("margin", "Giá cao", "Chỉ khoảng 1/4 thị trường bán đắt hơn mức này"),
 )
 
 
@@ -502,12 +510,45 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             int(recommended), req.unit_cost, cost_floor.commission_pct
         )
 
+    # Round to the nearest thousand. The inputs are references, not
+    # measurements, so quoting 222,900₫ implies a precision the data cannot
+    # carry — and sellers price in thousands anyway.
+    recommended = int(round(recommended / 1000) * 1000)
+    if cost_floor is not None and recommended < cost_floor.floor:
+        recommended = cost_floor.floor
+
+    # The verdict, as one word. Moves under ~2% are noise against a reference
+    # price, and telling a seller to change their price by that is worse advice
+    # than telling them to leave it alone.
+    direction: PriceDirection = "keep"
+    change_vnd: int | None = None
+    change_pct: float | None = None
+    margin_now: float | None = None
+    profit_now: int | None = None
+    profit_rec: int | None = None
+    if req.current_price:
+        change_vnd = recommended - req.current_price
+        change_pct = round(change_vnd / req.current_price * 100, 1)
+        if abs(change_pct) >= 2:
+            direction = "raise" if change_vnd > 0 else "lower"
+    if cost_floor is not None and req.unit_cost is not None:
+        keep = 1 - cost_floor.commission_pct / 100
+        profit_rec = int(round(recommended * keep - req.unit_cost))
+        if req.current_price:
+            margin_now = _net_margin_pct(
+                req.current_price, req.unit_cost, cost_floor.commission_pct
+            )
+            profit_now = int(round(req.current_price * keep - req.unit_cost))
+
     return PricingResponse(
         recommended_price=int(recommended), low=int(min(p25, recommended)),
         high=int(max(p75, recommended)), category_median=int(median),
         sample_size=stats.sample_size, rationale=rationale,
         market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
         stock_runway_days=runway_days, price_action=action,
+        direction=direction, change_vnd=change_vnd, change_pct=change_pct,
+        margin_pct_now=margin_now,
+        profit_per_unit_now=profit_now, profit_per_unit_at_recommended=profit_rec,
         strategies=_strategies(stats, cost_floor, req.unit_cost),
         market_label=_market_label(stats.countries) if stats.source != "demo" else None,
         price_floor=cost_floor.floor if cost_floor else None,
