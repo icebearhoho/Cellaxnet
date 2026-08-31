@@ -342,7 +342,6 @@ export type RiskGroup = {
   key: string;
   label: string;
   tone: "danger" | "warning" | "success";
-  traits: string;
   action: string;
   count: number;
   value_at_stake_vnd: number;
