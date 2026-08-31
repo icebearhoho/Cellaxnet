@@ -429,3 +429,48 @@ async def test_cost_never_pushes_past_the_top_of_the_market() -> None:
 
     assert result.price_floor is not None
     assert result.recommended_price == max(result.market_p75 or 0, result.price_floor)
+
+
+@pytest.mark.asyncio
+async def test_a_product_with_no_price_yet_is_not_told_to_keep_it() -> None:
+    """"Giá hiện tại đã hợp lý" about a blank field is wrong.
+
+    Costing a new product is a real use for this screen — the seller has a cost
+    and a margin target and no price at all — and it needs its own verdict.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", unit_cost=120_000,
+                       min_margin_pct=35, channel="shopee")
+    )
+
+    assert result.direction == "new"
+    assert result.change_vnd is None
+    assert result.price_floor is not None
+
+
+@pytest.mark.asyncio
+async def test_a_price_without_a_cost_says_it_was_not_profit_checked() -> None:
+    """Placed against competitors, not against the seller's own economics.
+
+    Silence here is the dangerous case: a seller whose cost is 230,000₫ would
+    be advised toward 277,000₫ with a margin they never asked anyone to check.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000)
+    )
+
+    assert result.margin_unverified is True
+    assert result.price_floor is None
+    assert any("chưa kiểm tra được" in r for r in result.reasons)
+
+
+@pytest.mark.asyncio
+async def test_a_cost_makes_the_recommendation_profit_checked() -> None:
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000,
+                       unit_cost=120_000, min_margin_pct=35, channel="shopee")
+    )
+
+    assert result.margin_unverified is False
+    assert result.margin_pct_at_recommended is not None
+    assert not any("chưa kiểm tra được" in r for r in result.reasons)

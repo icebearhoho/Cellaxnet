@@ -383,14 +383,15 @@ export function DynamicPricingPanel() {
                 </span>
               </div>
               <p id={`${priceId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
-                Dùng để tính mức tăng hoặc giảm so với giá đang bán.
+                Nhập nếu sản phẩm đang bán, để biết nên tăng hay giảm bao nhiêu. Bỏ trống
+                nếu đang định giá sản phẩm mới.
               </p>
             </div>
 
             <div className="rounded-lg border border-border bg-surface-2/40 p-4">
               <label htmlFor={costId} className="flex items-center gap-2 text-sm font-medium text-text">
                 <Wallet className="h-4 w-4 text-warning" aria-hidden="true" />
-                <span>Giá vốn <span className="font-normal text-text-muted">(không bắt buộc)</span></span>
+                <span>Giá vốn <span className="font-normal text-warning">(khuyến nghị)</span></span>
               </label>
               <div className="relative mt-2">
                 <Input
@@ -407,7 +408,8 @@ export function DynamicPricingPanel() {
                 </span>
               </div>
               <p id={`${costId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
-                Nhập giá vốn để hệ thống không đề xuất mức giá làm bạn lỗ.
+                Không có giá vốn, hệ thống chỉ so được với thị trường — không biết mức giá
+                đề xuất có đảm bảo lợi nhuận hay không.
               </p>
 
               {cost && (
@@ -596,7 +598,9 @@ export function DynamicPricingPanel() {
                   )}>
                     {result.direction === "raise" ? "Nên tăng giá"
                       : result.direction === "lower" ? "Nên giảm giá"
-                      : "Giá hiện tại đã hợp lý"}
+                      : result.direction === "new"
+                        ? (result.margin_unverified ? "Giá tham khảo theo thị trường" : "Giá đề xuất cho sản phẩm mới")
+                        : "Giá hiện tại đã hợp lý"}
                   </p>
 
                   <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -620,6 +624,17 @@ export function DynamicPricingPanel() {
                   </div>
 
                   <p className="mt-3 text-sm leading-6 text-text-muted">{result.rationale}</p>
+
+                  {/* Silence is the dangerous case here: without a cost the
+                      price is placed against competitors and nothing has
+                      checked whether it earns anything. */}
+                  {result.margin_unverified && (
+                    <p className="mt-3 flex items-start gap-1.5 rounded-md bg-warning/10 px-3 py-2 text-xs leading-5 text-warning">
+                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                      Chưa nhập giá vốn — mức này dựa trên thị trường, chưa kiểm tra được
+                      có đảm bảo lợi nhuận hay không.
+                    </p>
+                  )}
 
                   {result.price_floor !== null && (
                     <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-text-dim">

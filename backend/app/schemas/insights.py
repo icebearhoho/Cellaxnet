@@ -88,7 +88,9 @@ class PriceStrategy(BaseModel):
 
 #: What the seller should do, as one word. The screen leads with this: a
 #: recommendation nobody can act on in three seconds is a report, not advice.
-PriceDirection = Literal["raise", "lower", "keep"]
+#: "new" covers a product with no price yet: there is nothing to raise, lower
+#: or keep, and saying "giá hiện tại đã hợp lý" about a blank field is wrong.
+PriceDirection = Literal["raise", "lower", "keep", "new"]
 
 
 class PricingResponse(BaseModel):
@@ -116,6 +118,9 @@ class PricingResponse(BaseModel):
     #: Gap between the current price and the recommendation, for the headline.
     change_vnd: int | None = None
     change_pct: float | None = None
+    #: True when no cost was supplied: the price can be placed against the
+    #: market, but nothing here checked whether it earns anything.
+    margin_unverified: bool = False
     #: Margin at the *current* price, so the panel can show what changes.
     margin_pct_now: float | None = None
     #: Profit per unit after cost and commission, now and at the suggestion.

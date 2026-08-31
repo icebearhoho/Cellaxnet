@@ -184,9 +184,12 @@ export type PricingResult = {
   /** The steps behind the price, in the order they constrained it. */
   reasons: string[];
   /** Raise, lower or keep — the headline verdict. */
-  direction: "raise" | "lower" | "keep";
+  /** "new" = no current price to compare against; costing a product fresh. */
+  direction: "raise" | "lower" | "keep" | "new";
   change_vnd: number | null;
   change_pct: number | null;
+  /** No cost supplied, so nothing checked whether the price earns anything. */
+  margin_unverified: boolean;
   /** Margin and per-unit profit at the current price, for the before/after. */
   margin_pct_now: number | null;
   profit_per_unit_now: number | null;

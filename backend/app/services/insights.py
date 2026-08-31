@@ -522,7 +522,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     # The verdict, as one word. Moves under ~2% are noise against a reference
     # price, and telling a seller to change their price by that is worse advice
     # than telling them to leave it alone.
-    direction: PriceDirection = "keep"
+    direction: PriceDirection = "new" if not req.current_price else "keep"
     change_vnd: int | None = None
     change_pct: float | None = None
     margin_now: float | None = None
@@ -556,6 +556,16 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             f"Với giá vốn {_vnd(req.unit_cost or 0)} và mục tiêu biên "
             f"{req.min_margin_pct:g}%{fee}, mức thấp nhất là {_vnd(cost_floor.floor)}."
         )
+    if cost_floor is None:
+        # Said plainly, because the gap is easy to miss: the price is placed
+        # against competitors, and nothing here knows whether it earns
+        # anything. A seller whose cost is 230,000₫ would be advised to sell
+        # at a loss with no warning.
+        reasons.append(
+            "Chưa có giá vốn nên mức đề xuất chỉ dựa trên thị trường — "
+            "chưa kiểm tra được có đảm bảo lợi nhuận hay không."
+        )
+
     if cost_floor is not None:
         # Which constraint is actually binding. Without this a seller who
         # raises their cost and sees the same price assumes the field was
@@ -592,6 +602,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
         reasons=reasons,
         direction=direction, change_vnd=change_vnd, change_pct=change_pct,
+        margin_unverified=req.unit_cost is None,
         margin_pct_now=margin_now,
         profit_per_unit_now=profit_now, profit_per_unit_at_recommended=profit_rec,
         strategies=_strategies(stats, cost_floor, req.unit_cost),
