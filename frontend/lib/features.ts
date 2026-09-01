@@ -188,6 +188,10 @@ export type PriceStrategy = {
   key: "volume" | "balanced" | "margin";
   label: string;
   goal: string;
+  /** The statistic behind the figure, checkable against the data. */
+  source: string;
+  /** What picking this costs — the other half of every pricing choice. */
+  tradeoff: string;
   price: number;
   margin_pct: number | null;
   percentile: number | null;

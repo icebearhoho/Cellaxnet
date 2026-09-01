@@ -74,6 +74,13 @@ class PriceStrategy(BaseModel):
     label: str
     #: What the seller is buying with this price, in their terms.
     goal: str
+    #: Where the figure came from, named as a statistic a reviewer can check
+    #: against the data rather than a label chosen for the screen.
+    source: str
+    #: What choosing this costs, said plainly. Every option trades margin
+    #: against how easily the product sells, and stating one side without the
+    #: other is how a reference turns into a recommendation by accident.
+    tradeoff: str
     price: int
     #: Margin on revenue after commission; None when no cost was supplied.
     margin_pct: float | None = None

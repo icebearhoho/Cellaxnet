@@ -322,10 +322,28 @@ _StrategyKey = Literal["volume", "balanced", "margin"]
 #: One vocabulary across the three, so they read as points on a distribution
 #: rather than as three competing recommendations. "Giá cạnh tranh" was an
 #: interpretation of p25; "nhóm giá thấp" is what the number actually says.
-_STRATEGY_SPEC: tuple[tuple[_StrategyKey, str, str], ...] = (
-    ("volume", "Nhóm giá thấp", "Rẻ hơn khoảng 3/4 sản phẩm trên thị trường"),
-    ("balanced", "Trung vị thị trường", "Sát mặt bằng chung của các sản phẩm tương tự"),
-    ("margin", "Nhóm giá cao", "Chỉ khoảng 1/4 thị trường bán đắt hơn mức này"),
+#: Each option carries where its number came from and what picking it costs.
+#: A price with neither reads as a recommendation the engine is withholding a
+#: reason for; with both it reads as the reference it actually is.
+_STRATEGY_SPEC: tuple[tuple[_StrategyKey, str, str, str, str], ...] = (
+    (
+        "volume", "Nhóm giá thấp",
+        "Rẻ hơn khoảng 3/4 sản phẩm trên thị trường",
+        "Phân vị 25 — sắp xếp mọi sản phẩm cùng nhóm theo giá, đây là mức ở vị trí 1/4 từ dưới lên",
+        "Dễ được chọn khi khách so giá, nhưng lợi nhuận mỗi đơn thấp nhất trong ba mức.",
+    ),
+    (
+        "balanced", "Trung vị thị trường",
+        "Sát mặt bằng chung của các sản phẩm tương tự",
+        "Phân vị 50 — đúng mức giữa: một nửa thị trường bán rẻ hơn, một nửa bán đắt hơn",
+        "Không nổi bật về giá theo hướng nào, đổi lại ít rủi ro bị đánh giá là đắt hay rẻ bất thường.",
+    ),
+    (
+        "margin", "Nhóm giá cao",
+        "Chỉ khoảng 1/4 thị trường bán đắt hơn mức này",
+        "Phân vị 75 — mức ở vị trí 1/4 từ trên xuống khi xếp theo giá",
+        "Lợi nhuận mỗi đơn cao nhất, nhưng cần lý do để khách chấp nhận trả hơn mặt bằng.",
+    ),
 )
 
 
@@ -342,7 +360,7 @@ def _strategies(
     profit is not an option, so it is lifted and says so.
     """
     out: list[PriceStrategy] = []
-    for (key, label, goal), raw in zip(
+    for (key, label, goal, source, tradeoff), raw in zip(
         _STRATEGY_SPEC, (stats.p25, stats.median, stats.p75), strict=True
     ):
         price = int(raw)
@@ -360,8 +378,11 @@ def _strategies(
             # the market for a number that came from the seller's own costs.
             label = "Giá tối thiểu"
             goal = "Mức thấp nhất còn giữ được biên lợi nhuận mục tiêu"
+            source = "Tính từ giá vốn và biên mục tiêu của bạn, không phải từ thị trường"
+            tradeoff = "Bán dưới mức này là lỗ, nên đây là sàn chứ không phải một lựa chọn."
         out.append(PriceStrategy(
-            key=key, label=label, goal=goal, price=price, margin_pct=margin,
+            key=key, label=label, goal=goal, source=source, tradeoff=tradeoff,
+            price=price, margin_pct=margin,
             percentile=stats.percentile_of(price) if stats.percentile_of else None,
             lifted_by_floor=lifted,
         ))

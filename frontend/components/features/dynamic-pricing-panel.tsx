@@ -748,7 +748,7 @@ export function DynamicPricingPanel() {
                       className="flex items-center gap-2 text-xs font-medium text-text-muted transition-colors hover:text-text"
                     >
                       <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                      Các mức giá tham khảo khác
+                      Ba mốc giá của thị trường
                       <ChevronDown
                         className={cn("h-3.5 w-3.5 transition-transform", showStrategies && "rotate-180")}
                         aria-hidden="true"
@@ -789,6 +789,16 @@ export function DynamicPricingPanel() {
                                 Lợi nhuận <span className="tnum text-success">{s.margin_pct}%</span>
                               </p>
                             )}
+                            {/* Where the figure came from, and what picking it
+                                costs. Without the first it looks like advice
+                                with the reason withheld; without the second the
+                                reader has only one side of the trade. */}
+                            <p className="mt-2 border-t border-border/60 pt-2 text-2xs leading-4 text-text-dim">
+                              {s.source}
+                            </p>
+                            <p className="mt-1.5 text-2xs leading-4 text-text-muted">
+                              {s.tradeoff}
+                            </p>
                             {s.lifted_by_floor && (
                               <p className="mt-1.5 text-2xs leading-4 text-warning">
                                 Đã nâng lên giá sàn — không bán thấp hơn được.

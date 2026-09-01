@@ -620,3 +620,52 @@ async def test_without_a_cost_only_the_market_step_is_claimed() -> None:
     )
 
     assert [m.label for m in result.method] == ["Mốc thị trường"]
+
+
+@pytest.mark.asyncio
+async def test_each_reference_price_names_its_statistic() -> None:
+    """"Where does 189,000₫ come from" has to be answerable from the card.
+
+    A price with a label and no provenance reads as a recommendation whose
+    reason is being withheld; naming the percentile makes it checkable against
+    the data.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000)
+    )
+
+    sources = [s.source for s in result.strategies]
+    assert "Phân vị 25" in sources[0]
+    assert "Phân vị 50" in sources[1]
+    assert "Phân vị 75" in sources[2]
+
+
+@pytest.mark.asyncio
+async def test_each_reference_price_states_what_it_costs() -> None:
+    """Every option trades margin against how easily the product sells, and
+    stating one side without the other turns a reference into advice."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000)
+    )
+
+    for strategy in result.strategies:
+        assert strategy.tradeoff
+    # The cheap end sells more easily; the dear end earns more. Both are said.
+    assert "lợi nhuận mỗi đơn thấp nhất" in result.strategies[0].tradeoff
+    assert "cao nhất" in result.strategies[2].tradeoff
+
+
+@pytest.mark.asyncio
+async def test_a_lifted_option_credits_the_cost_not_the_market() -> None:
+    """Once the floor claims that slot the number stopped being a percentile,
+    and saying otherwise would attribute the seller's own costs to rivals."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=180_000, min_margin_pct=35, channel="shopee")
+    )
+
+    lifted = [s for s in result.strategies if s.lifted_by_floor]
+    assert lifted
+    for strategy in lifted:
+        assert "Phân vị" not in strategy.source
+        assert "giá vốn" in strategy.source.lower()
