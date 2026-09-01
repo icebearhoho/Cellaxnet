@@ -119,6 +119,9 @@ async def test_dynamic_pricing_falls_back_to_the_storefront_catalog(monkeypatch)
         return None
 
     monkeypatch.setattr("app.services.btc_market.price_reference", _no_reference)
+    monkeypatch.setattr(
+        "app.services.shopee_listings.reference_for_product", lambda _name, _cat: None
+    )
 
     category = "Mỹ phẩm"
     result = await insights.recommend_price(

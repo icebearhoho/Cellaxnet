@@ -44,7 +44,7 @@ class FakeReviewResponse(BaseModel):
 #: catalogue; the others are the organisers' observed Shopee dataset, read live
 #: or from its committed snapshot. The UI labels the two differently — an
 #: observed median must never be presented as a simulated one, or the reverse.
-PriceSource = Literal["demo", "btc_live", "btc_snapshot"]
+PriceSource = Literal["demo", "btc_live", "btc_snapshot", "shopee_seed"]
 
 class PricingRequest(BaseModel):
     product_name: str = Field(min_length=1, max_length=200)

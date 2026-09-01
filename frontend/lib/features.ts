@@ -180,7 +180,7 @@ export async function predictSegmentation(
 // --- #02 Dynamic Pricing ----------------------------------------------------
 /** Where the percentiles came from — the panel labels observed and simulated
  *  figures differently, so a seller always knows which one they are acting on. */
-export type PriceSource = "demo" | "btc_live" | "btc_snapshot";
+export type PriceSource = "demo" | "btc_live" | "btc_snapshot" | "shopee_seed";
 
 /** One way to price the product: a real position in its market, with what it
  *  costs and buys. */

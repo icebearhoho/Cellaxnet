@@ -138,11 +138,15 @@ function SourceBadge(
   // the walkthrough rather than on screen. `data_source` still carries it, so a
   // badge can come back without touching the API.
   if (source === "demo") return null;
+  // The hand-captured listings carry their own date in the label; the
+  // organisers' dataset is a fixed July 2026 extract, so only that one gets
+  // the period appended.
+  const period = source === "shopee_seed" ? "" : " · T7/2026";
   const shops = shopCount ? ` · ${shopCount} nhà bán` : "";
   return (
     <span className="flex w-fit items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[11px] font-medium text-success">
       <Database className="h-3 w-3" aria-hidden="true" />
-      {marketLabel ?? "Shopee"} · T7/2026{shops}
+      {marketLabel ?? "Shopee"}{period}{shops}
     </span>
   );
 }

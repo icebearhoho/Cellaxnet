@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 from app.schemas.insights import PricingRequest
-from app.services import btc_market, insights
+from app.services import btc_market, insights, shopee_listings
 
 
 @pytest.fixture(autouse=True)
@@ -22,6 +22,11 @@ def _demo_market(monkeypatch):
         return None
 
     monkeypatch.setattr(btc_market, "price_reference", _no_reference)
+    # Captured Shopee listings would otherwise supply the cosmetics market
+    # these tests name, and they are about the cost side, not the market one.
+    monkeypatch.setattr(
+        shopee_listings, "reference_for_product", lambda _name, _cat: None
+    )
     monkeypatch.setattr(insights, "_category_price_stats", lambda _c: insights._PriceStats(  # noqa: SLF001
         median=200_000, p25=150_000, p75=260_000, sample_size=20, source="demo",
     ))

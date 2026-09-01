@@ -39,7 +39,7 @@ from app.schemas.insights import (
     SentimentRequest,
     SentimentResponse,
 )
-from app.services import btc_market
+from app.services import btc_market, shopee_listings
 from app.services import commerce_store as store
 from app.services.genai.base import LlmMessage
 from app.services.genai.factory import get_llm_client
@@ -405,6 +405,9 @@ class _PriceStats:
     shop_count: int | None = None
     #: Shopee markets behind the figures, so the label can name them.
     countries: tuple[str, ...] = ()
+    #: When hand-captured listings were read off Shopee. Seed data ages, and
+    #: the panel says how old it is rather than implying it is live.
+    captured_at: str | None = None
     #: Placement of the seller's own price, when the source can compute one.
     percentile_of: Callable[[int], int | None] | None = None
 
@@ -428,7 +431,7 @@ def _category_price_stats(category: str) -> _PriceStats:
     )
 
 
-async def _price_stats(category: str) -> _PriceStats:
+async def _price_stats(category: str, req_name: str = "") -> _PriceStats:
     """Observed market percentiles when the dataset covers `category`.
 
     The BTC dataset carries no fashion or accessory listings, so those keep the
@@ -437,6 +440,17 @@ async def _price_stats(category: str) -> _PriceStats:
     """
     ref = await btc_market.price_reference(category)
     if ref is None:
+        # Hand-captured Shopee listings cover what the organisers' dataset
+        # cannot. Still a real market — competing shops, real prices — which is
+        # what the demo catalogue never was.
+        listings = shopee_listings.reference_for_product(req_name, category)
+        if listings is not None:
+            return _PriceStats(
+                median=listings.median, p25=listings.p25, p75=listings.p75,
+                sample_size=listings.sample_size, source="shopee_seed",
+                percentile_of=listings.percentile_of,
+                captured_at=listings.collected_at,
+            )
         return _category_price_stats(category)
     return _PriceStats(
         median=ref.median, p25=ref.p25, p75=ref.p75,
@@ -446,7 +460,7 @@ async def _price_stats(category: str) -> _PriceStats:
 
 
 async def recommend_price(req: PricingRequest) -> PricingResponse:
-    stats = await _price_stats(req.category)
+    stats = await _price_stats(req.category, req.product_name)
     median, p25, p75 = stats.median, stats.p25, stats.p75
 
     if stats.source == "demo":
@@ -635,7 +649,11 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         margin_pct_now=margin_now,
         profit_per_unit_now=profit_now, profit_per_unit_at_recommended=profit_rec,
         strategies=_strategies(stats, cost_floor, req.unit_cost),
-        market_label=_market_label(stats.countries) if stats.source != "demo" else None,
+        market_label=(
+            f"Shopee · quan sát {stats.captured_at}" if stats.source == "shopee_seed"
+            else _market_label(stats.countries) if stats.source != "demo"
+            else None
+        ),
         price_floor=cost_floor.floor if cost_floor else None,
         margin_pct_at_recommended=margin_at_rec,
         channel_name=cost_floor.channel_name if cost_floor else None,
