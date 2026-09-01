@@ -705,6 +705,31 @@ export function DynamicPricingPanel() {
                         </li>
                       ))}
                     </ul>
+
+                    {/* The arithmetic, for the reader who wants to check the
+                        number rather than take it. Sits inside the same
+                        disclosure: same question, one level deeper. */}
+                    {result.method.length > 0 && (
+                      <div className={cn("mt-4 border-t border-border pt-4", !showReasons && "hidden")}>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-text-dim">
+                          Cách tính
+                        </p>
+                        <ol className="mt-3 space-y-3">
+                          {result.method.map((step, i) => (
+                            <li key={step.label} className="flex gap-3">
+                              <span className="tnum mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-surface-3 text-2xs font-medium text-text-muted">
+                                {i + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-text">{step.label}</p>
+                                <p className="tnum mt-1 text-xs leading-5 text-accent">{step.detail}</p>
+                                <p className="mt-1 text-xs leading-5 text-text-dim">{step.why}</p>
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
                   </div>
                 )}
 

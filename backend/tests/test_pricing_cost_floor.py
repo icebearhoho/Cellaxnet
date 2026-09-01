@@ -576,3 +576,47 @@ async def test_what_the_seller_keeps_always_tracks_their_cost() -> None:
     assert dearer.profit_per_unit_at_recommended < cheap.profit_per_unit_at_recommended
     # The reference options carry the same truth in their own margins.
     assert dearer.strategies[0].margin_pct < cheap.strategies[0].margin_pct
+
+
+@pytest.mark.asyncio
+async def test_the_method_traces_the_number_end_to_end() -> None:
+    """"Where did this come from" has to be answerable from the response.
+
+    The reasons say what the situation is; the method says what the engine did,
+    with the arithmetic written out — the version a reviewer asks for, not the
+    seller.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000,
+                       unit_cost=60_000, min_margin_pct=35, channel="shopee")
+    )
+
+    labels = [m.label for m in result.method]
+    assert labels == ["Mốc thị trường", "Giá sàn theo chi phí", "Điều chỉnh theo giá vốn"]
+    for step in result.method:
+        assert step.detail and step.why
+
+
+@pytest.mark.asyncio
+async def test_each_step_shows_its_arithmetic() -> None:
+    """A rounded result cannot be checked; the operands can."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000,
+                       unit_cost=60_000, min_margin_pct=35, channel="shopee")
+    )
+    market, floor, *_ = result.method
+
+    assert "×" in market.detail and "95%" in market.detail
+    assert "÷" in floor.detail and "35%" in floor.detail
+    # The channel's cut belongs in the floor's arithmetic, not hidden in it.
+    assert "Shopee" in floor.detail
+
+
+@pytest.mark.asyncio
+async def test_without_a_cost_only_the_market_step_is_claimed() -> None:
+    """No cost means no floor and no cost adjustment, so neither is described."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000)
+    )
+
+    assert [m.label for m in result.method] == ["Mốc thị trường"]
