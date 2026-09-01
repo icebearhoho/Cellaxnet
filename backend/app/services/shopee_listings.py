@@ -24,7 +24,6 @@ import json
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from statistics import median as _median
 
 from app.core.logging import get_logger
 
