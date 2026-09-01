@@ -63,6 +63,15 @@ packaging of every dataset the 17 features build on. It is organized so any team
 
 > Full pipeline documentation and reproduction steps: **[`dataset/README.md`](dataset/README.md)**.
 
+## Modeling (features #01–#05)
+
+The LLM-powered modeling layer for ideas #01–#05 (review sentiment, fake-review
+detection, dynamic pricing, personal shopper, customer churn) lives in top-level
+feature folders and is documented in **[`MODELING.md`](MODELING.md)**. It is
+LLM-first (no training): OpenAI `gpt-4o-mini` by default, or local Ollama. Run
+`python demo.py` to see all five working; `python code/build_dashboard.py` builds a
+results dashboard.
+
 ## Quick start
 
 ```bash

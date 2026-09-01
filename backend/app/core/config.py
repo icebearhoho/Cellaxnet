@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "area303"
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 20
+    # Managed Postgres (Neon, RDS, ...) requires TLS; local Docker Compose does not.
+    POSTGRES_SSL: bool = False
 
     # --- BTC Shopee market data (read-only, external) ---
     # The competition organisers host an observed Shopee dataset. It is a
@@ -69,6 +71,8 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str | None = None
+    # Managed Redis (Upstash, ...) requires TLS (rediss://); local Docker Compose does not.
+    REDIS_TLS: bool = False
 
     # --- Auth ---
     JWT_SECRET: str = "change-me-in-production"
@@ -216,15 +220,26 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        return (
+        url = (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+        return f"{url}?ssl=require" if self.POSTGRES_SSL else url
+
+    @property
+    def database_url_sync(self) -> str:
+        """psycopg2 variant for Alembic — psycopg2 spells the TLS flag "sslmode"."""
+        url = (
+            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+        return f"{url}?sslmode=require" if self.POSTGRES_SSL else url
 
     @property
     def redis_url(self) -> str:
         auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
-        return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        scheme = "rediss" if self.REDIS_TLS else "redis"
+        return f"{scheme}://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
 
 @lru_cache(maxsize=1)

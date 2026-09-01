@@ -161,7 +161,7 @@ export function VirtualTryOnPanel() {
     formData.append("person", personFile);
     formData.append("garment", garmentFile);
     formData.append("cloth_type", clothType);
-    formData.append("steps", "10");
+    formData.append("steps", "50");
 
     try {
       const response = await fetch("/api/virtual-tryon", {

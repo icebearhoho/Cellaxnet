@@ -16,7 +16,7 @@ $env:HF_HOME = $cachePath
 Set-Location -LiteralPath $catVtonRoot
 
 & $pythonPath $appPath `
-    --width 384 `
-    --height 512 `
+    --width 576 `
+    --height 768 `
     --mixed_precision fp16 `
     --output_dir $outputPath
