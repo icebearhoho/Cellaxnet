@@ -517,3 +517,62 @@ async def test_reference_labels_share_one_vocabulary() -> None:
 
     labels = [s.label for s in result.strategies]
     assert labels == ["Nhóm giá thấp", "Trung vị thị trường", "Nhóm giá cao"]
+
+
+@pytest.mark.asyncio
+async def test_cost_moves_the_price_across_the_ordinary_range() -> None:
+    """Cost has to bind at everyday values, not only at the extreme.
+
+    The previous rule kept fixed headroom above the floor, which only bound
+    once cost passed roughly half the median — so two cosmetics costing
+    120,000₫ and 180,000₫ came back priced identically. Cost now slides the
+    price across the observed range.
+    """
+    mid = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=110_000, min_margin_pct=35, channel="shopee")
+    )
+    high = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=140_000, min_margin_pct=35, channel="shopee")
+    )
+
+    assert high.recommended_price > mid.recommended_price
+
+
+@pytest.mark.asyncio
+async def test_a_floor_under_the_cheap_end_leaves_the_market_in_charge() -> None:
+    """Below the cheapest quartile, cost is genuinely not the constraint.
+
+    The price should not move, and the reasons have to say why — an unchanged
+    number with no explanation is what makes the input look ignored.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=20_000, min_margin_pct=35, channel="shopee")
+    )
+
+    assert result.price_floor is not None
+    assert result.market_p25 is not None
+    assert result.price_floor < result.market_p25
+    assert any("quyết định bởi giá thị trường" in r for r in result.reasons)
+
+
+@pytest.mark.asyncio
+async def test_what_the_seller_keeps_always_tracks_their_cost() -> None:
+    """Even when the price holds, margin and per-unit profit must not."""
+    cheap = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=20_000, min_margin_pct=35, channel="shopee")
+    )
+    dearer = await insights.recommend_price(
+        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
+                       unit_cost=70_000, min_margin_pct=35, channel="shopee")
+    )
+
+    assert cheap.price_floor is not None and dearer.price_floor is not None
+    assert dearer.price_floor > cheap.price_floor
+    assert dearer.margin_pct_at_recommended < cheap.margin_pct_at_recommended
+    assert dearer.profit_per_unit_at_recommended < cheap.profit_per_unit_at_recommended
+    # The reference options carry the same truth in their own margins.
+    assert dearer.strategies[0].margin_pct < cheap.strategies[0].margin_pct

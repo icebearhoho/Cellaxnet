@@ -446,18 +446,22 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     # against that uncertainty the cheaper side is the safer error.
     recommended = round(median * 0.95)
 
-    # Cost still shapes the answer, not only veto it. A product costing
-    # 150,000₫ and one costing 90,000₫ should not be priced identically just
-    # because both floors sit under the market — the dearer one has less room
-    # and belongs higher up the range. Keeping a margin of headroom above the
-    # floor stays stable, because it depends on cost and market, never on the
-    # current price.
+    # Where in the market this product belongs, given what it costs to make.
+    #
+    # An earlier rule kept a fixed margin of headroom above the floor, which
+    # only ever bound at the expensive end: with a 292,000₫ median, cost had to
+    # exceed ~148,000₫ before it moved anything, so 20,000₫ and 70,000₫ — the
+    # ordinary range for cosmetics — produced an identical answer.
+    #
+    # Cost now slides the price across the observed range instead. A floor near
+    # p25 leaves room to compete on price; a floor near p75 does not, and the
+    # product belongs higher up. Still independent of the current price, so it
+    # stays stable under its own output.
     cost_floor = _cost_floor(req)
-    if cost_floor is not None:
-        recommended = max(recommended, round(cost_floor.floor * 1.12))
-        # Never past the top of the observed range: above p75 the reference has
-        # too little to say, and the floor below still applies.
-        recommended = min(recommended, max(p75, cost_floor.floor))
+    if cost_floor is not None and p75 > p25:
+        pressure = min(1.0, max(0.0, (cost_floor.floor - p25) / (p75 - p25)))
+        recommended = round(recommended + (p75 - recommended) * pressure)
+        recommended = max(recommended, cost_floor.floor)
 
     if req.current_price is None:
         rationale = f"Chưa có giá hiện tại — lấy {basis}."
