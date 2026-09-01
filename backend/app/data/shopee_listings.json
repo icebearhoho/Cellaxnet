@@ -7,51 +7,432 @@
       "keyword": "serum vitamin c",
       "category": "Mỹ phẩm",
       "listings": [
-        { "name": "Serum Collagen Kihasu Dưỡng Sáng Da", "price": 59000, "sold": 104 },
-        { "name": "BIOAQUA Tinh chất làm trắng da dưỡng ẩm 30ml/100ml", "price": 78800, "sold": 4000 },
-        { "name": "Tinh chất Vitamin C BIOAQUA Dưỡng ẩm", "price": 80000, "sold": 1000 },
-        { "name": "Serum Dưỡng Da Trắng Da RtopR Chiết Xuất", "price": 86000, "sold": 2000 },
-        { "name": "MeiYanQiong Tinh serum dưỡng ẩm vc làm sáng", "price": 89000, "sold": 2000 },
-        { "name": "Heabety Vitamin C Serum 15% nồng độ vàng", "price": 89300, "sold": 138 },
-        { "name": "Cocoon Tinh chất — Trial size (hàng tặng không bán)", "price": 94000, "sold": 20000 },
-        { "name": "OKDEALS Vitamin C Serum 30ML 5.000 PPM", "price": 97356, "sold": null },
-        { "name": "Serum Dưỡng Sáng Da Mờ Thâm Mụn Kihasu", "price": 99000, "sold": 741 },
-        { "name": "Dr.G Tinh Chất 3D Vitamin C, 8X Retinol", "price": 99500, "sold": 671 },
-        { "name": "BIOAQUA Vitamin C Serum Làm Trắng Da", "price": 108900, "sold": 81 },
-        { "name": "Serum (Tinh Chất) Vitamin C Zakka — Sample", "price": 120000, "sold": 7000 },
-        { "name": "Serum Beauty Visage Vitamin C Fito Cosmetic", "price": 126000, "sold": 130 },
-        { "name": "Nhật Bản DR.Lucel Double Serum Làm Trắng", "price": 128000, "sold": 9000 },
-        { "name": "DR.Lucel Serum chống oxy hóa vitamin C", "price": 136000, "sold": 33 },
-        { "name": "Torriden Tinh chất (hàng tặng kèm, mini)", "price": 140000, "sold": 20000 },
-        { "name": "Serum dưỡng trắng da, mờ đốm nâu, đều màu", "price": 144900, "sold": 9000 },
-        { "name": "LUCENGASE 6X VC Multi-Effect White Serum", "price": 149000, "sold": 78 },
-        { "name": "Serum vitamin C RTOPR dưỡng trắng", "price": 150000, "sold": 65 },
-        { "name": "Serum Compliment 20% Vitamin C", "price": 152000, "sold": 6000 },
-        { "name": "LANBENA Tinh chất dưỡng (Mua 2 Tặng 1)", "price": 159000, "sold": 700 },
-        { "name": "Serum Vitamin C 20% Compliment Dưỡng Trắng", "price": 162999, "sold": 1000 },
-        { "name": "Serum Compliment 10% Niacinamide, Vitamin C", "price": 164000, "sold": 749 },
-        { "name": "LANBENA Vitamin C Serum Dưỡng Ẩm Làm Sáng", "price": 169000, "sold": 231 },
-        { "name": "Serum Làm Mờ Thâm Và Sáng Da Balance", "price": 185000, "sold": 20000 },
-        { "name": "Tinh chất tẩy tế bào da mặt Lactic acid", "price": 195000, "sold": 873 },
-        { "name": "Serum Sáng Da, Mờ Thâm Balance Active", "price": 217600, "sold": 100000 },
-        { "name": "LAC Tinh chất Toner Vitamin C Serum Toner", "price": 224020, "sold": 8000 },
-        { "name": "LANBENA Bộ kem chống nắng + serum vitamin C", "price": 228000, "sold": 200 },
-        { "name": "Serum dưỡng mắt dạng lăn Eveline Vitamin C", "price": 254000, "sold": null },
-        { "name": "Serum dưỡng trắng da mặt nam giới Nio", "price": 298000, "sold": 20000 },
-        { "name": "Serum dưỡng trắng da mặt nam giới Nio (2)", "price": 298000, "sold": 10000 },
-        { "name": "Serum dưỡng trắng da mặt nam giới Nio (3)", "price": 298000, "sold": 10000 },
-        { "name": "Serum Alpha Arbutin sáng da giảm thâm", "price": 300000, "sold": 296 },
-        { "name": "Tinh chất nghệ Hưng Yên 10% Vitamin C cocoon", "price": 302250, "sold": 10000 },
-        { "name": "COMBO 2 Kem chống nắng dưỡng ẩm Lanbena", "price": 318000, "sold": 101 },
-        { "name": "Serum DIV Vitamin C+", "price": 320000, "sold": 443 },
-        { "name": "Serum Vitamin C 3% Oribe", "price": 324000, "sold": 893 },
-        { "name": "KANS serum trắng sáng da, Dưỡng Ẩm", "price": 329295, "sold": 40000 },
-        { "name": "Serum Vitamin C Dermarium R.S Warrior", "price": 330000, "sold": 3000 },
-        { "name": "COMBO 2 Serum + Kem LANBENA Vitamin C", "price": 368000, "sold": 1000 },
-        { "name": "COMBO 2 Tinh chất nghệ Cocoon (giảm 41%)", "price": 383000, "sold": 10000 },
-        { "name": "Tinh chất Dear, Klairs Freshly Vitamin C 5%", "price": 387000, "sold": 2000 },
-        { "name": "Serum Pro Vita-C Brightening Ampoule", "price": 399999, "sold": 10 },
-        { "name": "Tinh Chất Làm Sáng Da Biotrade Vitamin C 15", "price": 954000, "sold": 90 }
+        {
+          "name": "Serum Collagen Kihasu Dưỡng Sáng Da",
+          "price": 59000,
+          "sold": 104
+        },
+        {
+          "name": "BIOAQUA Tinh chất làm trắng da dưỡng ẩm 30ml/100ml",
+          "price": 78800,
+          "sold": 4000
+        },
+        {
+          "name": "Tinh chất Vitamin C BIOAQUA Dưỡng ẩm",
+          "price": 80000,
+          "sold": 1000
+        },
+        {
+          "name": "Serum Dưỡng Da Trắng Da RtopR Chiết Xuất",
+          "price": 86000,
+          "sold": 2000
+        },
+        {
+          "name": "MeiYanQiong Tinh serum dưỡng ẩm vc làm sáng",
+          "price": 89000,
+          "sold": 2000
+        },
+        {
+          "name": "Heabety Vitamin C Serum 15% nồng độ vàng",
+          "price": 89300,
+          "sold": 138
+        },
+        {
+          "name": "Cocoon Tinh chất — Trial size (hàng tặng không bán)",
+          "price": 94000,
+          "sold": 20000
+        },
+        {
+          "name": "OKDEALS Vitamin C Serum 30ML 5.000 PPM",
+          "price": 97356,
+          "sold": null
+        },
+        {
+          "name": "Serum Dưỡng Sáng Da Mờ Thâm Mụn Kihasu",
+          "price": 99000,
+          "sold": 741
+        },
+        {
+          "name": "Dr.G Tinh Chất 3D Vitamin C, 8X Retinol",
+          "price": 99500,
+          "sold": 671
+        },
+        {
+          "name": "BIOAQUA Vitamin C Serum Làm Trắng Da",
+          "price": 108900,
+          "sold": 81
+        },
+        {
+          "name": "Serum (Tinh Chất) Vitamin C Zakka — Sample",
+          "price": 120000,
+          "sold": 7000
+        },
+        {
+          "name": "Serum Beauty Visage Vitamin C Fito Cosmetic",
+          "price": 126000,
+          "sold": 130
+        },
+        {
+          "name": "Nhật Bản DR.Lucel Double Serum Làm Trắng",
+          "price": 128000,
+          "sold": 9000
+        },
+        {
+          "name": "DR.Lucel Serum chống oxy hóa vitamin C",
+          "price": 136000,
+          "sold": 33
+        },
+        {
+          "name": "Torriden Tinh chất (hàng tặng kèm, mini)",
+          "price": 140000,
+          "sold": 20000
+        },
+        {
+          "name": "Serum dưỡng trắng da, mờ đốm nâu, đều màu",
+          "price": 144900,
+          "sold": 9000
+        },
+        {
+          "name": "LUCENGASE 6X VC Multi-Effect White Serum",
+          "price": 149000,
+          "sold": 78
+        },
+        {
+          "name": "Serum vitamin C RTOPR dưỡng trắng",
+          "price": 150000,
+          "sold": 65
+        },
+        {
+          "name": "Serum Compliment 20% Vitamin C",
+          "price": 152000,
+          "sold": 6000
+        },
+        {
+          "name": "LANBENA Tinh chất dưỡng (Mua 2 Tặng 1)",
+          "price": 159000,
+          "sold": 700
+        },
+        {
+          "name": "Serum Vitamin C 20% Compliment Dưỡng Trắng",
+          "price": 162999,
+          "sold": 1000
+        },
+        {
+          "name": "Serum Compliment 10% Niacinamide, Vitamin C",
+          "price": 164000,
+          "sold": 749
+        },
+        {
+          "name": "LANBENA Vitamin C Serum Dưỡng Ẩm Làm Sáng",
+          "price": 169000,
+          "sold": 231
+        },
+        {
+          "name": "Serum Làm Mờ Thâm Và Sáng Da Balance",
+          "price": 185000,
+          "sold": 20000
+        },
+        {
+          "name": "Tinh chất tẩy tế bào da mặt Lactic acid",
+          "price": 195000,
+          "sold": 873
+        },
+        {
+          "name": "Serum Sáng Da, Mờ Thâm Balance Active",
+          "price": 217600,
+          "sold": 100000
+        },
+        {
+          "name": "LAC Tinh chất Toner Vitamin C Serum Toner",
+          "price": 224020,
+          "sold": 8000
+        },
+        {
+          "name": "LANBENA Bộ kem chống nắng + serum vitamin C",
+          "price": 228000,
+          "sold": 200
+        },
+        {
+          "name": "Serum dưỡng mắt dạng lăn Eveline Vitamin C",
+          "price": 254000,
+          "sold": null
+        },
+        {
+          "name": "Serum dưỡng trắng da mặt nam giới Nio",
+          "price": 298000,
+          "sold": 20000
+        },
+        {
+          "name": "Serum dưỡng trắng da mặt nam giới Nio (2)",
+          "price": 298000,
+          "sold": 10000
+        },
+        {
+          "name": "Serum dưỡng trắng da mặt nam giới Nio (3)",
+          "price": 298000,
+          "sold": 10000
+        },
+        {
+          "name": "Serum Alpha Arbutin sáng da giảm thâm",
+          "price": 300000,
+          "sold": 296
+        },
+        {
+          "name": "Tinh chất nghệ Hưng Yên 10% Vitamin C cocoon",
+          "price": 302250,
+          "sold": 10000
+        },
+        {
+          "name": "COMBO 2 Kem chống nắng dưỡng ẩm Lanbena",
+          "price": 318000,
+          "sold": 101
+        },
+        {
+          "name": "Serum DIV Vitamin C+",
+          "price": 320000,
+          "sold": 443
+        },
+        {
+          "name": "Serum Vitamin C 3% Oribe",
+          "price": 324000,
+          "sold": 893
+        },
+        {
+          "name": "KANS serum trắng sáng da, Dưỡng Ẩm",
+          "price": 329295,
+          "sold": 40000
+        },
+        {
+          "name": "Serum Vitamin C Dermarium R.S Warrior",
+          "price": 330000,
+          "sold": 3000
+        },
+        {
+          "name": "COMBO 2 Serum + Kem LANBENA Vitamin C",
+          "price": 368000,
+          "sold": 1000
+        },
+        {
+          "name": "COMBO 2 Tinh chất nghệ Cocoon (giảm 41%)",
+          "price": 383000,
+          "sold": 10000
+        },
+        {
+          "name": "Tinh chất Dear, Klairs Freshly Vitamin C 5%",
+          "price": 387000,
+          "sold": 2000
+        },
+        {
+          "name": "Serum Pro Vita-C Brightening Ampoule",
+          "price": 399999,
+          "sold": 10
+        },
+        {
+          "name": "Tinh Chất Làm Sáng Da Biotrade Vitamin C 15",
+          "price": 954000,
+          "sold": 90
+        }
+      ]
+    },
+    {
+      "keyword": "kem chống nắng",
+      "category": "Mỹ phẩm",
+      "listings": [
+        {
+          "name": "DABO Glow On Tone Up Sun Rosy Pink SPF50",
+          "price": 54000,
+          "sold": 479
+        },
+        {
+          "name": "Biore UV Value Sữa Chống Nắng",
+          "price": 57900,
+          "sold": 100000
+        },
+        {
+          "name": "Kem BB Chống Nắng Che Khuyết Điểm Dưỡng",
+          "price": 59765,
+          "sold": 10000
+        },
+        {
+          "name": "Kem chống nắng mặt chống nước Laikou UV",
+          "price": 63279,
+          "sold": 10000
+        },
+        {
+          "name": "Kem chống nắng làm trắng da Vitamin C RtopR",
+          "price": 68816,
+          "sold": null
+        },
+        {
+          "name": "[Mini size] Kem Chống Nắng Teenilicious SPF 5",
+          "price": 75000,
+          "sold": 1000
+        },
+        {
+          "name": "Kem chống nắng LAIKOU Vitamin C làm",
+          "price": 76491,
+          "sold": 405
+        },
+        {
+          "name": "Kem Chống Nắng Kiềm dầu, lâu trôi High",
+          "price": 79250,
+          "sold": 13
+        },
+        {
+          "name": "SOCUS Kem chống nắng SPF50+ 2-trong-1",
+          "price": 91779,
+          "sold": null
+        },
+        {
+          "name": "Kem Chống Nắng Tone Dr.PEPTI 50",
+          "price": 94500,
+          "sold": 3000
+        },
+        {
+          "name": "Kem Chống Nắng Dưỡng Trắng Da",
+          "price": 119403,
+          "sold": 1000
+        },
+        {
+          "name": "Sữa chống nắng dưỡng trắng hằng ngày",
+          "price": 124200,
+          "sold": 3
+        },
+        {
+          "name": "Kem chống nắng cao SPF50+ cho da nhạy cảm",
+          "price": 125100,
+          "sold": 213
+        },
+        {
+          "name": "Kem Chống Nắng Compliment Daily Sun",
+          "price": 126000,
+          "sold": 432
+        },
+        {
+          "name": "[Bao Bì Mới] Kem chống nắng RIORI SPF",
+          "price": 127800,
+          "sold": 3000
+        },
+        {
+          "name": "[Hàng Tặng Kèm Không Bán] [MINI] Torriden",
+          "price": 130000,
+          "sold": 30000
+        },
+        {
+          "name": "Kem Chống Nắng SPF 50 Mocha Kiềm",
+          "price": 130500,
+          "sold": 2000
+        },
+        {
+          "name": "Kem chống nắng Ositree SPF50 +",
+          "price": 130900,
+          "sold": 517
+        },
+        {
+          "name": "Serum Dưỡng Thể & Chống Nắng NIVEA",
+          "price": 131400,
+          "sold": 10000
+        },
+        {
+          "name": "Kem chống nắng Compliment SPF50 bảo",
+          "price": 134640,
+          "sold": 269
+        },
+        {
+          "name": "Sữa Chống Nắng Dưỡng Trắng Tạo",
+          "price": 145250,
+          "sold": 26
+        },
+        {
+          "name": "[TẶNG NƯỚC TẨY TRANG] Kem Chống Nắng",
+          "price": 146960,
+          "sold": 1000
+        },
+        {
+          "name": "LANBENA Kem chống nắng SPF50+ Pa+++ (30",
+          "price": 148852,
+          "sold": 1000
+        },
+        {
+          "name": "Kem Chống Nắng Dermablock SPF50+",
+          "price": 149160,
+          "sold": 457
+        },
+        {
+          "name": "Kem chống nắng PESTLO Safe Recipe Su",
+          "price": 149600,
+          "sold": 20000
+        },
+        {
+          "name": "Kem Chống Nắng Cấp Ẩm Nâng Tone Da",
+          "price": 149600,
+          "sold": 1000
+        },
+        {
+          "name": "LANBENA Kem chống nắng Sunscreen SPF50",
+          "price": 157520,
+          "sold": 5000
+        },
+        {
+          "name": "Kem chống nắng vật lý SPF50/PA+++, chống t",
+          "price": 161330,
+          "sold": 4000
+        },
+        {
+          "name": "[Phiên Bản Cải Tiến] Biore UV Aqua",
+          "price": 161920,
+          "sold": 20000
+        },
+        {
+          "name": "Kem Chống Nắng I SHOW SPF50+ PA++++",
+          "price": 162712,
+          "sold": 2000
+        },
+        {
+          "name": "Kem chống nắng Bio-Essence SPF50+ PA+++",
+          "price": 162800,
+          "sold": 5000
+        },
+        {
+          "name": "Kem chống nắng Kháng nước Nâng tone",
+          "price": 166320,
+          "sold": 349
+        },
+        {
+          "name": "[Chính Hãng] Kem Chống Nắng Dabo",
+          "price": 166320,
+          "sold": 628
+        },
+        {
+          "name": "Kem chống nắng Seimy - Sunscreen Plus",
+          "price": 169000,
+          "sold": 6000
+        },
+        {
+          "name": "Kem Chống Nắng 577 VIBRANT GLAMOUR",
+          "price": 169000,
+          "sold": 1000
+        },
+        {
+          "name": "[LIVESTREAM] Biore UV",
+          "price": 171341,
+          "sold": 70000
+        },
+        {
+          "name": "[LIVESTREAM] Biore UV (2)",
+          "price": 171341,
+          "sold": 100000
+        },
+        {
+          "name": "Biore UV Serum Chống Nắng Dưỡng",
+          "price": 171341,
+          "sold": 400000
+        },
+        {
+          "name": "MizuMi Kem Chống Nắng Phổ Rộng UV Water",
+          "price": 329120,
+          "sold": 10000
+        }
       ]
     }
   ]

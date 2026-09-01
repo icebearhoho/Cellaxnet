@@ -145,3 +145,19 @@ async def test_a_floor_inside_the_range_is_not_called_outside_it() -> None:
     joined = " ".join(result.reasons)
     assert "nằm ngoài vùng giá" not in joined
     assert "Giá vốn cao nên mức tham khảo" in joined
+
+
+def test_the_right_keyword_wins_when_several_are_captured() -> None:
+    """Two captures in the same category must not blur into one another.
+
+    Sunscreen and serum sit at different price levels — median 134,640₫ against
+    164,000₫ — so a product matched to the wrong capture would be priced
+    against the wrong market.
+    """
+    serum = shopee_listings.reference_for_product("Serum Vitamin C 15%", "Mỹ phẩm")
+    sunscreen = shopee_listings.reference_for_product("Kem chống nắng SPF50", "Mỹ phẩm")
+
+    assert serum is not None and sunscreen is not None
+    assert serum.keyword == "serum vitamin c"
+    assert sunscreen.keyword == "kem chống nắng"
+    assert serum.median != sunscreen.median
