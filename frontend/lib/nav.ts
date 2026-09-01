@@ -71,7 +71,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "AP", slug: "autopilot",        label: "Digital Twin",      href: "/seller/autopilot",        icon: Sparkles,        app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
   { id: "VB", slug: "voucher-booster",  label: "Voucher Booster",   href: "/seller/voucher-booster",  icon: BadgePercent,    app: "seller", section: "commerce",     category: "Generative AI",   owner: "TL" },
   { id: "BR", slug: "daily-briefing",   label: "Hôm nay cần làm gì",  href: "/seller/daily-briefing",   icon: ClipboardCheck,  app: "seller", section: "intelligence", category: "Generative AI",   owner: "TL" },
-  { id: "01", slug: "review-intelligence", label: "Đánh giá của khách hàng", href: "/seller/review-intelligence", icon: Star, app: "seller", section: "intelligence", category: "NLP", owner: "DA" },
+  { id: "01", slug: "review-intelligence", label: "Trải nghiệm khách hàng", href: "/seller/review-intelligence", icon: Star, app: "seller", section: "intelligence", category: "NLP", owner: "DA" },
   { id: "OD", slug: "orders",           label: "Đơn hàng",           href: "/seller/orders",           icon: Receipt,       app: "seller", section: "commerce",     category: "Behavioral AI",   owner: "TL" },
   { id: "02", slug: "dynamic-pricing",  label: "Gợi ý giá bán",    href: "/seller/dynamic-pricing",  icon: Tag,           app: "seller", section: "commerce",     category: "Time Series",     owner: "TL" },
   { id: "04", slug: "customer-risk",    label: "Rủi ro khách hàng",  href: "/seller/customer-risk",    icon: UserMinus,     app: "seller", section: "intelligence", category: "Behavioral AI",   owner: "TL" },

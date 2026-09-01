@@ -92,7 +92,7 @@ function ProductReviewsPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Đánh giá của khách hàng</CardTitle>
+        <CardTitle>Trải nghiệm khách hàng</CardTitle>
         <p className="mt-1 text-xs text-text-muted">
           Chọn một sản phẩm để đọc toàn bộ đánh giá, đã phân loại sẵn theo cảm xúc.
         </p>
