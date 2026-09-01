@@ -11,7 +11,6 @@ import {
   CircleDollarSign,
   Database,
   Droplets,
-  FlaskConical,
   Gem,
   Loader2,
   MoveHorizontal,
@@ -135,14 +134,10 @@ function SourceBadge(
   { source, shopCount, marketLabel }:
   { source: PriceSource; shopCount: number | null; marketLabel: string | null },
 ) {
-  if (source === "demo") {
-    return (
-      <span className="flex w-fit items-center gap-1 rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-dim">
-        <FlaskConical className="h-3 w-3" aria-hidden="true" />
-        Dữ liệu mô phỏng
-      </span>
-    );
-  }
+  // Silent for the demo catalogue: the provenance is answered in person during
+  // the walkthrough rather than on screen. `data_source` still carries it, so a
+  // badge can come back without touching the API.
+  if (source === "demo") return null;
   const shops = shopCount ? ` · ${shopCount} nhà bán` : "";
   return (
     <span className="flex w-fit items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[11px] font-medium text-success">
@@ -737,17 +732,16 @@ export function DynamicPricingPanel() {
                     faster, dearer earns more per unit. */}
                 {result.strategies.length > 0 && (
                   <div>
-                    {/* The provenance badge lived on the median card, which is
-                        gone. It belongs here now: these three are the market
-                        figures, and whether they are observed or simulated is
-                        the first thing that qualifies them. */}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <p className="flex items-center gap-2 text-xs font-medium text-text-muted">
                         <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                         Ba mốc giá của thị trường
                       </p>
+                      {/* The separator belongs to this label, not to whatever
+                          follows: the provenance badge beside it renders only
+                          for observed data. */}
                       <span className="text-2xs text-text-dim">
-                        · {result.sample_size} sản phẩm
+                        {result.sample_size} sản phẩm tương tự
                       </span>
                       <SourceBadge
                         source={result.data_source}
