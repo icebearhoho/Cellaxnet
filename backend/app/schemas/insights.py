@@ -100,18 +100,6 @@ class PriceStrategy(BaseModel):
 PriceDirection = Literal["raise", "lower", "keep", "new"]
 
 
-class MethodStep(BaseModel):
-    """One step of the calculation, in the order it was applied."""
-
-    label: str
-    #: The arithmetic, written out. "292.000₫ × 95% = 277.400₫" answers "where
-    #: did this come from" in a way that a rounded result never can.
-    detail: str
-    #: Why this step exists at all — the judgement behind the formula, which is
-    #: the part a reviewer will actually push on.
-    why: str
-
-
 class PricingResponse(BaseModel):
     recommended_price: int
     low: int
@@ -152,10 +140,6 @@ class PricingResponse(BaseModel):
     #: Three positions in the market, cheapest first. Same product, same
     #: floor — what changes is which end of the market it sits at.
     strategies: list[PriceStrategy] = []
-    #: How the number was arrived at, step by step, with the arithmetic shown.
-    #: Distinct from `reasons`, which says what the situation is; this says what
-    #: the engine did — the question a reviewer asks, not the seller.
-    method: list[MethodStep] = []
     #: The steps behind the recommendation, in the order they constrain it.
     #: "Why 223,000₫ and not 210,000₫" is the question a price invites, and a
     #: verdict that cannot answer it reads as a guess.

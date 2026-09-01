@@ -212,8 +212,6 @@ export type PricingResult = {
   price_percentile: number | null;
   /** The steps behind the price, in the order they constrained it. */
   reasons: string[];
-  /** How the number was calculated, with the arithmetic shown. */
-  method: { label: string; detail: string; why: string }[];
   /** Raise, lower or keep — the headline verdict. */
   /** "new" = no current price to compare against; costing a product fresh. */
   direction: "raise" | "lower" | "keep" | "new";

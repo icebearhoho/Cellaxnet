@@ -27,7 +27,6 @@ from app.schemas.insights import (
     FakeReviewResponse,
     InventoryAlertRequest,
     InventoryAlertResponse,
-    MethodStep,
     PriceDirection,
     PriceSource,
     PriceStrategy,
@@ -479,61 +478,11 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     # p25 leaves room to compete on price; a floor near p75 does not, and the
     # product belongs higher up. Still independent of the current price, so it
     # stays stable under its own output.
-    # Each step records what it did, so the number can be traced end to end
-    # rather than defended after the fact.
-    method: list[MethodStep] = [
-        MethodStep(
-            label="Mốc thị trường",
-            detail=(
-                f"Trung vị {_vnd(int(median))} × 95% = {_vnd(round(median * 0.95))}"
-            ),
-            why=(
-                "Trung vị chịu được giá bất thường tốt hơn trung bình. Trừ 5% vì "
-                "mẫu tham chiếu chỉ vài nhà bán — lệch về phía rẻ an toàn hơn "
-                "lệch về phía đắt."
-            ),
-        )
-    ]
-
     cost_floor = _cost_floor(req)
-    if cost_floor is not None:
-        fee_note = (
-            f" − phí {cost_floor.channel_name} {cost_floor.commission_pct:g}%"
-            if cost_floor.channel_name else ""
-        )
-        method.append(MethodStep(
-            label="Giá sàn theo chi phí",
-            detail=(
-                f"{_vnd(req.unit_cost or 0)} ÷ (100%{fee_note} − biên "
-                f"{req.min_margin_pct:g}%) = {_vnd(cost_floor.floor)}"
-            ),
-            why=(
-                "Phí sàn trừ trên chính giá bán, nên nó nằm cùng vế với biên "
-                "lợi nhuận. Đây là mức thấp nhất còn giữ được biên bạn đặt."
-            ),
-        ))
-
     if cost_floor is not None and p75 > p25:
         pressure = min(1.0, max(0.0, (cost_floor.floor - p25) / (p75 - p25)))
-        before = recommended
         recommended = round(recommended + (p75 - recommended) * pressure)
         recommended = max(recommended, cost_floor.floor)
-        moved = (
-            f" → dịch {_vnd(before)} lên {_vnd(int(recommended))}"
-            if recommended != before else " → giữ nguyên mốc thị trường"
-        )
-        method.append(MethodStep(
-            label="Điều chỉnh theo giá vốn",
-            detail=(
-                f"Giá sàn {_vnd(cost_floor.floor)} nằm ở mức {pressure:.0%} của dải "
-                f"{_vnd(int(p25))}–{_vnd(int(p75))}{moved}"
-            ),
-            why=(
-                "Giá vốn càng sát nhóm giá cao thì càng ít dư địa cạnh tranh về "
-                "giá, nên mức tham khảo dịch lên theo. Giá vốn thấp hơn nhóm giá "
-                "thấp thì không dịch — lúc đó thị trường mới là ràng buộc."
-            ),
-        ))
 
     if req.current_price is None:
         rationale = f"Chưa có giá hiện tại — lấy {basis}."
@@ -679,7 +628,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         high=int(max(p75, recommended)), category_median=int(median),
         sample_size=stats.sample_size, rationale=rationale,
         market_p25=int(p25), market_p75=int(p75), price_percentile=percentile,
-        reasons=reasons, method=method,
+        reasons=reasons,
         direction=direction, change_vnd=change_vnd, change_pct=change_pct,
         margin_unverified=req.unit_cost is None,
         large_move=change_pct is not None and abs(change_pct) >= 25,
