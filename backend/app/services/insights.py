@@ -407,6 +407,9 @@ class _PriceStats:
     #: When hand-captured listings were read off Shopee. Seed data ages, and
     #: the panel says how old it is rather than implying it is live.
     captured_at: str | None = None
+    #: Dearest listing observed. A floor above this is not "premium pricing" —
+    #: there is no competitor at that level to be premium against.
+    max_price: int | None = None
     #: Placement of the seller's own price, when the source can compute one.
     percentile_of: Callable[[int], int | None] | None = None
 
@@ -449,6 +452,7 @@ async def _price_stats(category: str, req_name: str = "") -> _PriceStats:
                 sample_size=listings.sample_size, source="shopee_seed",
                 percentile_of=listings.percentile_of,
                 captured_at=listings.collected_at,
+                max_price=max(listings.prices),
             )
         return _category_price_stats(category)
     return _PriceStats(
@@ -615,6 +619,17 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
             reasons.append(
                 "Giá vốn hiện còn thấp so với mặt bằng thị trường, nên mức tham khảo "
                 "được quyết định bởi giá thị trường."
+            )
+        elif stats.max_price and cost_floor.floor > stats.max_price:
+            # Past the dearest listing observed, which is a different situation
+            # from "priced at the top end": there is no competitor at this level
+            # at all, so the honest reading is that the product cannot be sold
+            # here at the margin asked for, not that it sits in a premium tier.
+            over = round((cost_floor.floor - stats.max_price) / stats.max_price * 100)
+            reasons.append(
+                f"Mức thấp nhất {_vnd(cost_floor.floor)} còn cao hơn cả sản phẩm đắt nhất "
+                f"quan sát được ({_vnd(stats.max_price)}, chênh {over}%) — với giá vốn này "
+                "sản phẩm nằm ngoài vùng giá của thị trường."
             )
         else:
             reasons.append(

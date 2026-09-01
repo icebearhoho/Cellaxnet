@@ -112,3 +112,36 @@ async def test_a_cost_above_the_whole_market_still_shows_the_market() -> None:
     assert all(s.price < result.price_floor for s in result.strategies)
     # Every one of them loses money at that price, and the figures show it.
     assert all(s.margin_pct is not None and s.margin_pct < 0 for s in result.strategies)
+
+
+@pytest.mark.asyncio
+async def test_a_floor_past_the_dearest_listing_says_outside_the_market() -> None:
+    """Above every observed price is not the same as "priced at the top end".
+
+    There is no competitor at that level to be premium against, so the honest
+    reading is that the product cannot be sold there at the margin asked for.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="Serum Vitamin C 15%", category="Mỹ phẩm",
+                       current_price=502_000, unit_cost=350_000,
+                       min_margin_pct=35, channel="shopee")
+    )
+
+    joined = " ".join(result.reasons)
+    assert "nằm ngoài vùng giá của thị trường" in joined
+    assert "đắt nhất quan sát được" in joined
+
+
+@pytest.mark.asyncio
+async def test_a_floor_inside_the_range_is_not_called_outside_it() -> None:
+    """A dear-but-reachable product belongs in the top of the market, not past
+    it, and the wording has to tell the two apart."""
+    result = await insights.recommend_price(
+        PricingRequest(product_name="Serum Vitamin C 15%", category="Mỹ phẩm",
+                       current_price=502_000, unit_cost=150_000,
+                       min_margin_pct=35, channel="shopee")
+    )
+
+    joined = " ".join(result.reasons)
+    assert "nằm ngoài vùng giá" not in joined
+    assert "Giá vốn cao nên mức tham khảo" in joined
