@@ -1176,6 +1176,357 @@
           "sold": 1000
         }
       ]
+    },
+    {
+      "keyword": "sữa rửa mặt",
+      "category": "Mỹ phẩm",
+      "listings": [
+        {
+          "name": "Sữa Rửa Mặt Collagen Kihasu 100ml",
+          "price": 49000,
+          "sold": 170
+        },
+        {
+          "name": "KIHASU Collagen Làm",
+          "price": 49000,
+          "sold": 1000
+        },
+        {
+          "name": "Sữa Rửa Mặt Thảo Dược Thiên Nhiên Sắc",
+          "price": 53640,
+          "sold": 6000
+        },
+        {
+          "name": "Youthology Sữa Rửa Mặt Amino Acid Mini 25m",
+          "price": 59092,
+          "sold": 6000
+        },
+        {
+          "name": "Sữa rửa mặt cho nam Oxy sạch dịu nh",
+          "price": 61000,
+          "sold": 5000
+        },
+        {
+          "name": "Sữa Rửa Mặt Dịu Nhẹ PINKTWO Amino Acid",
+          "price": 62000,
+          "sold": 4000
+        },
+        {
+          "name": "[Mua 1 Tặng 1] Sữa Rửa Mặt Dịu Nhe",
+          "price": 62000,
+          "sold": 10000
+        },
+        {
+          "name": "Sữa rửa mặt dịu lành cho da nhạy cảm Cetaph",
+          "price": 65000,
+          "sold": 182
+        },
+        {
+          "name": "Youthology Sữa Rửa Mặt APG Không Bọt 100",
+          "price": 66572,
+          "sold": 74
+        },
+        {
+          "name": "Youthology Sữa Rửa Mặt Không Tạo Bọt APG",
+          "price": 66572,
+          "sold": 6000
+        },
+        {
+          "name": "Sữa Rửa Mặt Labonita Vital Panthenol",
+          "price": 73000,
+          "sold": 1000
+        },
+        {
+          "name": "Sữa rửa mặt Diệp Lục Chlorophyll 120g",
+          "price": 78131,
+          "sold": 7
+        },
+        {
+          "name": "Sữa rửa mặt LA BONITA Panthenol B5 Là",
+          "price": 80000,
+          "sold": 57
+        },
+        {
+          "name": "Sữa rửa mặt hỗ trợ làm sạch sâu, kiềm dầu",
+          "price": 84000,
+          "sold": 30000
+        },
+        {
+          "name": "[BAO BÌ MỚI] - Gel rửa mặt cho da dầu, mụn",
+          "price": 84050,
+          "sold": 2000
+        },
+        {
+          "name": "Gel Rửa Mặt Nâng Cơ Reihaku Hatomugi",
+          "price": 84500,
+          "sold": 25
+        },
+        {
+          "name": "[MUA 1 TẶNG 1] ZHUBEN Sữa Rửa Mặt",
+          "price": 85500,
+          "sold": 8
+        },
+        {
+          "name": "Combo 3 Món ASAMOKA: Dầu Gội 80g",
+          "price": 88563,
+          "sold": 28
+        },
+        {
+          "name": "Combo 2 Sữa Rửa Mặt Retolab Phytoclear",
+          "price": 89000,
+          "sold": 7000
+        },
+        {
+          "name": "[Quà Tặng] Sữa Rửa Mặt ZiiiT Tràm Trà Kiềm",
+          "price": 89000,
+          "sold": 181
+        },
+        {
+          "name": "Sữa rửa mặt Oribe Soft Touch Dân Khang là",
+          "price": 89000,
+          "sold": 6000
+        },
+        {
+          "name": "LANBENA SỮA RỬA MẶT BHA (236ML) - Kiể",
+          "price": 89012,
+          "sold": 5000
+        },
+        {
+          "name": "(Quà Tặng Không Bán) Sữa rửa mặt kem d",
+          "price": 90000,
+          "sold": 5000
+        },
+        {
+          "name": "Sữa rửa mặt gừng, nhẹ nhàng làm sạch sâu",
+          "price": 90470,
+          "sold": 20000
+        },
+        {
+          "name": "Sữa rửa mặt da dầu nhạy cảm ARICAMUN",
+          "price": 96390,
+          "sold": 1000
+        },
+        {
+          "name": "Sữa Rửa Mặt Dịu Nhẹ Cho Da Nhạy Cảm",
+          "price": 97200,
+          "sold": null
+        },
+        {
+          "name": "Sữa rửa mặt dịu nhẹ cho da nhạy cảm",
+          "price": 98100,
+          "sold": null
+        },
+        {
+          "name": "Sữa rửa mặt nam KING MONSTER dịu nhe",
+          "price": 98100,
+          "sold": null
+        },
+        {
+          "name": "Sữa rửa mặt dạng gel Dermarium Goodnight",
+          "price": 100000,
+          "sold": null
+        },
+        {
+          "name": "OSITREE Sữa Rửa Mặt Trà Đen 200g Bọt M",
+          "price": 102476,
+          "sold": null
+        },
+        {
+          "name": "Sữa Rửa Mặt Dịu Nhẹ Cho Da Nhạy Cảm & Mụ",
+          "price": 103500,
+          "sold": null
+        },
+        {
+          "name": "Sữa Rửa Mặt Hydra Nourish Cleanser KEYS",
+          "price": 104400,
+          "sold": 220
+        },
+        {
+          "name": "LANBENA Sữa rửa mặt (100g) - hỗ trợ làm",
+          "price": 107100,
+          "sold": 10000
+        },
+        {
+          "name": "Sữa Rửa Mặt Tràm Trà Kiểm Soát Dầu, Ngừ",
+          "price": 108000,
+          "sold": 29
+        },
+        {
+          "name": "Sữa rửa mặt dịu nhẹ giúp giảm mụn chiết xuất",
+          "price": 108000,
+          "sold": 7000
+        },
+        {
+          "name": "Sữa rửa mặt Bio-essence dịu nhẹ, sạch sâ",
+          "price": 109800,
+          "sold": 3000
+        },
+        {
+          "name": "Sữa rửa mặt Bio-essence dịu nhẹ, sạch sâ (2)",
+          "price": 109800,
+          "sold": 9000
+        },
+        {
+          "name": "Sữa Rửa Mặt Dịu Nhẹ Cho Da Nhạy C",
+          "price": 110700,
+          "sold": 40000
+        },
+        {
+          "name": "[FBS] Sữa rửa mặt sáng da HUNFSOW",
+          "price": 112050,
+          "sold": 397
+        },
+        {
+          "name": "Sữa Rửa Mặt Socus Lành Tính – Dịu Nhẹ Ch",
+          "price": 112687,
+          "sold": 234
+        },
+        {
+          "name": "Sữa Rửa Mặt Neutrogena Sạch Sâu",
+          "price": 116100,
+          "sold": null
+        },
+        {
+          "name": "[Mua 2 Tặng 2] Sữa Rửa Mặt Dịu Nhẹ",
+          "price": 116100,
+          "sold": null
+        },
+        {
+          "name": "Sữa rửa mặt Collagen LEBELAGE giữ ẩm dịu n",
+          "price": 121347,
+          "sold": null
+        },
+        {
+          "name": "[TẶNG BĂNG ĐÔ] Sữa rửa mặt dịu nhẹ giả",
+          "price": 124200,
+          "sold": null
+        },
+        {
+          "name": "Sữa Rửa Mặt Sạch Sâu Compliment Cho Da",
+          "price": 125099,
+          "sold": null
+        },
+        {
+          "name": "Sữa Rửa Mặt Compliment - Sạch Sâu",
+          "price": 125099,
+          "sold": 819
+        },
+        {
+          "name": "Sữa Rửa Mặt Compliment - Sạch Sâu (2)",
+          "price": 125099,
+          "sold": 914
+        },
+        {
+          "name": "Sữa Rửa Mặt Sạch Sâu Compliment Cho Da (2)",
+          "price": 125099,
+          "sold": 20000
+        },
+        {
+          "name": "Sữa Rửa Mặt Sạch Sâu Compliment Cho Da (3)",
+          "price": 125099,
+          "sold": 5000
+        },
+        {
+          "name": "Sữa Rửa Mặt Sạch Sâu Compliment Cho Da (4)",
+          "price": 125099,
+          "sold": 10000
+        },
+        {
+          "name": "Sữa rửa mặt HULO CARE AQUA MARINE",
+          "price": 125100,
+          "sold": null
+        },
+        {
+          "name": "Sữa Rửa Mặt Sạch Sâu Dịu Nhẹ, Cấp Ẩm",
+          "price": 129600,
+          "sold": 152
+        },
+        {
+          "name": "[VB] Combo 2 x Sữa rửa mặt cho nam",
+          "price": 132020,
+          "sold": 49
+        },
+        {
+          "name": "[VB] Combo 2 x Sữa rửa mặt cho nam (2)",
+          "price": 132020,
+          "sold": 126
+        },
+        {
+          "name": "[VB] Combo 2 x Sữa rửa mặt cho nam (3)",
+          "price": 132020,
+          "sold": 133
+        },
+        {
+          "name": "Combo Simple Sữa Rửa Mặt 150ML + Nước",
+          "price": 133083,
+          "sold": 91
+        },
+        {
+          "name": "[LIVE] Sữa rửa mặt sáng da HUNFSOW 5X",
+          "price": 135000,
+          "sold": 71
+        },
+        {
+          "name": "Youthology Sữa Rửa Mặt Amino Acid Tạo Bọt",
+          "price": 137571,
+          "sold": 30000
+        },
+        {
+          "name": "Sữa Rửa Mặt Hồng Sâm My Gold Maxclinic",
+          "price": 139500,
+          "sold": 203
+        },
+        {
+          "name": "Sữa Rửa Mặt Dịu Nhẹ Sạch Dầu Nhờn Ngừa M",
+          "price": 139500,
+          "sold": 6000
+        },
+        {
+          "name": "Sữa rửa mặt 2% BHA Dermarium The Waves là",
+          "price": 140000,
+          "sold": 284
+        },
+        {
+          "name": "Gel làm sạch dịu nhẹ dành cho da nhạy cảm, d",
+          "price": 143100,
+          "sold": 1000
+        },
+        {
+          "name": "[FBS] Sữa rửa mặt dịu lành cho da nhạy",
+          "price": 146780,
+          "sold": 282
+        },
+        {
+          "name": "[MUA 1 TẶNG 3] ZHUBEN Sữa Rửa Mặt",
+          "price": 148500,
+          "sold": null
+        },
+        {
+          "name": "Gel Rửa Mặt Hoa Đào Gel Pha Lê Rửa Mặt Dịu",
+          "price": 152100,
+          "sold": 554
+        },
+        {
+          "name": "Sữa Rửa Mặt Dạng Sữa Safe Me Làm Sạch",
+          "price": 162000,
+          "sold": null
+        },
+        {
+          "name": "Sữa rửa mặt TrioDerma Acne Deep",
+          "price": 203400,
+          "sold": 1000
+        },
+        {
+          "name": "Sữa Rửa Mặt Cerave Foaming Cleanser",
+          "price": 359100,
+          "sold": 10000
+        },
+        {
+          "name": "Sữa Rửa Mặt Mocha Bio Active Cleanser 300",
+          "price": 792000,
+          "sold": null
+        }
+      ]
     }
   ]
 }
