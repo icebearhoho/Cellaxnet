@@ -49,10 +49,10 @@ def test_bundles_and_strays_do_not_set_the_quartiles() -> None:
     assert max(ref.prices) < 954_000
 
 
-def test_an_uncaptured_category_returns_nothing() -> None:
-    """Borrowing a cosmetics median for a jacket is the error this whole
+def test_an_uncaptured_product_returns_nothing() -> None:
+    """Borrowing a cosmetics median for an accessory is the error this whole
     reference exists to remove, so silence is the right answer."""
-    assert shopee_listings.reference_for_product("Áo thun cotton", "Thời trang") is None
+    assert shopee_listings.reference_for_product("Túi đeo chéo da PU", "Phụ kiện") is None
 
 
 @pytest.mark.asyncio
@@ -69,9 +69,9 @@ async def test_pricing_uses_the_captured_listings() -> None:
 
 
 @pytest.mark.asyncio
-async def test_an_uncaptured_category_falls_back_to_the_catalogue() -> None:
+async def test_an_uncaptured_product_falls_back_to_the_catalogue() -> None:
     result = await insights.recommend_price(
-        PricingRequest(product_name="Áo thun cotton unisex", category="Thời trang",
+        PricingRequest(product_name="Túi đeo chéo da PU", category="Phụ kiện",
                        current_price=200_000)
     )
 
@@ -161,3 +161,34 @@ def test_the_right_keyword_wins_when_several_are_captured() -> None:
     assert serum.keyword == "serum vitamin c"
     assert sunscreen.keyword == "kem chống nắng"
     assert serum.median != sunscreen.median
+
+
+def test_one_shared_word_is_not_a_match() -> None:
+    """A jacket and a t-shirt share only "áo", and cost very differently.
+
+    While each category held a single capture, falling back to it was a real
+    market. With several per category the same rule silently prices a jacket
+    off t-shirts — the category-level error this reference exists to remove.
+    """
+    tshirt = shopee_listings.reference_for_product("Áo thun cotton unisex", "Thời trang")
+    jacket = shopee_listings.reference_for_product("Áo khoác dù 2 lớp", "Thời trang")
+
+    assert tshirt is not None and tshirt.keyword == "áo thun unisex"
+    assert jacket is None
+
+
+def test_every_captured_cosmetic_finds_its_own_market() -> None:
+    """Six captures in one category must not blur into each other."""
+    expected = {
+        "Serum Vitamin C 15%": "serum vitamin c",
+        "Kem chống nắng SPF50": "kem chống nắng",
+        "Son tint lì velvet": "son tint",
+        "Toner cấp ẩm": "toner cấp ẩm",
+        "Sữa rửa mặt dịu nhẹ": "sữa rửa mặt",
+        "Mặt nạ ngủ dưỡng ẩm": "mặt nạ ngủ",
+    }
+
+    for product, keyword in expected.items():
+        ref = shopee_listings.reference_for_product(product, "Mỹ phẩm")
+        assert ref is not None, product
+        assert ref.keyword == keyword, product

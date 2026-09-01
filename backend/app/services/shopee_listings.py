@@ -109,9 +109,9 @@ def reference_for_product(product_name: str, category: str) -> ListingReference 
     """Best captured keyword for this product, or None.
 
     Matched on the product's own words rather than on an exact keyword, so
-    "Serum Vitamin C 15%" finds the "serum vitamin c" capture. Falls back to any
-    capture in the same category, which is still a real market — just a looser
-    comparison than the same product type.
+    "Serum Vitamin C 15%" finds the "serum vitamin c" capture. Two words must
+    agree: one shared word is usually just the category noun, and pricing a
+    jacket off t-shirts because both say "áo" is worse than not pricing it.
     """
     data = _load()
     collected_at = data.get("collected_at", "")
@@ -119,16 +119,22 @@ def reference_for_product(product_name: str, category: str) -> ListingReference 
     if not queries:
         return None
 
+    # A single shared word is not a match. "Áo khoác dù" and "áo thun unisex"
+    # overlap only on "áo", and jackets cost several times what t-shirts do —
+    # so a keyword has to agree with the product on the noun *and* a qualifier
+    # before it is treated as the same market.
     words = set(product_name.lower().split())
     scored = [
         (len(words & set(q["keyword"].lower().split())), q)
         for q in queries
     ]
     best_overlap, best_query = max(scored, key=lambda pair: pair[0])
-    if best_overlap == 0:
-        # Nothing matched the product; the category capture is still a market,
-        # just a broader one. Better than comparing the seller to themselves.
-        best_query = queries[0]
+    if best_overlap < 2:
+        # No capture describes this product. Falling back to another one in the
+        # same category was defensible while each category held a single
+        # keyword; with several it silently prices a jacket off t-shirts, which
+        # is the same category-level error the whole reference exists to avoid.
+        return None
 
     return _reference_for(best_query, collected_at)
 
