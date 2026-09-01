@@ -137,7 +137,7 @@ function SourceBadge(
 ) {
   if (source === "demo") {
     return (
-      <span className="mt-1.5 flex w-fit items-center gap-1 rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-dim">
+      <span className="flex w-fit items-center gap-1 rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] text-text-dim">
         <FlaskConical className="h-3 w-3" aria-hidden="true" />
         Dữ liệu mô phỏng
       </span>
@@ -145,7 +145,7 @@ function SourceBadge(
   }
   const shops = shopCount ? ` · ${shopCount} nhà bán` : "";
   return (
-    <span className="mt-1.5 flex w-fit items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[11px] font-medium text-success">
+    <span className="flex w-fit items-center gap-1 rounded-md bg-success/10 px-1.5 py-0.5 text-[11px] font-medium text-success">
       <Database className="h-3 w-3" aria-hidden="true" />
       {marketLabel ?? "Shopee"} · T7/2026{shops}
     </span>
@@ -166,7 +166,6 @@ export function DynamicPricingPanel() {
   const [cost, setCost] = useState("");
   const [margin, setMargin] = useState(20);
   const [marginTouched, setMarginTouched] = useState(false);
-  const [showStrategies, setShowStrategies] = useState(false);
   const [showReasons, setShowReasons] = useState(false);
   const [channel, setChannel] = useState<string>("shopee");
   const [busy, setBusy] = useState(false);
@@ -738,23 +737,25 @@ export function DynamicPricingPanel() {
                     faster, dearer earns more per unit. */}
                 {result.strategies.length > 0 && (
                   <div>
-                    {/* Collapsed by default: these are evidence for the
-                        recommendation, not four recommendations. Shown at once
-                        they made the reader ask which number was the answer. */}
-                    <button
-                      type="button"
-                      onClick={() => setShowStrategies((v) => !v)}
-                      aria-expanded={showStrategies}
-                      className="flex items-center gap-2 text-xs font-medium text-text-muted transition-colors hover:text-text"
-                    >
-                      <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                      Ba mốc giá của thị trường
-                      <ChevronDown
-                        className={cn("h-3.5 w-3.5 transition-transform", showStrategies && "rotate-180")}
-                        aria-hidden="true"
+                    {/* The provenance badge lived on the median card, which is
+                        gone. It belongs here now: these three are the market
+                        figures, and whether they are observed or simulated is
+                        the first thing that qualifies them. */}
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className="flex items-center gap-2 text-xs font-medium text-text-muted">
+                        <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                        Ba mốc giá của thị trường
+                      </p>
+                      <span className="text-2xs text-text-dim">
+                        · {result.sample_size} sản phẩm
+                      </span>
+                      <SourceBadge
+                        source={result.data_source}
+                        shopCount={result.shop_count}
+                        marketLabel={result.market_label}
                       />
-                    </button>
-                    <div className={cn("mt-3 grid gap-2 sm:grid-cols-3", !showStrategies && "hidden")}>
+                    </div>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
                       {result.strategies.map((s) => {
                         const chosen = s.price === result.recommended_price;
                         return (
@@ -789,14 +790,9 @@ export function DynamicPricingPanel() {
                                 Lợi nhuận <span className="tnum text-success">{s.margin_pct}%</span>
                               </p>
                             )}
-                            {/* Where the figure came from, and what picking it
-                                costs. Without the first it looks like advice
-                                with the reason withheld; without the second the
-                                reader has only one side of the trade. */}
-                            <p className="mt-2 border-t border-border/60 pt-2 text-2xs leading-4 text-text-dim">
-                              {s.source}
-                            </p>
-                            <p className="mt-1.5 text-2xs leading-4 text-text-muted">
+                            {/* The trade, not the statistic: what picking this
+                                costs is what the seller weighs. */}
+                            <p className="mt-2 border-t border-border/60 pt-2 text-2xs leading-4 text-text-muted">
                               {s.tradeoff}
                             </p>
                             {s.lifted_by_floor && (
@@ -808,52 +804,6 @@ export function DynamicPricingPanel() {
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
-                {result.market_p25 !== null && result.market_p75 !== null && (
-                  <div className="rounded-lg border border-border bg-surface-2/40 px-5 py-4">
-                    <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
-                      <BarChart3 className="h-4 w-4" aria-hidden="true" />{" "}
-                      Mặt bằng giá {result.market_label ?? "quan sát được"}
-                    </p>
-
-                    {/* A median alone cannot say whether a category is tight or
-                        five-fold wide, which is exactly what decides how much
-                        room a seller has to move. */}
-                    <div className="mt-4 flex items-end justify-between gap-2 text-xs">
-                      <div>
-                        <div className="text-text-dim">Rẻ hơn 25%</div>
-                        <div className="tnum mt-0.5 font-medium text-text">{VND.format(result.market_p25)}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-text-dim">Trung vị</div>
-                        <div className="tnum mt-0.5 font-semibold text-success">{VND.format(result.category_median)}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-text-dim">Đắt hơn 25%</div>
-                        <div className="tnum mt-0.5 font-medium text-text">{VND.format(result.market_p75)}</div>
-                      </div>
-                    </div>
-
-                    <div className="relative mt-3 h-1.5 rounded-full bg-surface-2">
-                      <div className="absolute inset-y-0 left-1/4 right-1/4 rounded-full bg-success/30" />
-                      {result.price_percentile !== null && (
-                        <div
-                          className="absolute -top-1 h-3.5 w-0.5 rounded bg-accent"
-                          style={{ left: `${Math.min(98, Math.max(1, result.price_percentile))}%` }}
-                          aria-hidden="true"
-                        />
-                      )}
-                    </div>
-
-                    {result.price_percentile !== null && (
-                      <p className="mt-3 text-xs leading-5 text-text-muted">
-                        Giá của bạn đắt hơn{" "}
-                        <span className="tnum font-medium text-accent">{result.price_percentile}%</span>{" "}
-                        trong {result.sample_size} sản phẩm quan sát được.
-                      </p>
-                    )}
                   </div>
                 )}
 
