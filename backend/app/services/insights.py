@@ -324,22 +324,19 @@ _StrategyKey = Literal["volume", "balanced", "margin"]
 #: Each option carries where its number came from and what picking it costs.
 #: A price with neither reads as a recommendation the engine is withholding a
 #: reason for; with both it reads as the reference it actually is.
-_STRATEGY_SPEC: tuple[tuple[_StrategyKey, str, str, str, str], ...] = (
+_STRATEGY_SPEC: tuple[tuple[_StrategyKey, str, str, str], ...] = (
     (
         "volume", "Nhóm giá thấp",
-        "Rẻ hơn khoảng 3/4 sản phẩm trên thị trường",
         "Phân vị 25 — sắp xếp mọi sản phẩm cùng nhóm theo giá, đây là mức ở vị trí 1/4 từ dưới lên",
         "Dễ được chọn khi khách so giá, nhưng lợi nhuận mỗi đơn thấp nhất trong ba mức.",
     ),
     (
         "balanced", "Trung vị thị trường",
-        "Sát mặt bằng chung của các sản phẩm tương tự",
         "Phân vị 50 — đúng mức giữa: một nửa thị trường bán rẻ hơn, một nửa bán đắt hơn",
         "Không nổi bật về giá theo hướng nào, đổi lại ít rủi ro bị đánh giá là đắt hay rẻ bất thường.",
     ),
     (
         "margin", "Nhóm giá cao",
-        "Chỉ khoảng 1/4 thị trường bán đắt hơn mức này",
         "Phân vị 75 — mức ở vị trí 1/4 từ trên xuống khi xếp theo giá",
         "Lợi nhuận mỗi đơn cao nhất, nhưng cần lý do để khách chấp nhận trả hơn mặt bằng.",
     ),
@@ -359,7 +356,7 @@ def _strategies(
     profit is not an option, so it is lifted and says so.
     """
     out: list[PriceStrategy] = []
-    for (key, label, goal, source, tradeoff), raw in zip(
+    for (key, label, source, tradeoff), raw in zip(
         _STRATEGY_SPEC, (stats.p25, stats.median, stats.p75), strict=True
     ):
         # The marker keeps the market's price even when the seller cannot sell
@@ -372,14 +369,11 @@ def _strategies(
             _net_margin_pct(price, unit_cost, cost_floor.commission_pct)
             if cost_floor is not None and unit_cost is not None else None
         )
-        if lifted:
-            assert cost_floor is not None
-            tradeoff = (
-                f"Giá vốn của bạn không cho phép bán ở mức này — cần từ "
-                f"{_vnd(cost_floor.floor)} trở lên mới giữ được biên mục tiêu."
-            )
+        # An unreachable marker keeps its own trade-off line: the red margin and
+        # the floor stated above the cards already say the cost rules it out,
+        # and repeating that on all three crowded out what each marker means.
         out.append(PriceStrategy(
-            key=key, label=label, goal=goal, source=source, tradeoff=tradeoff,
+            key=key, label=label, source=source, tradeoff=tradeoff,
             price=price, margin_pct=margin,
             percentile=stats.percentile_of(price) if stats.percentile_of else None,
             below_cost_floor=lifted,

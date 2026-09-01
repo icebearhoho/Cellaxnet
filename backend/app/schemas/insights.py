@@ -72,8 +72,6 @@ class PriceStrategy(BaseModel):
 
     key: Literal["volume", "balanced", "margin"]
     label: str
-    #: What the seller is buying with this price, in their terms.
-    goal: str
     #: Where the figure came from, named as a statistic a reviewer can check
     #: against the data rather than a label chosen for the screen.
     source: str

@@ -760,7 +760,6 @@ export function DynamicPricingPanel() {
                             <p className="tnum mt-2 text-lg font-semibold text-text">
                               {VND.format(s.price)}
                             </p>
-                            <p className="mt-1 text-2xs leading-4 text-text-muted">{s.goal}</p>
                             {s.margin_pct !== null && (
                               <p className="mt-2 text-2xs text-text-dim">
                                 Lợi nhuận{" "}
