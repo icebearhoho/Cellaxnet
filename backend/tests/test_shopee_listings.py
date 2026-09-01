@@ -90,3 +90,25 @@ async def test_the_three_markers_come_from_the_captured_prices() -> None:
 
     assert ref is not None
     assert [s.price for s in result.strategies] == [ref.p25, ref.median, ref.p75]
+
+
+@pytest.mark.asyncio
+async def test_a_cost_above_the_whole_market_still_shows_the_market() -> None:
+    """When nothing in the market clears the floor, the markers still differ.
+
+    A 300,000₫ cost needing 35% cannot be sold at any observed price, and the
+    earlier rule answered by printing the floor three times — telling the seller
+    nothing about the market they cannot compete in.
+    """
+    result = await insights.recommend_price(
+        PricingRequest(product_name="Serum Vitamin C 15%", category="Mỹ phẩm",
+                       current_price=502_000, unit_cost=300_000,
+                       min_margin_pct=35, channel="shopee")
+    )
+
+    assert all(s.below_cost_floor for s in result.strategies)
+    assert len({s.price for s in result.strategies}) == 3
+    assert result.price_floor is not None
+    assert all(s.price < result.price_floor for s in result.strategies)
+    # Every one of them loses money at that price, and the figures show it.
+    assert all(s.margin_pct is not None and s.margin_pct < 0 for s in result.strategies)

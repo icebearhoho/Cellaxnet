@@ -180,24 +180,27 @@ async def test_three_strategies_sit_at_the_market_quartiles() -> None:
 
 
 @pytest.mark.asyncio
-async def test_a_strategy_that_cannot_be_sold_at_a_profit_is_lifted() -> None:
-    """An option below the floor is not an option.
+async def test_an_unreachable_marker_keeps_the_market_price() -> None:
+    """The marker shows where the market is, not where the seller can go.
 
-    With a cost that rules out the cheaper end, those strategies move up to the
-    floor and say so — quietly quoting a losing price would be worse than
-    offering fewer choices.
+    Replacing it with the floor collapsed all three onto one figure and hid the
+    market entirely — worst precisely when the seller most needs to see how far
+    below it they are.
     """
     result = await insights.recommend_price(
         PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
                        unit_cost=180_000, min_margin_pct=35, channel="shopee")
     )
 
-    lifted = [s for s in result.strategies if s.lifted_by_floor]
-    assert lifted, "a high cost should push the cheap end up to the floor"
-    for strategy in result.strategies:
-        assert strategy.price >= (result.price_floor or 0)
-    for strategy in lifted:
-        assert strategy.price == result.price_floor
+    blocked = [s for s in result.strategies if s.below_cost_floor]
+    assert blocked, "this cost should rule out the cheap end"
+    assert len({s.price for s in result.strategies}) == 3, "markers must stay distinct"
+    assert [s.price for s in result.strategies] == [
+        result.market_p25, result.category_median, result.market_p75,
+    ]
+    # A price below the floor loses money, and the margin says so.
+    for strategy in blocked:
+        assert strategy.margin_pct is not None and strategy.margin_pct < 35
 
 
 @pytest.mark.asyncio
@@ -223,7 +226,7 @@ async def test_strategies_need_no_cost_to_be_offered() -> None:
 
     assert len(result.strategies) == 3
     assert all(s.margin_pct is None for s in result.strategies)
-    assert all(not s.lifted_by_floor for s in result.strategies)
+    assert all(not s.below_cost_floor for s in result.strategies)
 
 
 @pytest.mark.asyncio
@@ -326,25 +329,6 @@ async def test_the_reasons_walk_from_market_to_floor_to_price() -> None:
     assert "mức thấp nhất" in joined.lower()
     assert "Biên lợi nhuận" in joined
     assert len(result.reasons) >= 3
-
-
-@pytest.mark.asyncio
-async def test_a_floor_lifted_option_is_not_called_a_market_price() -> None:
-    """That number came from the seller's own costs, not from competitors.
-
-    Leaving "Giá cạnh tranh" on it would credit the market for a floor, and a
-    seller would read it as evidence about rivals rather than about themselves.
-    """
-    result = await insights.recommend_price(
-        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=183_000,
-                       unit_cost=120_000, min_margin_pct=35, channel="shopee")
-    )
-
-    lifted = [s for s in result.strategies if s.lifted_by_floor]
-    assert lifted, "this cost should lift the cheap option onto the floor"
-    for strategy in lifted:
-        assert strategy.label == "Giá tối thiểu"
-        assert "cạnh tranh" not in strategy.label
 
 
 @pytest.mark.asyncio
@@ -614,19 +598,3 @@ async def test_each_reference_price_states_what_it_costs() -> None:
     # The cheap end sells more easily; the dear end earns more. Both are said.
     assert "lợi nhuận mỗi đơn thấp nhất" in result.strategies[0].tradeoff
     assert "cao nhất" in result.strategies[2].tradeoff
-
-
-@pytest.mark.asyncio
-async def test_a_lifted_option_credits_the_cost_not_the_market() -> None:
-    """Once the floor claims that slot the number stopped being a percentile,
-    and saying otherwise would attribute the seller's own costs to rivals."""
-    result = await insights.recommend_price(
-        PricingRequest(product_name="X", category="Mỹ phẩm", current_price=200_000,
-                       unit_cost=180_000, min_margin_pct=35, channel="shopee")
-    )
-
-    lifted = [s for s in result.strategies if s.lifted_by_floor]
-    assert lifted
-    for strategy in lifted:
-        assert "Phân vị" not in strategy.source
-        assert "giá vốn" in strategy.source.lower()

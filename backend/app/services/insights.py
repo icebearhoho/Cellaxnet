@@ -362,28 +362,27 @@ def _strategies(
     for (key, label, goal, source, tradeoff), raw in zip(
         _STRATEGY_SPEC, (stats.p25, stats.median, stats.p75), strict=True
     ):
+        # The marker keeps the market's price even when the seller cannot sell
+        # there. Replacing it with the floor collapsed all three onto the same
+        # figure, which erased the one thing they exist to show — where the
+        # market sits — exactly when that is the most useful thing to know.
         price = int(raw)
-        lifted = False
-        if cost_floor is not None and price < cost_floor.floor:
-            price = cost_floor.floor
-            lifted = True
+        lifted = cost_floor is not None and price < cost_floor.floor
         margin = (
             _net_margin_pct(price, unit_cost, cost_floor.commission_pct)
             if cost_floor is not None and unit_cost is not None else None
         )
         if lifted:
-            # No longer a market position: this is the cost floor wearing the
-            # cheap option's slot, and calling it "competitive" would credit
-            # the market for a number that came from the seller's own costs.
-            label = "Giá tối thiểu"
-            goal = "Mức thấp nhất còn giữ được biên lợi nhuận mục tiêu"
-            source = "Tính từ giá vốn và biên mục tiêu của bạn, không phải từ thị trường"
-            tradeoff = "Bán dưới mức này là lỗ, nên đây là sàn chứ không phải một lựa chọn."
+            assert cost_floor is not None
+            tradeoff = (
+                f"Giá vốn của bạn không cho phép bán ở mức này — cần từ "
+                f"{_vnd(cost_floor.floor)} trở lên mới giữ được biên mục tiêu."
+            )
         out.append(PriceStrategy(
             key=key, label=label, goal=goal, source=source, tradeoff=tradeoff,
             price=price, margin_pct=margin,
             percentile=stats.percentile_of(price) if stats.percentile_of else None,
-            lifted_by_floor=lifted,
+            below_cost_floor=lifted,
         ))
     return out
 

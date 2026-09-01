@@ -86,11 +86,11 @@ class PriceStrategy(BaseModel):
     margin_pct: float | None = None
     #: Share of observed products priced at or below this, when known.
     percentile: int | None = None
-    #: True when the margin floor lifted this option off its quartile — the
-    #: strategy cannot be had at that price without selling at a loss. The
-    #: label changes with it: a lifted option is a cost floor, not a market
-    #: position, and naming it after the market would misattribute the number.
-    lifted_by_floor: bool = False
+    #: True when the seller's cost rules this price out. The figure still shows
+    #: the market's own level — replacing it with the floor made all three
+    #: markers identical and hid where the market actually sits, which is worth
+    #: most precisely when the seller cannot reach it.
+    below_cost_floor: bool = False
 
 
 #: What the seller should do, as one word. The screen leads with this: a

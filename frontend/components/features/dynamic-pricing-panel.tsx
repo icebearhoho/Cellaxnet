@@ -737,9 +737,11 @@ export function DynamicPricingPanel() {
                             key={s.key}
                             className={cn(
                               "rounded-lg border p-4",
-                              chosen
-                                ? "border-accent bg-accent/[0.05]"
-                                : "border-border bg-surface-2/40",
+                              s.below_cost_floor
+                                ? "border-danger/30 bg-danger/[0.04]"
+                                : chosen
+                                  ? "border-accent bg-accent/[0.05]"
+                                  : "border-border bg-surface-2/40",
                             )}
                           >
                             <div className="flex items-center justify-between gap-2">
@@ -761,19 +763,23 @@ export function DynamicPricingPanel() {
                             <p className="mt-1 text-2xs leading-4 text-text-muted">{s.goal}</p>
                             {s.margin_pct !== null && (
                               <p className="mt-2 text-2xs text-text-dim">
-                                Lợi nhuận <span className="tnum text-success">{s.margin_pct}%</span>
+                                Lợi nhuận{" "}
+                                <span className={cn(
+                                  "tnum",
+                                  s.below_cost_floor ? "text-danger" : "text-success",
+                                )}>
+                                  {s.margin_pct}%
+                                </span>
                               </p>
                             )}
                             {/* The trade, not the statistic: what picking this
                                 costs is what the seller weighs. */}
-                            <p className="mt-2 border-t border-border/60 pt-2 text-2xs leading-4 text-text-muted">
+                            <p className={cn(
+                              "mt-2 border-t border-border/60 pt-2 text-2xs leading-4",
+                              s.below_cost_floor ? "text-danger" : "text-text-muted",
+                            )}>
                               {s.tradeoff}
                             </p>
-                            {s.lifted_by_floor && (
-                              <p className="mt-1.5 text-2xs leading-4 text-warning">
-                                Đã nâng lên giá sàn — không bán thấp hơn được.
-                              </p>
-                            )}
                           </div>
                         );
                       })}

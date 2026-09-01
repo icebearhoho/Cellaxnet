@@ -195,9 +195,9 @@ export type PriceStrategy = {
   price: number;
   margin_pct: number | null;
   percentile: number | null;
-  /** The margin floor lifted this option off its quartile — the strategy is
-   *  not available at that price without selling at a loss. */
-  lifted_by_floor: boolean;
+  /** The seller's cost rules this price out. The figure still shows the
+   *  market's own level, so they can see how far below it they are. */
+  below_cost_floor: boolean;
 };
 
 export type PricingResult = {
