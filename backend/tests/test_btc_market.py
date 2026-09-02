@@ -107,14 +107,18 @@ async def test_rationale_states_which_data_it_used(monkeypatch) -> None:
         PricingRequest(product_name="Serum", category="Mỹ phẩm", current_price=300_000)
     )
     simulated = await insights.recommend_price(
-        PricingRequest(product_name="Túi đeo chéo", category="Phụ kiện", current_price=300_000)
+        PricingRequest(product_name="Bông tai bạc 925", category="Phụ kiện",
+                       current_price=300_000)
     )
 
     assert "Shopee" in observed.rationale and "4 nhà bán" in observed.rationale
     # Vietnamese thousands separator, not Python's default comma.
     assert "67.900₫" in observed.rationale
-    assert "mô phỏng" in simulated.rationale
+    # The catalogue fallback names no source. It used to say "mô phỏng", which
+    # was removed from the copy; what still has to hold is that it never
+    # claims Shopee for numbers that did not come from there.
     assert "Shopee" not in simulated.rationale
+    assert simulated.market_label is None
 
 
 @pytest.mark.asyncio
@@ -193,7 +197,8 @@ async def test_missing_snapshot_file_is_not_an_error(monkeypatch, tmp_path) -> N
 async def test_pricing_still_works_with_no_dataset_configured() -> None:
     """With the dataset switched off entirely, pricing keeps working."""
     result = await insights.recommend_price(
-        PricingRequest(product_name="Túi đeo chéo", category="Phụ kiện", current_price=468_000)
+        PricingRequest(product_name="Bông tai bạc 925", category="Phụ kiện",
+                       current_price=468_000)
     )
 
     assert result.data_source == "demo"

@@ -50,9 +50,13 @@ def test_bundles_and_strays_do_not_set_the_quartiles() -> None:
 
 
 def test_an_uncaptured_product_returns_nothing() -> None:
-    """Borrowing a cosmetics median for an accessory is the error this whole
-    reference exists to remove, so silence is the right answer."""
-    assert shopee_listings.reference_for_product("Túi đeo chéo da PU", "Phụ kiện") is None
+    """Borrowing another product's median is the error this whole reference
+    exists to remove, so silence is the right answer.
+
+    Jewellery is deliberately outside the capture set: the accessory keywords
+    cover bags, hats and belts, and earrings share no word with any of them.
+    """
+    assert shopee_listings.reference_for_product("Bông tai bạc 925", "Phụ kiện") is None
 
 
 @pytest.mark.asyncio
@@ -71,7 +75,7 @@ async def test_pricing_uses_the_captured_listings() -> None:
 @pytest.mark.asyncio
 async def test_an_uncaptured_product_falls_back_to_the_catalogue() -> None:
     result = await insights.recommend_price(
-        PricingRequest(product_name="Túi đeo chéo da PU", category="Phụ kiện",
+        PricingRequest(product_name="Bông tai bạc 925", category="Phụ kiện",
                        current_price=200_000)
     )
 
