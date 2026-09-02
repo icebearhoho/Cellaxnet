@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ChartNoAxesColumnIncreasing, ChevronDown, Lightbulb, Mail, MapPin, Phone, Search, ShoppingBag,
   Store, UserMinus, UserRound, UserRoundX, UsersRound, type LucideIcon,
@@ -23,8 +23,7 @@ type Persona = (typeof PERSONAS)[number];
 type PersonaMeta = {
   label: string;
   shortDescription: string;
-  analysis: string;
-  action: string;
+  action: ReactNode;
   icon: LucideIcon;
   tone: string;
   bar: string;
@@ -34,9 +33,8 @@ type PersonaMeta = {
 const PERSONA_META: Record<Persona, PersonaMeta> = {
   "Active Buyers": {
     label: "Khách hàng tích cực",
-    shortDescription: "Thường xuyên tương tác, yêu thích và mua sản phẩm.",
-    analysis: "Đây là nhóm tạo doanh thu chính, có tín hiệu mua và mức độ quan tâm cao nhất.",
-    action: "Ưu tiên loyalty/VIP và gợi ý sản phẩm theo lịch sử mua hoặc yêu thích.",
+    shortDescription: "Nhóm còn tương tác nhiều nhất: có lượt thích, wishlist và lịch sử mua.",
+    action: "Cung cấp thẻ loyalty/VIP và gợi ý sản phẩm theo lịch sử mua hoặc yêu thích.",
     icon: ShoppingBag,
     tone: "border-success/30 bg-success/[0.06] text-success",
     bar: "bg-success",
@@ -44,9 +42,13 @@ const PERSONA_META: Record<Persona, PersonaMeta> = {
   },
   "Sellers (listing & selling activity)": {
     label: "Người bán",
-    shortDescription: "Có hoạt động đăng bán hoặc bán sản phẩm.",
-    analysis: "Hành vi nổi bật là đăng bán; một số tài khoản có tỷ lệ sản phẩm bị từ chối cao.",
-    action: "Cung cấp checklist tối ưu ảnh, mô tả và giá; kết nối Seller Coach khi cần.",
+    shortDescription: "Có lịch sử đăng bán hoặc bán được hàng, nhưng phần lớn đã lâu không quay lại.",
+    action: (
+      <>
+        Hướng dẫn dùng <span className="font-semibold text-text">Cải thiện cửa hàng</span> để rà soát lại gian hàng.
+        Sau đó xin phản hồi để biết họ đang vướng ở đâu và giới thiệu đúng tính năng hỗ trợ tiếp theo.
+      </>
+    ),
     icon: Store,
     tone: "border-accent/30 bg-accent/[0.06] text-accent",
     bar: "bg-accent",
@@ -55,7 +57,6 @@ const PERSONA_META: Record<Persona, PersonaMeta> = {
   "At-risk / Low-activity Users": {
     label: "Có nguy cơ rời bỏ",
     shortDescription: "Vẫn còn hiện diện nhưng mức tương tác đang giảm.",
-    analysis: "Nhóm này chưa hoàn toàn rời đi nhưng gần như không còn mua, bán hoặc yêu thích sản phẩm.",
     action: "Can thiệp sớm bằng thông báo nhắc nhớ và ưu đãi nhỏ có thời hạn ngắn.",
     icon: UserMinus,
     tone: "border-warning/30 bg-warning/[0.06] text-warning",
@@ -65,7 +66,6 @@ const PERSONA_META: Record<Persona, PersonaMeta> = {
   "Dormant / Ghost Users": {
     label: "Không còn hoạt động",
     shortDescription: "Đã ngừng tương tác trong thời gian dài.",
-    analysis: "Phần lớn không còn hoạt động mua, bán, thích hoặc wishlist và đã lâu không đăng nhập.",
     action: "Chạy chiến dịch win-back qua email/SMS với ưu đãi quay lại đủ mạnh nhưng tần suất vừa phải.",
     icon: UserRoundX,
     tone: "border-danger/30 bg-danger/[0.06] text-danger",
@@ -239,7 +239,6 @@ export function SegmentationPanel() {
                 <CardTitle className="text-lg">{selectedMeta.label}</CardTitle>
                 <Badge variant={selectedMeta.badge}>{segmentCounts[selectedPersona]} khách hàng</Badge>
               </div>
-              <p className="mt-1.5 text-sm text-text-muted">{selectedMeta.shortDescription}</p>
             </div>
             <div className="relative w-full shrink-0 sm:w-80">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-dim" aria-hidden="true" />
@@ -255,17 +254,11 @@ export function SegmentationPanel() {
           </CardHeader>
 
           <CardContent className="space-y-5 p-5 sm:p-6">
-            <div className="grid gap-3 rounded-2xl border border-border bg-bg-alt p-4 lg:grid-cols-2">
-              <div>
-                <p className="flex items-center gap-2 text-sm font-semibold text-text">
-                  <Lightbulb className="h-4 w-4 text-warning" aria-hidden="true" /> Đặc điểm nhóm
-                </p>
-                <p className="mt-1.5 text-sm leading-6 text-text-muted">{selectedMeta.analysis}</p>
-              </div>
-              <div className="border-t border-border pt-3 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-                <p className="text-sm font-semibold text-text">Hành động đề xuất</p>
-                <p className="mt-1.5 text-sm leading-6 text-text-muted">{selectedMeta.action}</p>
-              </div>
+            <div className="rounded-2xl border border-border bg-bg-alt p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold text-text">
+                <Lightbulb className="h-4 w-4 text-warning" aria-hidden="true" /> Hành động đề xuất
+              </p>
+              <p className="mt-1.5 text-sm leading-6 text-text-muted">{selectedMeta.action}</p>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -282,7 +275,7 @@ export function SegmentationPanel() {
                 <p className="mt-1 text-sm text-text-muted">Thử tên, số điện thoại, email hoặc thành phố khác.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" aria-label={`Danh sách ${selectedMeta.label}`}>
+              <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2" aria-label={`Danh sách ${selectedMeta.label}`}>
                 {visible.map((customer) => (
                   <article key={customer.id} className="rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-border-strong">
                     <div className="flex items-start justify-between gap-3">
