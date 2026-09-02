@@ -107,7 +107,7 @@ async def test_rationale_states_which_data_it_used(monkeypatch) -> None:
         PricingRequest(product_name="Serum", category="Mỹ phẩm", current_price=300_000)
     )
     simulated = await insights.recommend_price(
-        PricingRequest(product_name="Áo khoác", category="Thời trang", current_price=300_000)
+        PricingRequest(product_name="Túi đeo chéo", category="Phụ kiện", current_price=300_000)
     )
 
     assert "Shopee" in observed.rationale and "4 nhà bán" in observed.rationale
@@ -193,7 +193,7 @@ async def test_missing_snapshot_file_is_not_an_error(monkeypatch, tmp_path) -> N
 async def test_pricing_still_works_with_no_dataset_configured() -> None:
     """With the dataset switched off entirely, pricing keeps working."""
     result = await insights.recommend_price(
-        PricingRequest(product_name="Áo khoác", category="Thời trang", current_price=468_000)
+        PricingRequest(product_name="Túi đeo chéo", category="Phụ kiện", current_price=468_000)
     )
 
     assert result.data_source == "demo"

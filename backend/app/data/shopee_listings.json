@@ -2124,6 +2124,382 @@
           "sold": 7000
         }
       ]
+    },
+    {
+      "keyword": "áo khoác dù",
+      "category": "Thời trang",
+      "listings": [
+        {
+          "name": "Áo khoác (đầu danh sách)",
+          "price": 90000,
+          "sold": 659
+        },
+        {
+          "name": "Áo khoác (đầu danh sách) 2",
+          "price": 109000,
+          "sold": 205
+        },
+        {
+          "name": "Áo khoác (đầu danh sách) 3",
+          "price": 118520,
+          "sold": 176
+        },
+        {
+          "name": "Áo khoác (đầu danh sách) 4",
+          "price": 119999,
+          "sold": 10000
+        },
+        {
+          "name": "Áo khoác (đầu danh sách) 5",
+          "price": 127633,
+          "sold": 10000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp",
+          "price": 128650,
+          "sold": 7000
+        },
+        {
+          "name": "Áo Khoác Dù 2 Lớp Mỏng Nhẹ Phản Quang",
+          "price": 129000,
+          "sold": 350
+        },
+        {
+          "name": "Áo khoác unisex nam nữ cháy phố kiểu bombe",
+          "price": 129999,
+          "sold": 4000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Chống Nước Chống",
+          "price": 140269,
+          "sold": 2000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B",
+          "price": 153550,
+          "sold": 9000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (2)",
+          "price": 153550,
+          "sold": 1000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (3)",
+          "price": 153550,
+          "sold": 7000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (4)",
+          "price": 156870,
+          "sold": 10000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Chống Nước Chống (2)",
+          "price": 156870,
+          "sold": 10000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (5)",
+          "price": 156870,
+          "sold": 1000
+        },
+        {
+          "name": "DWIN local brand bombe",
+          "price": 159000,
+          "sold": 58
+        },
+        {
+          "name": "DWIN local brand bombe (2)",
+          "price": 159000,
+          "sold": 728
+        },
+        {
+          "name": "Áo khoác nữ 2 Lớp Chống Nước",
+          "price": 159000,
+          "sold": 409
+        },
+        {
+          "name": "Áo Khoác Gió Nữ Chống Nước Chống",
+          "price": 161850,
+          "sold": 1000
+        },
+        {
+          "name": "Cyouuxu Oversize Nam",
+          "price": 165000,
+          "sold": null
+        },
+        {
+          "name": "Áo Khoác Dù 2 Lớp Unisex Form Rộng Bomb",
+          "price": 165000,
+          "sold": null
+        },
+        {
+          "name": "Áo Khoác Gió Nam nữ 2 Lớp Chống Nước",
+          "price": 169000,
+          "sold": 236
+        },
+        {
+          "name": "Áo khoác gió nam nữ 2 lớp AVANCOMAN cao",
+          "price": 178999,
+          "sold": 20000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (6)",
+          "price": 179000,
+          "sold": 6000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (7)",
+          "price": 179000,
+          "sold": 2000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (8)",
+          "price": 179000,
+          "sold": 4000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp B (9)",
+          "price": 179000,
+          "sold": 1000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp",
+          "price": 179000,
+          "sold": 4000
+        },
+        {
+          "name": "Áo khoác cặp đôi nam nữ có mũ vải gió dù chốn",
+          "price": 179000,
+          "sold": 174
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Chống Nước Chống (3)",
+          "price": 185000,
+          "sold": 211
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Chống Nước Chống (4)",
+          "price": 185000,
+          "sold": 263
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp (2)",
+          "price": 185000,
+          "sold": 3000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp (3)",
+          "price": 185000,
+          "sold": 3000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp (4)",
+          "price": 185000,
+          "sold": 4000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp (5)",
+          "price": 185000,
+          "sold": 2000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp (6)",
+          "price": 185000,
+          "sold": 2000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Mũ Cao Cấp 2 Lớp (7)",
+          "price": 185000,
+          "sold": 383
+        },
+        {
+          "name": "Áo dù gió thể thao nam nữ from rộng unisex",
+          "price": 185609,
+          "sold": 579
+        },
+        {
+          "name": "TOP BÁN CHẠY - Áo khoác dù bomber nam n",
+          "price": 188000,
+          "sold": 82
+        },
+        {
+          "name": "TOP BÁN CHẠY - Áo khoác dù bomber nam n (2)",
+          "price": 188000,
+          "sold": 64
+        },
+        {
+          "name": "TOP BÁN CHẠY - Áo khoác dù bomber nam n (3)",
+          "price": 188000,
+          "sold": 88
+        },
+        {
+          "name": "TOP BÁN CHẠY - Áo khoác dù bomber nam n (4)",
+          "price": 188000,
+          "sold": 77
+        },
+        {
+          "name": "TOP BÁN CHẠY - Áo khoác dù bomber nam n (5)",
+          "price": 188000,
+          "sold": 101
+        },
+        {
+          "name": "Áo khoác gió cặp đôi nam nữ có mũ chống nư",
+          "price": 189000,
+          "sold": 1000
+        },
+        {
+          "name": "Áo khoác gió đôi nam nữ in Dwin 2 lớp chất liệ",
+          "price": 189000,
+          "sold": 293
+        },
+        {
+          "name": "Áo khoác gió nam nữ 2 lớp nhiều khóa chất vải",
+          "price": 190070,
+          "sold": 2000
+        },
+        {
+          "name": "Áo Khoác Gió Nhẫn Nữ Avo Avocado Dày Dặ",
+          "price": 199000,
+          "sold": 16
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Azila 2 Lớp Nhiều Kh",
+          "price": 204620,
+          "sold": 1000
+        },
+        {
+          "name": "Áo khoác gió nam nữ túi hộp APT Unisex Áo gi",
+          "price": 209000,
+          "sold": 3000
+        },
+        {
+          "name": "Áo khoác gió nam nữ ESSENTIALS APT Unise",
+          "price": 209000,
+          "sold": 3000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Cao Cấp 2 Lớp By S",
+          "price": 219000,
+          "sold": 240
+        },
+        {
+          "name": "Áo Khoác Bomber Dù Hai Lớp Nam Nữ Thu Đô",
+          "price": 219000,
+          "sold": 1000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ Cao Cấp 2 Lớp Cổ C",
+          "price": 219000,
+          "sold": 265
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ DYPOISON NAD Chống",
+          "price": 219120,
+          "sold": 1000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ EXCELLENT NAD",
+          "price": 219120,
+          "sold": 4000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ 2 khóa ngực NAD",
+          "price": 219120,
+          "sold": 1000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ NAD Unisex Có Mũ",
+          "price": 219120,
+          "sold": 611
+        },
+        {
+          "name": "Áo khoác nữ Birie Choobe 2 lớp cản gió",
+          "price": 230000,
+          "sold": 431
+        },
+        {
+          "name": "Áo khoác dù thể thao 2 lớp chống nắng chống",
+          "price": 234020,
+          "sold": 10000
+        },
+        {
+          "name": "Áo khoác dù nam nữ, áo khoác gió chống nắng",
+          "price": 235000,
+          "sold": 1000
+        },
+        {
+          "name": "Áo Khoác Bomber Dù 2 Lớp Nam Nữ NAD unis",
+          "price": 239000,
+          "sold": 105
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ LETTHEHE NAD",
+          "price": 239000,
+          "sold": 146
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ LETTHEHEART NAD",
+          "price": 239000,
+          "sold": 164
+        },
+        {
+          "name": "Áo Khoác Gió Nam thể thao 2 lớp, chất dù xị",
+          "price": 227920,
+          "sold": 625
+        },
+        {
+          "name": "Áo khoác dù phối 2 lớp local brand Otis Club",
+          "price": 228800,
+          "sold": 1000
+        },
+        {
+          "name": "Áo Khoác Gió Nam Nữ NAD Unisex 2 Lớp",
+          "price": 236720,
+          "sold": 5000
+        },
+        {
+          "name": "Áo Khoác Dù Nam Pigofashion 2 Lớp dày m",
+          "price": 245520,
+          "sold": 77
+        },
+        {
+          "name": "Áo khoác dù cản hai lớp cao cấp cản gió chốn",
+          "price": 245520,
+          "sold": 385
+        },
+        {
+          "name": "Áo khoác dù nam chính hãng không nhãn",
+          "price": 245520,
+          "sold": 4000
+        },
+        {
+          "name": "Áo khoác dù nam cổ bẻ 2 lớp cao cấp túi khóa",
+          "price": 254320,
+          "sold": 54
+        },
+        {
+          "name": "Áo Khoác Dù Nam Pigofashion 2 Lớp dày m (2)",
+          "price": 254320,
+          "sold": 13
+        },
+        {
+          "name": "Áo khoác dù nam mẫu mới cao cấp nhiều màu",
+          "price": 254320,
+          "sold": 169
+        },
+        {
+          "name": "Áo khoác bomber nam 4MEN AK066, vải dù (gió",
+          "price": 263120,
+          "sold": 280
+        },
+        {
+          "name": "Áo khoác dù (gió) nam có nón 4MEN AK069 vải",
+          "price": 263120,
+          "sold": 760
+        }
+      ]
     }
   ]
 }

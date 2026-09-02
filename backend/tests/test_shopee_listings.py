@@ -164,17 +164,25 @@ def test_the_right_keyword_wins_when_several_are_captured() -> None:
 
 
 def test_one_shared_word_is_not_a_match() -> None:
-    """A jacket and a t-shirt share only "áo", and cost very differently.
+    """A camisole shares only "áo" with the shirt and jacket captures.
 
-    While each category held a single capture, falling back to it was a real
-    market. With several per category the same rule silently prices a jacket
-    off t-shirts — the category-level error this reference exists to remove.
+    Falling back on a single shared word priced a jacket off t-shirts before
+    the jacket capture existed, and the same rule would now price a camisole
+    off either — the category-level error this reference exists to remove.
     """
+    camisole = shopee_listings.reference_for_product("Áo hai dây basic", "Thời trang")
+
+    assert camisole is None
+
+
+def test_shirts_and_jackets_price_against_their_own_markets() -> None:
+    """Jackets cost meaningfully more, and the two captures must not blur."""
     tshirt = shopee_listings.reference_for_product("Áo thun cotton unisex", "Thời trang")
     jacket = shopee_listings.reference_for_product("Áo khoác dù 2 lớp", "Thời trang")
 
     assert tshirt is not None and tshirt.keyword == "áo thun unisex"
-    assert jacket is None
+    assert jacket is not None and jacket.keyword == "áo khoác dù"
+    assert jacket.median > tshirt.median
 
 
 def test_every_captured_cosmetic_finds_its_own_market() -> None:

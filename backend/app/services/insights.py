@@ -464,9 +464,17 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         basis = f"trung vị danh mục {req.category} trên {stats.sample_size} sản phẩm mô phỏng"
     else:
         shops = f" của {stats.shop_count} nhà bán" if stats.shop_count else ""
+        # The organisers' extract is fixed to July 2026; hand-captured listings
+        # carry their own date. Hard-coding the period put the wrong month on
+        # anything captured later.
+        when = (
+            f" ({stats.captured_at})" if stats.captured_at
+            else " (T7/2026)" if stats.source != "demo"
+            else ""
+        )
         basis = (
             f"trung vị {_vnd(stats.median)} từ {stats.sample_size} sản phẩm {req.category}"
-            f"{shops} quan sát được trên {_market_label(stats.countries)} (T7/2026)"
+            f"{shops} quan sát được trên {_market_label(stats.countries)}{when}"
         )
 
     # Anchored to the market rather than to what the seller charges today.
