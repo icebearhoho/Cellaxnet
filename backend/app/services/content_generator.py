@@ -140,7 +140,9 @@ async def _generate_variant(req, platform: str, llm) -> ContentVariant:  # noqa:
 
 @llm_cache(prefix="content_generator")
 async def generate(req: ContentGeneratorRequest) -> ContentGeneratorResponse:
-    if settings.DEMO_MODE or not settings.GEMINI_API_KEY and not settings.OPENAI_API_KEY:
+    if settings.DEMO_MODE or not (
+        settings.GEMINI_API_KEY or settings.OPENAI_API_KEY or settings.OLLAMA_API_KEY
+    ):
         log.info("content_generator.demo_mode")
         variants = [_fallback_variant(req, platform) for platform in req.platforms]
         return ContentGeneratorResponse(

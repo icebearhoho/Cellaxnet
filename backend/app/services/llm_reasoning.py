@@ -31,7 +31,16 @@ _LANG_RULE = (
 
 def llm_ready() -> bool:
     """True if a real (non-mock) LLM is configured."""
-    return not settings.DEMO_MODE and bool(settings.OPENAI_API_KEY or settings.GEMINI_API_KEY)
+    provider_keys = {
+        "gemini": settings.GEMINI_API_KEY,
+        "openai": settings.OPENAI_API_KEY,
+        "ollama": settings.OLLAMA_API_KEY,
+    }
+    return (
+        not settings.DEMO_MODE
+        and settings.LLM_PROVIDER != "mock"
+        and bool(provider_keys.get(settings.LLM_PROVIDER))
+    )
 
 
 def _parse_json(raw: str) -> dict:

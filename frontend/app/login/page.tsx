@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { AuthCard } from "@/components/auth/auth-card";
 import { useAuth } from "@/lib/auth-context";
 import { ApiClientError } from "@/lib/api";
+import { readActiveWorkspaceId, setActiveWorkspaceId } from "@/lib/active-workspace";
+import { listWorkspaces } from "@/lib/workspaces";
 
 function LoginForm() {
   const router = useRouter();
@@ -24,6 +26,28 @@ function LoginForm() {
     setError(null);
     try {
       const user = await login(email.trim(), password);
+      let sellerDestination = user.role === "admin" ? "/seller" : "/seller/onboarding";
+
+      // A seller should land in a usable product, not in a workspace setup
+      // dead-end. Resolve the first accessible workspace immediately after
+      // authentication so every scoped API request carries X-Workspace-ID.
+      if (user.role === "admin" || user.role === "seller") {
+        try {
+          const workspaces = await listWorkspaces();
+          const requestedId = readActiveWorkspaceId();
+          const active =
+            workspaces.find((workspace) => workspace.id === requestedId) ??
+            workspaces.find((workspace) => workspace.status === "active") ??
+            workspaces[0];
+          if (active) {
+            setActiveWorkspaceId(active.id);
+            sellerDestination = user.role === "admin" ? "/seller" : "/seller/workspace";
+          }
+        } catch {
+          // Authentication still succeeded. Onboarding can retry workspace
+          // discovery and gives the user a useful recovery path.
+        }
+      }
       // Honour ?next= when the middleware bounced them here, else send admins
       // to the portal and everyone else to the shop.
       const requestedNext = params.get("next");
@@ -33,11 +57,9 @@ function LoginForm() {
           : null;
       router.replace(
         next ||
-          (user.role === "admin"
-            ? "/seller"
-            : user.role === "seller"
-              ? "/seller/onboarding"
-              : "/shop"),
+          (user.role === "admin" || user.role === "seller"
+            ? sellerDestination
+            : "/shop"),
       );
     } catch (err) {
       setError(

@@ -76,7 +76,7 @@ export function OrdersPanel() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="muted">{orders?.length ?? 0} đơn</Badge>
+          <Badge variant="muted">{orders === null ? "Đang tải" : `${orders.length} đơn`}</Badge>
           {orders && orders.length > 0 && (
             <Badge variant="live">{fmt(revenue)}</Badge>
           )}

@@ -464,7 +464,33 @@ async def _dispatch(name: str, args: dict) -> tuple[dict, str]:
 async def agent_ask(question: str, history: list[dict] | None = None) -> CopilotAgentResponse:
     client = get_llm_client()
     if not llm_ready() or not hasattr(client, "chat_tools"):
-        # Fallback: single-step router (still a working answer).
+        # Keep the no-LLM path useful and honest. Product-similarity is one of
+        # the suggested questions in the UI, but the legacy single-step router
+        # has no product-graph skill and used to misclassify it as a briefing.
+        low = question.lower()
+        if any(key in low for key in ("tương tự", "giống", "thay thế", "similar")):
+            result, summary = await _dispatch("product_graph", {"product": question})
+            if result.get("found") is False:
+                answer = summary
+            else:
+                similar = result.get("similar") or []
+                names = ", ".join(str(name) for name in similar)
+                answer = (
+                    f"Các sản phẩm tương tự **{result['name']}**: {names}. "
+                    f"Sản phẩm gốc có xu hướng {result.get('trend', 'chưa xác định')} "
+                    f"và biến động doanh số {result.get('sales_change_pct', 0):+.1f}%."
+                )
+            return CopilotAgentResponse(
+                answer=answer,
+                tools_used=["product_graph"],
+                steps=[AgentStep(
+                    tool="product_graph", args={"product": question}, summary=summary
+                )],
+                multi_step=False,
+            )
+
+        # Other supported intents retain their deterministic single-step
+        # analysis instead of failing when no paid model is configured.
         r = await ask(question)
         return CopilotAgentResponse(
             answer=r.answer, tools_used=[r.skill_used] if r.skill_used else [],

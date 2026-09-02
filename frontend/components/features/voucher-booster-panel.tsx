@@ -44,9 +44,11 @@ export function VoucherBoosterPanel() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
+    setLoading(true);
     setError(null);
     try {
       const [recs, rows] = await Promise.all([
@@ -58,6 +60,8 @@ export function VoucherBoosterPanel() {
     } catch (cause) {
       setError(cause instanceof ApiClientError
         ? cause.message : "Không thể tải Voucher Booster. Hãy kiểm tra workspace và backend.");
+    } finally {
+      setLoading(false);
     }
   };
   useEffect(() => { void load(); }, []);
@@ -114,6 +118,27 @@ export function VoucherBoosterPanel() {
       </Card>
 
       {error && <div className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{error}</div>}
+
+      {loading && !top && (
+        <Card>
+          <CardContent className="flex items-center gap-3 p-6 text-sm text-text-muted">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Đang đọc tồn kho, biên lợi nhuận và chuẩn bị kịch bản an toàn…
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && !error && !top && (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-sm font-medium">Chưa tạo được kịch bản từ snapshot hiện tại.</p>
+            <p className="mt-1 text-xs text-text-muted">Hãy cập nhật dữ liệu vận hành rồi thử phân tích lại.</p>
+            <Button className="mt-4" variant="secondary" onClick={() => void load()}>
+              Phân tích lại
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {top && (
         <Card className="border-accent/40 shadow-[5px_6px_0_hsl(var(--accent)/.14)]">

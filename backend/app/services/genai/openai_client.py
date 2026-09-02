@@ -23,7 +23,10 @@ def _convert_messages(messages: list[LlmMessage]) -> list[dict]:
 
 class OpenAIClient(LlmClient):
     def __init__(self, *, api_key: str | None = None, model: str | None = None) -> None:
-        base_url = settings.OPENAI_BASE_URL.rstrip("/")
+        is_ollama = settings.LLM_PROVIDER == "ollama"
+        base_url = (
+            settings.AUTOPILOT_OLLAMA_URL if is_ollama else settings.OPENAI_BASE_URL
+        ).rstrip("/")
         # Ollama Cloud exposes an OpenAI-compatible endpoint, but authenticates
         # with the Ollama key.  Keeping an older OPENAI_API_KEY in .env must not
         # make requests to ollama.com fail with a misleading 401.
@@ -33,7 +36,9 @@ class OpenAIClient(LlmClient):
             else settings.OPENAI_API_KEY
         )
         self._api_key = api_key or provider_key
-        self.model = model or settings.OPENAI_MODEL
+        self.model = model or (
+            settings.AUTOPILOT_OLLAMA_MODEL if is_ollama else settings.OPENAI_MODEL
+        )
         if not self._api_key:
             raise UpstreamUnavailableError(
                 "OPENAI_API_KEY is not configured.",

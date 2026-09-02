@@ -38,9 +38,12 @@ def get_llm_client() -> LlmClient:
         from app.services.genai.gemini_client import GeminiClient
 
         return GeminiClient()
-    if provider == "openai":
-        if not settings.OPENAI_API_KEY:
-            log.warning("llm_client.openai.no_key_fallback_mock")
+    if provider in {"openai", "ollama"}:
+        provider_key = (
+            settings.OLLAMA_API_KEY if provider == "ollama" else settings.OPENAI_API_KEY
+        )
+        if not provider_key:
+            log.warning("llm_client.provider.no_key_fallback_mock", provider=provider)
             from app.services.genai.mock_client import MockLlmClient
 
             return MockLlmClient()

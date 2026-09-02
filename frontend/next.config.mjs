@@ -7,10 +7,6 @@ const publicApiOrigin = (() => {
   }
 })();
 
-const backendInternalUrl = (
-  process.env.BACKEND_INTERNAL_URL || "http://127.0.0.1:8010"
-).replace(/\/$/, "");
-
 const connectSources = ["'self'", "http://127.0.0.1:8000", "http://127.0.0.1:8010"];
 if (publicApiOrigin) connectSources.push(publicApiOrigin);
 
@@ -54,18 +50,6 @@ const nextConfig = {
   // cross-origin 307 redirect and lose their Authorization header.
   skipTrailingSlashRedirect: true,
   skipProxyUrlNormalize: true,
-  async rewrites() {
-    return [
-      {
-        source: "/api/v1/:path*/",
-        destination: `${backendInternalUrl}/api/v1/:path*/`,
-      },
-      {
-        source: "/api/v1/:path*",
-        destination: `${backendInternalUrl}/api/v1/:path*`,
-      },
-    ];
-  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

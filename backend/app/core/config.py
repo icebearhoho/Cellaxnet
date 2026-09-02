@@ -102,7 +102,7 @@ class Settings(BaseSettings):
 
     # LLM provider — Gemini is primary per the project AI_BRIEFs,
     # OpenAI is the secondary fallback.
-    LLM_PROVIDER: Literal["gemini", "openai", "mock"] = "mock"
+    LLM_PROVIDER: Literal["gemini", "openai", "ollama", "mock"] = "mock"
     GEMINI_API_KEY: str | None = None
     GEMINI_MODEL: str = "gemini-1.5-pro"
     OPENAI_API_KEY: str | None = None

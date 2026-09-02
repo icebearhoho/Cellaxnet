@@ -58,6 +58,7 @@ mobile/.expo/
 mobile/dist/
 mobile/web-build/
 qa-artifacts/
+.runtime/
 
 # --- Ad-hoc local QA output ---
 test_result.json

@@ -34,7 +34,9 @@ def _metrics(mode: Literal["traditional", "ai"]) -> dict[str, float]:
 
 async def _explain_with_llm(item: dict, signals: dict[str, str]) -> str:
     """Use the LLM to generate a Vietnamese reasoning line."""
-    if settings.DEMO_MODE or (not settings.GEMINI_API_KEY and not settings.OPENAI_API_KEY):
+    if settings.DEMO_MODE or not (
+        settings.GEMINI_API_KEY or settings.OPENAI_API_KEY or settings.OLLAMA_API_KEY
+    ):
         return item["reason"]
 
     llm = get_llm_client()

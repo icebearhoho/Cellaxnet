@@ -366,7 +366,7 @@ export function VirtualTryOnPanel() {
       <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          Máy đang chạy chế độ cân bằng bộ nhớ 384×512, 10 bước. Kết quả phụ
+          Máy đang chạy chế độ chất lượng cao 768×1024, 50 bước. Kết quả phụ
           thuộc tư thế người mẫu và ảnh trang phục; ảnh chính diện cho kết quả ổn định nhất.
         </p>
       </div>

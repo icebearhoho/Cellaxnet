@@ -15,13 +15,26 @@ export default function StorePage() {
   const [activeCategory, setActiveCategory] = useState<string>("Tất cả");
   const [products, setProducts] = useState<StoreProduct[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (q: string, category: string) => {
     setLoading(true);
-    const cat = category === "Tất cả" ? undefined : category;
-    const res = await getStoreProducts(q || undefined, cat);
-    setProducts(res ? res.products : null);
-    setLoading(false);
+    setError(null);
+    try {
+      const cat = category === "Tất cả" ? undefined : category;
+      const res = await getStoreProducts(q || undefined, cat);
+      if (!res) {
+        setProducts(null);
+        setError("Chưa kết nối được cửa hàng. Máy chủ có thể đang khởi động, hãy thử lại.");
+        return;
+      }
+      setProducts(res.products);
+    } catch {
+      setProducts(null);
+      setError("Chưa kết nối được cửa hàng. Máy chủ có thể đang khởi động, hãy thử lại.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // Load all products on mount.
@@ -102,7 +115,14 @@ export default function StorePage() {
         <div className="grid place-items-center rounded-lg border border-border bg-surface py-20 text-center">
           <PackageOpen className="h-8 w-8 text-text-dim" strokeWidth={1.5} />
           <p className="mt-3 text-lg font-bold">Cửa hàng đang nghỉ một chút</p>
-          <p className="mt-1 text-text-muted">Chưa tải được sản phẩm. Bạn thử lại sau nhé!</p>
+          <p className="mt-1 text-text-muted">{error ?? "Chưa tải được sản phẩm. Bạn thử lại sau nhé!"}</p>
+          <button
+            type="button"
+            onClick={() => load(query, activeCategory)}
+            className="mt-4 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
+          >
+            Thử tải lại
+          </button>
         </div>
       ) : products.length === 0 ? (
         <div className="grid place-items-center rounded-lg border border-border bg-surface py-20 text-center">

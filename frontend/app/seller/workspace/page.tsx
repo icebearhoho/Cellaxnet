@@ -194,8 +194,14 @@ export default function SellerWorkspacePage() {
 
   if (loading && !workspace) {
     return (
-      <main className="grid min-h-screen place-items-center bg-bg text-text-dim">
-        <Loader2 className="h-6 w-6 animate-spin" />
+      <main className="grid min-h-screen place-items-center bg-bg px-6 text-text-dim">
+        <div className="max-w-md text-center">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+          <p className="mt-4 text-sm font-medium text-text">Đang mở workspace của bạn…</p>
+          <p className="mt-1 text-xs leading-5">
+            Máy chủ miễn phí có thể cần vài giây để khởi động. Bạn không cần tải lại trang.
+          </p>
+        </div>
       </main>
     );
   }

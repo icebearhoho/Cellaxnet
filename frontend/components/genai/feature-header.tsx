@@ -6,6 +6,7 @@ export function FeatureHeader({
   title,
   subtitle,
   action,
+  backHref = "/seller",
 }: {
   id: string;
   title: string;
@@ -14,6 +15,7 @@ export function FeatureHeader({
   owner: "TL" | "DA" | "FS" | "D1" | "D2";
   demoMode?: boolean;
   action?: ReactNode;
+  backHref?: string;
 }) {
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -27,7 +29,7 @@ export function FeatureHeader({
       <div className="flex flex-col items-end gap-2">
         {action ?? (
           <Button asChild variant="ghost" size="sm">
-            <Link href="/">← Tổng quan</Link>
+            <Link href={backHref}>← Tổng quan</Link>
           </Button>
         )}
       </div>
