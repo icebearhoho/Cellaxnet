@@ -63,9 +63,9 @@ async def test_pricing_uses_the_captured_listings() -> None:
     )
 
     assert result.data_source == "shopee_seed"
-    assert result.market_label is not None
-    # Seed data ages; the label has to say when it was read.
-    assert "quan sát" in result.market_label
+    # Named, so a reader can tell an observed reference from the demo
+    # catalogue, which carries no label at all.
+    assert result.market_label == "Shopee"
 
 
 @pytest.mark.asyncio

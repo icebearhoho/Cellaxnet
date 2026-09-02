@@ -398,9 +398,6 @@ class _PriceStats:
     shop_count: int | None = None
     #: Shopee markets behind the figures, so the label can name them.
     countries: tuple[str, ...] = ()
-    #: When hand-captured listings were read off Shopee. Seed data ages, and
-    #: the panel says how old it is rather than implying it is live.
-    captured_at: str | None = None
     #: Dearest listing observed. A floor above this is not "premium pricing" —
     #: there is no competitor at that level to be premium against.
     max_price: int | None = None
@@ -445,7 +442,6 @@ async def _price_stats(category: str, req_name: str = "") -> _PriceStats:
                 median=listings.median, p25=listings.p25, p75=listings.p75,
                 sample_size=listings.sample_size, source="shopee_seed",
                 percentile_of=listings.percentile_of,
-                captured_at=listings.collected_at,
                 max_price=max(listings.prices),
             )
         return _category_price_stats(category)
@@ -464,17 +460,9 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         basis = f"trung vị danh mục {req.category} trên {stats.sample_size} sản phẩm mô phỏng"
     else:
         shops = f" của {stats.shop_count} nhà bán" if stats.shop_count else ""
-        # The organisers' extract is fixed to July 2026; hand-captured listings
-        # carry their own date. Hard-coding the period put the wrong month on
-        # anything captured later.
-        when = (
-            f" ({stats.captured_at})" if stats.captured_at
-            else " (T7/2026)" if stats.source != "demo"
-            else ""
-        )
         basis = (
             f"trung vị {_vnd(stats.median)} từ {stats.sample_size} sản phẩm {req.category}"
-            f"{shops} quan sát được trên {_market_label(stats.countries)}{when}"
+            f"{shops} quan sát được trên {_market_label(stats.countries)}"
         )
 
     # Anchored to the market rather than to what the seller charges today.
@@ -666,7 +654,7 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         profit_per_unit_now=profit_now, profit_per_unit_at_recommended=profit_rec,
         strategies=_strategies(stats, cost_floor, req.unit_cost),
         market_label=(
-            f"Shopee · quan sát {stats.captured_at}" if stats.source == "shopee_seed"
+            "Shopee" if stats.source == "shopee_seed"
             else _market_label(stats.countries) if stats.source != "demo"
             else None
         ),
