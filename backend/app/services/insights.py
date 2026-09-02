@@ -401,6 +401,10 @@ class _PriceStats:
     #: Dearest listing observed. A floor above this is not "premium pricing" —
     #: there is no competitor at that level to be premium against.
     max_price: int | None = None
+    #: Search term behind a hand-captured reference. Named in the rationale so
+    #: the seller can see the comparison was against jackets rather than
+    #: against everything filed under "Thời trang".
+    keyword: str | None = None
     #: Placement of the seller's own price, when the source can compute one.
     percentile_of: Callable[[int], int | None] | None = None
 
@@ -442,7 +446,7 @@ async def _price_stats(category: str, req_name: str = "") -> _PriceStats:
                 median=listings.median, p25=listings.p25, p75=listings.p75,
                 sample_size=listings.sample_size, source="shopee_seed",
                 percentile_of=listings.percentile_of,
-                max_price=max(listings.prices),
+                max_price=max(listings.prices), keyword=listings.keyword,
             )
         return _category_price_stats(category)
     return _PriceStats(
@@ -457,11 +461,15 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     median, p25, p75 = stats.median, stats.p25, stats.p75
 
     if stats.source == "demo":
-        basis = f"trung vị danh mục {req.category} trên {stats.sample_size} sản phẩm mô phỏng"
+        basis = f"trung vị danh mục {req.category} trên {stats.sample_size} sản phẩm"
     else:
         shops = f" của {stats.shop_count} nhà bán" if stats.shop_count else ""
+        # The keyword, not the category: 60 listings for "áo khoác dù" is a
+        # comparison against jackets, while "60 sản phẩm Thời trang" reads as
+        # though a jacket were being priced off dresses and t-shirts too.
+        scope = f'"{stats.keyword}"' if stats.keyword else req.category
         basis = (
-            f"trung vị {_vnd(stats.median)} từ {stats.sample_size} sản phẩm {req.category}"
+            f"trung vị {_vnd(stats.median)} từ {stats.sample_size} sản phẩm {scope}"
             f"{shops} quan sát được trên {_market_label(stats.countries)}"
         )
 

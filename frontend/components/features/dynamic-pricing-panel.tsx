@@ -238,6 +238,10 @@ export function DynamicPricingPanel() {
       setError("Nhập tên sản phẩm để bắt đầu định giá.");
       return;
     }
+    if (!unitCost) {
+      setError("Nhập giá vốn để biết mức giá tham khảo có đủ lợi nhuận hay không.");
+      return;
+    }
 
     setBusy(true);
     setError(null);
@@ -386,7 +390,7 @@ export function DynamicPricingPanel() {
             <div className="rounded-lg border border-border bg-surface-2/40 p-4">
               <label htmlFor={costId} className="flex items-center gap-2 text-sm font-medium text-text">
                 <Wallet className="h-4 w-4 text-warning" aria-hidden="true" />
-                <span>Giá vốn <span className="font-normal text-warning">(khuyến nghị)</span></span>
+                <span>Giá vốn <span className="text-danger" aria-hidden="true">*</span></span>
               </label>
               <div className="relative mt-2">
                 <Input
@@ -403,8 +407,7 @@ export function DynamicPricingPanel() {
                 </span>
               </div>
               <p id={`${costId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
-                Không có giá vốn, hệ thống chỉ so được với thị trường — không biết mức giá
-                tham khảo có đảm bảo lợi nhuận hay không.
+                Dùng để tính mức giá thấp nhất còn giữ được biên lợi nhuận sau phí sàn.
               </p>
 
               {cost && (
