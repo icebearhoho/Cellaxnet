@@ -13,6 +13,8 @@ from __future__ import annotations
 import json
 from typing import Any, cast
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.logging import get_logger
 from app.schemas.copilot import (
     AgentStep,
@@ -416,15 +418,22 @@ _AGENT_SYSTEM = (
 )
 
 
-async def _dispatch(name: str, args: dict) -> tuple[dict, str]:
+async def _dispatch(
+    name: str, args: dict, db: AsyncSession
+) -> tuple[dict, str]:
     """Run a tool; return (compact_result_for_model, human_summary_for_ui)."""
     if name == "product_graph":
-        rg = await graph_svc.explore(ProductGraphRequest(query=args.get("product", "")), narrate=False)
+        rg = await graph_svc.explore(
+            db, ProductGraphRequest(query=args.get("product", ""))
+        )
         if not rg.found or rg.product is None:
             return {"found": False}, f"Không tìm thấy sản phẩm '{args.get('product', '')}'"
         return (
-            {"name": rg.product.name, "sku": rg.product.sku, "trend": rg.product.trend,
-             "sales_change_pct": rg.sales.change_pct if rg.sales else None,
+            {"name": rg.product.name, "sku": rg.product.sku,
+             "sales_change_pct": rg.product.sales_change_pct,
+             "revenue_vnd": rg.product.revenue_vnd,
+             "units_sold": rg.product.units_sold,
+             "category_rank": rg.product.category_rank,
              "similar": [s.name for s in rg.similar_products[:4]]},
             f"Product graph: {rg.product.name} (SKU {rg.product.sku})",
         )
@@ -461,7 +470,9 @@ async def _dispatch(name: str, args: dict) -> tuple[dict, str]:
     return {"error": "unknown tool"}, f"unknown tool {name}"
 
 
-async def agent_ask(question: str, history: list[dict] | None = None) -> CopilotAgentResponse:
+async def agent_ask(
+    question: str, db: AsyncSession, history: list[dict] | None = None
+) -> CopilotAgentResponse:
     client = get_llm_client()
     if not llm_ready() or not hasattr(client, "chat_tools"):
         # Fallback: single-step router (still a working answer).
@@ -502,7 +513,7 @@ async def agent_ask(question: str, history: list[dict] | None = None) -> Copilot
             # category is expected). Never let that crash the request — return an
             # error to the model so it can correct itself on the next turn.
             try:
-                result, summary = await _dispatch(fn, args)
+                result, summary = await _dispatch(fn, args, db)
             except Exception as exc:  # noqa: BLE001 — tool errors are recoverable
                 result = {"error": f"invalid arguments for {fn}: {exc}"}
                 summary = f"{fn}: lỗi tham số"

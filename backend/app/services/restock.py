@@ -8,9 +8,8 @@ answers instantly and works with no network — the live refresh below is an
 upgrade on top, never a requirement (same contract as supply_news).
 
 Allocation lives here and only here. An earlier offline mirror of these
-formulas in restock_planner/ drifted the moment channels were added, so the
-folder now owns only what it is good at — fetching signals and modelling them
-(season, competition, channels) — and the money decision has a single
+formulas in restock_planner/ drifted, so the folder now owns only what it is
+good at — fetching and modelling market signals — and the money decision has a single
 implementation.
 """
 
@@ -36,7 +35,6 @@ _DATA_FILE = Path(__file__).resolve().parents[1] / "data" / "restock_market.json
 
 # Defaults mirror restock_planner/config.py — keep the two in step.
 DEFAULT_SENSITIVITY = 0.5
-MAX_SKU_BUDGET_SHARE = 0.25
 URGENCY_CAP = 3.0
 
 _SERPAPI = "https://serpapi.com/search"
@@ -64,24 +62,6 @@ def _season_profiles() -> dict[str, dict]:
         idx = {int(m): float(v) for m, v in (prof.get("seasonal_index") or {}).items()}
         out[category] = {**prof, "seasonal_index": idx}
     return out
-
-
-def _channel_config() -> dict:
-    """Channel definitions, cases and measured platform presence.
-
-    Sourced from the snapshot rather than redeclared here, so the offline layer
-    in restock_planner/channels.py stays the single place they are defined.
-    """
-    ch = _snapshot().get("channels") or {}
-    return {
-        "definitions": ch.get("definitions") or {},
-        "cases": ch.get("cases") or {},
-        "default_case": ch.get("default_case") or {},
-        "order": ch.get("order") or list((ch.get("definitions") or {}).keys()),
-        "case_order": ch.get("case_order") or list((ch.get("cases") or {}).keys()),
-        "market": ch.get("market") or {},
-        "market_fetched_at": ch.get("market_fetched_at"),
-    }
 
 
 def _brand_rows() -> list[dict]:
@@ -272,61 +252,20 @@ def _reason(c: dict, qty: int, partial: bool) -> str:
     return f"{head} — " + ", ".join(bits)
 
 
-def _amplify(value: float, strength: float) -> float:
-    """Stretch a multiplier's distance from 1.0. Mirrors restock_planner/channels.py.
+def _allocate(products, budget, month, season, competition, horizon) -> dict:
+    """Allocate the budget once per SKU from measured shop demand.
 
-    Amplifying the deviation, not the value, pins 1.0 ("ordinary month",
-    "nobody on sale") at 1.0 for every case, so cases only diverge where there
-    is a signal to react to.
+    The current planner UI asks a store-level question: what should the seller
+    buy for the next ``horizon`` days? Older code silently split every SKU over
+    four channel scenarios even after those controls were removed from the UI.
+    That multiplied the same demand several times and made quantities depend on
+    assumptions the seller never chose.
+
+    A SKU now appears once. Its baseline is fulfilled units/day from the shop
+    order history, adjusted only by Google Trends seasonality and measured
+    Google Shopping competition. Channel allocation can be reintroduced when
+    real per-SKU marketplace orders exist; it must not be guessed here.
     """
-    return max(0.05, 1.0 + (value - 1.0) * strength)
-
-
-def _measured_volumes(rates: dict[str, float]) -> dict[str, float]:
-    """Turn measured orders-per-day into the same volume factor a case supplies.
-
-    A case's `volume` says "this channel sells N times the baseline". Once real
-    order rates exist, that ratio can be measured instead of declared: each
-    channel is scaled against the mean rate of the channels we actually have
-    data for. Shopee at 5.7 orders/day beside Lazada at 0.8 becomes 1.77x and
-    0.23x — the same shape the planner already consumes, but earned rather
-    than typed in.
-    """
-    live = {k: v for k, v in (rates or {}).items() if v > 0}
-    if not live:
-        return {}
-    mean = sum(live.values()) / len(live)
-    if mean <= 0:
-        return {}
-    return {k: round(v / mean, 4) for k, v in live.items()}
-
-
-def _allocate(products, budget, month, season, competition, horizon,
-              channel_cases=None, channel_fees=None, measured=None) -> dict:
-    """Allocate one shared budget across every (channel, SKU) pair.
-
-    Stock sent to a marketplace warehouse is committed to that channel, so the
-    real decision is not just "which SKU" but "which SKU, on which channel" —
-    a SKU that moves on Shopee can sit dead on a channel with no traffic. The
-    seller has one pot of money, so all pairs compete in a single ranking.
-
-    Existing stock is central, so it is credited to channels in proportion to
-    the demand each one generates; a channel expected to sell nothing is
-    credited nothing and therefore asks for nothing.
-    """
-    chan_cfg = _channel_config()
-    definitions = chan_cfg["definitions"]
-    cases = chan_cfg["cases"]
-    active_cases = dict(chan_cfg["default_case"])
-    for cid, case_id in (channel_cases or {}).items():
-        if cid in definitions and case_id in cases:
-            active_cases[cid] = case_id
-    fees = {cid: float(definitions[cid].get("commission_pct", 0.0)) for cid in definitions}
-    for cid, pct in (channel_fees or {}).items():
-        if cid in fees and 0.0 <= float(pct) <= 50.0:
-            fees[cid] = float(pct)
-
-    order = [c for c in chan_cfg["order"] if c in definitions]
     candidates = []
 
     for p in products:
@@ -342,101 +281,55 @@ def _allocate(products, budget, month, season, competition, horizon,
         season_idx = float((prof.get("seasonal_index") or {}).get(month, 1.0))
         comp_mult = float((competition.get(category) or {}).get("demand_multiplier", 1.0))
         baseline = daily * horizon
+        demand_factor = season_idx * comp_mult
+        expected_demand = math.ceil(baseline * demand_factor)
+        need = max(0, expected_demand - stock)
+        if need <= 0:
+            continue
 
-        # Demand this SKU generates on each channel, under that channel's case.
-        per_channel: dict[str, dict] = {}
-        for cid in order:
-            case = cases.get(active_cases.get(cid, "hot")) or {}
-            season_adj = _amplify(season_idx, float(case.get("season", 1.0)))
-            trend_adj = _amplify(comp_mult, float(case.get("trend", 1.0)))
-            # A synced channel's real order rate outranks the hand-picked case:
-            # the case only ever existed because the rate was unknown.
-            volume = float((measured or {}).get(cid, case.get("volume", 0.0)))
-            factor = volume * season_adj * trend_adj
-            per_channel[cid] = {
-                "factor": factor, "season_adj": season_adj, "trend_adj": trend_adj,
-                "volume": volume,
-                "demand": baseline * factor,
-            }
+        # There is no defensible platform fee until a SKU is assigned to a real
+        # channel. Keep this as gross contribution instead of inventing a split
+        # and pretending that the result is net profit.
+        margin = price - cost
+        if margin <= 0:
+            continue
+        roi = margin / cost
+        urgency = _urgency(stock, daily, horizon)
 
-        total_demand = sum(v["demand"] for v in per_channel.values())
-        for cid in order:
-            v = per_channel[cid]
-            if v["demand"] <= 0:
-                continue  # a dead channel asks for nothing
-            # Central stock credited in proportion to the demand it serves.
-            stock_share = stock * (v["demand"] / total_demand) if total_demand else 0.0
-            need = max(0, math.ceil(v["demand"] - stock_share))
-            if need <= 0:
-                continue
-
-            fee_pct = fees.get(cid, 0.0)
-            net_price = price * (1.0 - fee_pct / 100.0)
-            margin = net_price - cost
-            if margin <= 0:
-                continue  # the platform's cut wipes out the margin
-            roi = margin / cost
-            daily_ch = daily * v["factor"]
-            urgency = _urgency(int(round(stock_share)), daily_ch, horizon)
-
-            candidates.append({
-                "sku": p.get("sku", ""), "name": p.get("name", ""),
-                "brand": p.get("brand", ""), "category": category,
-                "channel": cid, "channel_name": definitions[cid]["name"],
-                "price_vnd": int(price), "cost_vnd": int(cost),
-                "stock": int(round(stock_share)),
-                "daily_sales": round(daily_ch, 2),
-                "days_of_stock_left": round(stock_share / daily_ch, 1) if daily_ch else 0.0,
-                "season_index": round(season_idx, 3),
-                "competition_multiplier": round(comp_mult, 3),
-                "baseline_demand": int(round(baseline)),
-                "expected_demand": int(round(v["demand"])),
-                "need_qty": need,
-                "unit_margin_vnd": int(round(margin)),
-                "commission_pct": fee_pct,
-                "roi": round(roi, 4), "urgency": round(urgency, 2),
-                # The channel's demand factor already folds in season and
-                # trend, amplified by that channel's case — so ranking on it
-                # sends capital to where the goods will actually move.
-                "priority": roi * urgency * v["factor"],
-                "_key": f"{cid}|{p.get('sku', '')}",
-            })
+        candidates.append({
+            "sku": p.get("sku", ""), "name": p.get("name", ""),
+            "brand": p.get("brand", ""), "category": category,
+            "channel": "own", "channel_name": "Toàn cửa hàng",
+            "price_vnd": int(price), "cost_vnd": int(cost),
+            "stock": stock,
+            "daily_sales": round(daily, 4),
+            "days_of_stock_left": round(stock / daily, 1) if daily else 0.0,
+            "season_index": round(season_idx, 3),
+            "competition_multiplier": round(comp_mult, 3),
+            "baseline_demand": int(round(baseline)),
+            "expected_demand": expected_demand,
+            "need_qty": need,
+            "unit_margin_vnd": int(round(margin)),
+            "commission_pct": 0.0,
+            "roi": round(roi, 4), "urgency": round(urgency, 2),
+            "priority": roi * urgency * demand_factor,
+            "_key": p.get("sku", ""),
+        })
 
     candidates.sort(key=lambda c: -c["priority"])
 
     remaining = float(budget)
     ordered: dict[str, int] = {}
 
-    # Pass 1 — capped so the budget spreads across the portfolio; uncapped
-    # ROI-greedy would sink everything into one line.
-    #
-    # The cap is "no single SKU takes more than MAX_SKU_BUDGET_SHARE", and a
-    # SKU is now split across channels, so the per-line cap divides by the
-    # number of channels actually asking for stock. Without the division, four
-    # channels x 25% fills the budget in four lines and the "cap" stops
-    # diversifying anything — channels ranked fifth onward get exactly zero
-    # even when their demand is identical.
-    live_channels = len({c["channel"] for c in candidates}) or 1
-    cap_vnd = budget * MAX_SKU_BUDGET_SHARE / live_channels
+    # Fund the independently ranked needs in order. There is deliberately no
+    # hidden "x% per SKU" cap: such a cap is a purchasing policy, not measured
+    # store or market data, and previously made the answer change with an
+    # unexplained constant.
     for c in candidates:
-        qty = min(c["need_qty"], int(cap_vnd // c["cost_vnd"]),
-                  int(remaining // c["cost_vnd"]))
+        qty = min(c["need_qty"], int(remaining // c["cost_vnd"]))
         if qty > 0:
             ordered[c["_key"]] = qty
             remaining -= qty * c["cost_vnd"]
-
-    # Pass 2 — spend the remainder on unmet need, same priority order.
-    for c in candidates:
-        if remaining < c["cost_vnd"]:
-            continue
-        already = ordered.get(c["_key"], 0)
-        gap = c["need_qty"] - already
-        if gap <= 0:
-            continue
-        extra = min(gap, int(remaining // c["cost_vnd"]))
-        if extra > 0:
-            ordered[c["_key"]] = already + extra
-            remaining -= extra * c["cost_vnd"]
 
     items, skipped = [], []
     for c in candidates:
@@ -445,7 +338,7 @@ def _allocate(products, budget, month, season, competition, horizon,
             skipped.append({
                 "sku": c["sku"], "name": c["name"], "category": c["category"],
                 "need_qty": c["need_qty"], "cost_vnd": c["cost_vnd"],
-                "reason": f"Hết vốn — không đủ tiền nhập cho {c['channel_name']}",
+                "reason": "Hết vốn — chưa đủ tiền nhập mã này",
             })
             continue
         partial = qty < c["need_qty"]
@@ -462,9 +355,19 @@ def _allocate(products, budget, month, season, competition, horizon,
     spent = sum(i["spend_vnd"] for i in items)
     revenue = sum(i["expected_revenue_vnd"] for i in items)
     profit = sum(i["expected_profit_vnd"] for i in items)
+    unfunded = sum(
+        (c["need_qty"] - ordered.get(c["_key"], 0)) * c["cost_vnd"]
+        for c in candidates
+    )
+    recommended_budget = spent + unfunded
+    budget_status = "insufficient" if unfunded > 0 else (
+        "surplus" if remaining > 0 else "fully_funded"
+    )
     return {
         "items": items, "skipped": skipped,
         "spent_vnd": int(spent), "remaining_vnd": int(max(0, remaining)),
+        "recommended_budget_vnd": int(recommended_budget),
+        "unfunded_vnd": int(unfunded), "budget_status": budget_status,
         "budget_used_pct": round(spent / budget * 100, 1) if budget else 0.0,
         "item_count": len(items), "skipped_count": len(skipped),
         "total_units": sum(i["order_qty"] for i in items),
@@ -472,113 +375,6 @@ def _allocate(products, budget, month, season, competition, horizon,
         "expected_margin_pct": round(profit / revenue * 100, 1) if revenue else 0.0,
         "roi_pct": round(profit / spent * 100, 1) if spent else 0.0,
     }
-
-
-def _channel_results(plan: dict, month: int, season: dict, competition: dict,
-                     channel_cases=None, channel_fees=None, measured=None) -> list[dict]:
-    """Roll the allocation up per channel, and say what to do about each."""
-    cfg = _channel_config()
-    definitions, cases = cfg["definitions"], cfg["cases"]
-    active = dict(cfg["default_case"])
-    for cid, case_id in (channel_cases or {}).items():
-        if cid in definitions and case_id in cases:
-            active[cid] = case_id
-    fees = {cid: float(definitions[cid].get("commission_pct", 0.0)) for cid in definitions}
-    for cid, pct in (channel_fees or {}).items():
-        if cid in fees and 0.0 <= float(pct) <= 50.0:
-            fees[cid] = float(pct)
-
-    by_channel: dict[str, list[dict]] = {}
-    for i in plan["items"]:
-        by_channel.setdefault(i["channel"], []).append(i)
-    spent_total = plan["spent_vnd"] or 1
-
-    # Averaged across categories so one channel figure summarises the month.
-    season_avg = (
-        sum((p.get("seasonal_index") or {}).get(month, 1.0) for p in season.values())
-        / len(season) if season else 1.0
-    )
-    comp_avg = (
-        sum(float(c.get("demand_multiplier", 1.0)) for c in competition.values())
-        / len(competition) if competition else 1.0
-    )
-
-    rows = []
-    for cid in cfg["order"]:
-        if cid not in definitions:
-            continue
-        d = definitions[cid]
-        case_id = active.get(cid, "hot")
-        case = cases.get(case_id) or {}
-        season_adj = _amplify(season_avg, float(case.get("season", 1.0)))
-        trend_adj = _amplify(comp_avg, float(case.get("trend", 1.0)))
-        from_orders = cid in (measured or {})
-        volume = float((measured or {}).get(cid, case.get("volume", 0.0)))
-        factor = volume * season_adj * trend_adj
-
-        mine = by_channel.get(cid, [])
-        spend = sum(i["spend_vnd"] for i in mine)
-        revenue = sum(i["expected_revenue_vnd"] for i in mine)
-        profit = sum(i["expected_profit_vnd"] for i in mine)
-        commission = sum(i.get("commission_cost_vnd", 0) for i in mine)
-        demand = sum(i["expected_demand"] for i in mine)
-        qty = sum(i["order_qty"] for i in mine)
-
-        # Measured presence — `listings: 0` everywhere means the platform is
-        # not visible to Google Shopping at all, which is a limit of the
-        # measurement, not evidence the platform is empty.
-        measured_rows = []
-        for category, row in (cfg["market"] or {}).items():
-            m = (row.get("channels") or {}).get(cid)
-            if m:
-                measured_rows.append({
-                    "category": category, "listings": m.get("listings", 0),
-                    "share_pct": m.get("share_pct", 0.0),
-                    "median_price_vnd": m.get("median_price_vnd", 0),
-                    "on_sale": m.get("on_sale", 0),
-                    "avg_discount": m.get("avg_discount", 0.0),
-                })
-        measurable = bool(d.get("source_match")) and any(
-            r["listings"] for r in measured_rows
-        )
-
-        if volume <= 0:
-            verdict = ("Không nhập — kênh chưa ra đơn. Nhập thêm chỉ đọng vốn; "
-                       "cần sửa kênh (giá, ảnh, quảng cáo) trước khi rót hàng.")
-        elif not mine:
-            verdict = "Không được chia vốn — kênh khác cho vòng quay vốn tốt hơn ở tháng này."
-        elif factor >= 1.5:
-            verdict = f"Ưu tiên rót hàng — cầu gấp {factor:.1f} lần mức nền."
-        elif factor <= 0.6:
-            verdict = f"Rót dè chừng — cầu chỉ bằng {factor:.0%} mức nền."
-        else:
-            verdict = "Rót ở mức bình thường."
-
-        rows.append({
-            "channel": cid, "name": d.get("name", cid),
-            "kind": d.get("kind", "marketplace"),
-            "case": case_id, "case_label": case.get("label", case_id),
-            "case_desc": case.get("desc", ""),
-            "commission_pct": fees.get(cid, 0.0),
-            "volume_factor": round(volume, 3),
-            "season_adj": round(season_adj, 3),
-            "trend_adj": round(trend_adj, 3),
-            "demand_factor": round(factor, 3),
-            "expected_demand": int(demand),
-            "order_qty": int(qty), "spend_vnd": int(spend),
-            "expected_revenue_vnd": int(revenue),
-            "expected_profit_vnd": int(profit),
-            "commission_cost_vnd": int(commission),
-            "budget_share_pct": round(spend / spent_total * 100, 1),
-            "sku_count": len(mine),
-            "verdict": verdict,
-            "measured": measured_rows,
-            "measurable": measurable,
-            # True once the channel's own order history drives the number, so
-            # the UI can stop calling it an assumption.
-            "volume_from_orders": from_orders,
-        })
-    return rows
 
 
 def _outlook(month: int, season: dict, competition: dict) -> list[dict]:
@@ -617,19 +413,23 @@ def _outlook(month: int, season: dict, competition: dict) -> list[dict]:
 
 def _summary(plan: dict, month: int, outlook: list[dict], scenario: bool) -> str:
     if not plan["items"]:
-        return (f"Tháng {month}: vốn không đủ nhập mặt hàng nào — "
-                f"{plan['skipped_count']} SP đang cần hàng.")
+        if plan["unfunded_vnd"]:
+            return ("Ngân sách hiện tại chưa đủ để nhập mã ưu tiên đầu tiên. "
+                    f"Còn thiếu {plan['unfunded_vnd']:,}₫ để đáp ứng toàn bộ nhu cầu.")
+        return "Tồn kho hiện tại đã đủ cho thời gian đã chọn; chưa cần nhập thêm."
     top = outlook[0] if outlook else None
-    head = (f"Tháng {month}: nhập {plan['total_units']} sản phẩm thuộc "
-            f"{plan['item_count']} mã, dùng {plan['budget_used_pct']:.0f}% vốn, "
-            f"lãi dự kiến {plan['expected_profit_vnd']:,}₫ (ROI {plan['roi_pct']:.0f}%).")
+    if plan["budget_status"] == "surplus":
+        head = (f"Kế hoạch cần {plan['spent_vnd']:,}₫ để đủ hàng trong thời gian đã chọn; "
+                f"còn lại {plan['remaining_vnd']:,}₫, không cần nhập dư chỉ để dùng hết vốn. "
+                f"Nên nhập {plan['total_units']} sản phẩm thuộc {plan['item_count']} mã.")
+    else:
+        head = (f"Với ngân sách này, nên nhập {plan['total_units']} sản phẩm thuộc "
+                f"{plan['item_count']} mã.")
     if top:
-        head += (f" Ngành đáng đổ vốn nhất: {top['category']} "
-                 f"(hệ số {top['combined_factor']:.2f} — {top['advice'].lower()}).")
-    if plan["skipped_count"]:
-        head += f" {plan['skipped_count']} dòng phải bỏ qua vì hết vốn."
-    if scenario:
-        head += " [Kịch bản giả định, không phải số đo thật]"
+        head += f" Nhóm nên ưu tiên: {top['category']} — {top['advice'].lower()}."
+    if plan["unfunded_vnd"]:
+        head += (f" Còn thiếu {plan['unfunded_vnd']:,}₫ để đáp ứng toàn bộ "
+                 "nhu cầu được dự báo.")
     return head
 
 
@@ -637,9 +437,7 @@ def _summary(plan: dict, month: int, outlook: list[dict], scenario: bool) -> str
 # entry point
 # --------------------------------------------------------------------------- #
 
-async def build_plan(
-    req: RestockPlanRequest, synced_rates: dict[str, float] | None = None
-) -> RestockPlanResponse:
+async def build_plan(req: RestockPlanRequest) -> RestockPlanResponse:
     snap = _snapshot()
     meta = snap.get("meta", {})
     season = _season_profiles()
@@ -667,18 +465,27 @@ async def build_plan(
         # keeps the real spread between categories (see _scenario).
         competition = _scenario(competition, req.scenario_pressure or 0.0, sensitivity)
 
-    products = commerce_store.all_products()
+    # Recompute velocity from exact fulfilled order lines instead of trusting
+    # ``product['daily_sales']``. The shared demo catalog floors that field at
+    # 0.1 for visual features, which would otherwise create purchasing demand
+    # for products with zero completed sales.
+    products = []
+    for raw in commerce_store.all_products():
+        stats = commerce_store.product_sales_stats(raw["id"], days=45)
+        products.append({
+            **raw,
+            "daily_sales": stats["units_sold"] / stats["days"],
+        })
     if req.categories:
         products = [p for p in products if p.get("category") in req.categories]
 
-    measured_volumes = _measured_volumes(synced_rates or {})
     plan = _allocate(products, req.budget_vnd, month, season, competition,
-                     req.horizon_days, req.channel_cases, req.channel_fees,
-                     measured_volumes)
+                     req.horizon_days)
     outlook = _outlook(month, season, competition)
-    channel_rows = _channel_results(plan, month, season, competition,
-                                    req.channel_cases, req.channel_fees,
-                                    measured_volumes)
+    # The recommendation is store-wide. Returning the old scenario rows here
+    # would expose guessed channel figures even though quantities no longer use
+    # them.
+    channel_rows: list[dict] = []
 
     # Built as a plain dict and validated in one go: the allocation helpers all
     # deal in dicts, and Pydantic coerces each nested one into its model here.
@@ -689,14 +496,15 @@ async def build_plan(
         "horizon_days": req.horizon_days,
         "budget_vnd": int(req.budget_vnd),
         **{k: plan[k] for k in (
-            "spent_vnd", "remaining_vnd", "budget_used_pct", "item_count",
+            "spent_vnd", "remaining_vnd", "recommended_budget_vnd",
+            "unfunded_vnd", "budget_status", "budget_used_pct", "item_count",
             "skipped_count", "total_units", "expected_revenue_vnd",
             "expected_profit_vnd", "expected_margin_pct", "roi_pct",
             "items", "skipped",
         )},
         "outlook": outlook,
         "channels": channel_rows,
-        "channel_market_fetched_at": _channel_config().get("market_fetched_at"),
+        "channel_market_fetched_at": None,
         "competition": list(competition.values()),
         "brands": sorted(brands, key=lambda b: -b["pressure"]),
         "summary": _summary(plan, month, outlook, scenario),
@@ -708,5 +516,9 @@ async def build_plan(
         "live_refresh": live,
         "scenario": scenario,
         "competition_sensitivity": sensitivity,
+        "shop_data_source": "Dữ liệu shop demo: đơn hợp lệ, tồn kho, giá vốn và giá bán",
+        "shop_data_as_of": commerce_store.shop_profile().get("data_as_of"),
+        "sales_history_days": 45,
+        "profit_basis": "gross_before_platform_and_operating_costs",
     }
     return RestockPlanResponse.model_validate(payload)

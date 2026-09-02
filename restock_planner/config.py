@@ -67,12 +67,6 @@ COMPETITION_SENSITIVITY = 0.5
 SEASON_INDEX_MIN = 0.6
 SEASON_INDEX_MAX = 1.6
 
-# Diversification cap: no single SKU may absorb more than this share of the
-# budget on the first allocation pass. Pure ROI-greedy would sink the whole
-# budget into the one highest-margin item — mathematically optimal, terrible
-# inventory advice. Leftover money is topped up in a second, uncapped pass.
-MAX_SKU_BUDGET_SHARE = 0.25
-
 # SerpApi
 SERPAPI_ENDPOINT = "https://serpapi.com/search"
 ENV_FILE = FEATURE_DIR / ".env"

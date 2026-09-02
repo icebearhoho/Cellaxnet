@@ -1,68 +1,106 @@
-"""Đề 1 — Product Knowledge as an entity graph.
+"""Schemas for the seller's product-performance relationship view.
 
-Given a product (by name or SKU), resolves its relationships across the commerce
-graph — similar SKUs, same-brand siblings, category peers, promotions — and a
-grounded causal explanation of its sales movement. Answers the brief's example
-questions ("sản phẩm nào tương tự SKU này?", "vì sao doanh số đổi?", "promotion
-nào hiệu quả?") from the shop's own data.
+Every numeric field in these responses is derived from marketplace rows stored
+by the sync pipeline.  The API deliberately carries its source and calculation
+window beside the values so the frontend never has to present an unexplained
+number.
 """
 
 from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel
-
-from app.schemas.knowledge import Driver
+from pydantic import BaseModel, Field
 
 
 class ProductGraphRequest(BaseModel):
-    query: str  # product name or SKU
-    question: str | None = None  # optional natural-language relationship question
+    """Legacy lookup request kept for API compatibility."""
+
+    query: str = Field(min_length=1)
+    shop_connection_id: int | None = None
+    days: int = Field(default=30, ge=7, le=365)
 
 
-class ProductEntity(BaseModel):
+class ShopSourceOption(BaseModel):
+    id: int
+    platform: str
+    shop_name: str
+    status: str
+    last_synced_at: str | None
+    product_records: int
+    order_records: int
+
+
+class GraphDataSource(BaseModel):
+    kind: Literal["marketplace_sync", "demo_shop"]
+    shop_connection_id: int | None
+    platform: str
+    shop_name: str
+    status: str
+    last_synced_at: str | None
+    period_start: str
+    period_end: str
+    period_days: int
+    product_records: int
+    order_records: int
+    order_item_records: int
+    demo_data_used: bool
+    revenue_definition: str
+
+
+class ProductPerformance(BaseModel):
     id: str
-    sku: str
+    external_product_id: str
+    sku: str | None
     name: str
-    brand: str
+    brand: str | None
     category: str
-    price_vnd: int
-    cost_vnd: int
-    trend: str
-    stock_status: str
+    price_vnd: int | None
+    image_url: str | None
+    revenue_vnd: int
+    units_sold: int
+    orders_count: int
+    revenue_rank: int
+    category_rank: int
+    category_revenue_share_pct: float
+    sales_change_pct: float | None
+    highlight_reason: str
 
 
-class RelatedProduct(BaseModel):
-    id: str
-    sku: str
-    name: str
-    brand: str
-    price_vnd: int
-    relation: str  # why it's related
+class SimilarProduct(ProductPerformance):
+    relation: str
+    comparison: str
 
 
-class SalesBlock(BaseModel):
-    sales_prev: int
-    sales_curr: int
-    change_pct: float
-    direction: Literal["up", "down", "flat"]
-    drivers: list[Driver]
+class CategoryPerformance(BaseModel):
+    category: str
+    rank: int
+    revenue_vnd: int
+    units_sold: int
+    orders_count: int
+    revenue_share_pct: float
+    growth_pct: float | None
+    product_count: int
+    top_product_id: str
+    top_product_name: str
+    top_product_image_url: str | None
+    top_product_names: list[str]
 
 
-class PromotionInfo(BaseModel):
-    name: str
-    discount_pct: int
-    lift_pct: int
-    effectiveness: str
+class ProductGraphOverview(BaseModel):
+    data_available: bool
+    source: GraphDataSource | None
+    available_shops: list[ShopSourceOption]
+    categories: list[CategoryPerformance]
+    top_products: list[ProductPerformance]
+    summary: str
+    missing_reason: str | None = None
 
 
 class ProductGraphResponse(BaseModel):
     found: bool
-    product: ProductEntity | None
-    sales: SalesBlock | None
-    similar_products: list[RelatedProduct]
-    brand_siblings: list[str]
-    category_peers: int
-    promotions: list[PromotionInfo]
+    data_available: bool
+    source: GraphDataSource | None
+    product: ProductPerformance | None
+    similar_products: list[SimilarProduct]
     summary: str

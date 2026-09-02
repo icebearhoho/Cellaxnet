@@ -425,21 +425,105 @@ export async function askAgent(
 }
 
 // --- Product Graph — quan hệ SKU/brand + sản phẩm tương tự (Đề 1) ----------
-export type PGDriver = { factor: string; direction: "up" | "down"; impact: "low" | "medium" | "high" };
-export type PGSimilar = { id: string; sku: string; name: string; brand: string; price_vnd: number; relation: string };
+export type GraphSource = {
+  kind: "marketplace_sync" | "demo_shop";
+  shop_connection_id: number | null;
+  platform: string;
+  shop_name: string;
+  status: string;
+  last_synced_at: string | null;
+  period_start: string;
+  period_end: string;
+  period_days: number;
+  product_records: number;
+  order_records: number;
+  order_item_records: number;
+  demo_data_used: boolean;
+  revenue_definition: string;
+};
+
+export type GraphShopOption = {
+  id: number;
+  platform: string;
+  shop_name: string;
+  status: string;
+  last_synced_at: string | null;
+  product_records: number;
+  order_records: number;
+};
+
+export type ProductPerformance = {
+  id: string;
+  external_product_id: string;
+  sku: string | null;
+  name: string;
+  brand: string | null;
+  category: string;
+  price_vnd: number | null;
+  image_url: string | null;
+  revenue_vnd: number;
+  units_sold: number;
+  orders_count: number;
+  revenue_rank: number;
+  category_rank: number;
+  category_revenue_share_pct: number;
+  sales_change_pct: number | null;
+  highlight_reason: string;
+};
+
 export type ProductGraphResult = {
   found: boolean;
-  product: { id: string; sku: string; name: string; brand: string; category: string; price_vnd: number; cost_vnd: number; trend: string; stock_status: string } | null;
-  sales: { sales_prev: number; sales_curr: number; change_pct: number; direction: "up" | "down" | "flat"; drivers: PGDriver[] } | null;
-  similar_products: PGSimilar[];
-  brand_siblings: string[];
-  category_peers: number;
-  promotions: { name: string; discount_pct: number; lift_pct: number; effectiveness: string }[];
+  data_available: boolean;
+  source: GraphSource | null;
+  product: ProductPerformance | null;
+  similar_products: (ProductPerformance & {
+    relation: string;
+    comparison: string;
+  })[];
   summary: string;
 };
 
-export async function exploreProductGraph(query: string): Promise<ProductGraphResult | null> {
-  return post<ProductGraphResult>("/product-knowledge/graph", { query });
+export type ProductGraphOverview = {
+  data_available: boolean;
+  source: GraphSource | null;
+  available_shops: GraphShopOption[];
+  categories: {
+    category: string;
+    rank: number;
+    revenue_vnd: number;
+    units_sold: number;
+    orders_count: number;
+    revenue_share_pct: number;
+    growth_pct: number | null;
+    product_count: number;
+    top_product_id: string;
+    top_product_name: string;
+    top_product_image_url: string | null;
+    top_product_names: string[];
+  }[];
+  top_products: ProductPerformance[];
+  summary: string;
+  missing_reason: string | null;
+};
+
+function graphParams(shopId?: number, days = 30) {
+  const params = new URLSearchParams({ days: String(days) });
+  if (shopId) params.set("shop_connection_id", String(shopId));
+  return params.toString();
+}
+
+export async function getProductGraphOverview(shopId?: number, days = 30): Promise<ProductGraphOverview | null> {
+  return get<ProductGraphOverview>(`/product-knowledge/graph/overview?${graphParams(shopId, days)}`);
+}
+
+export async function getProductGraphDetail(
+  productId: string,
+  shopId?: number,
+  days = 30,
+): Promise<ProductGraphResult | null> {
+  return get<ProductGraphResult>(
+    `/product-knowledge/graph/products/${encodeURIComponent(productId)}?${graphParams(shopId, days)}`,
+  );
 }
 
 // --- Daily Briefing — hôm nay cần làm gì -----------------------------------
@@ -562,6 +646,8 @@ export type RestockBrand = {
 export type RestockPlan = {
   month: number; horizon_days: number;
   budget_vnd: number; spent_vnd: number; remaining_vnd: number; budget_used_pct: number;
+  recommended_budget_vnd: number; unfunded_vnd: number;
+  budget_status: "insufficient" | "fully_funded" | "surplus";
   item_count: number; skipped_count: number; total_units: number;
   expected_revenue_vnd: number; expected_profit_vnd: number;
   expected_margin_pct: number; roi_pct: number;
@@ -573,6 +659,9 @@ export type RestockPlan = {
   weeks_of_history: number; trends_fetched_at: string | null;
   brand_sale_fetched_at: string | null; live_refresh: boolean;
   scenario: boolean; competition_sensitivity: number;
+  shop_data_source: string; shop_data_as_of: string | null;
+  sales_history_days: number;
+  profit_basis: "gross_before_platform_and_operating_costs";
 };
 
 /**
@@ -601,8 +690,6 @@ export async function planRestock(input: {
   categories?: Category[];
   scenario_pressure?: number | null;
   refresh_live?: boolean;
-  channel_cases?: Partial<Record<ChannelId, CaseId>>;
-  channel_fees?: Partial<Record<ChannelId, number>>;
 }): Promise<RestockResult> {
   if (DEMO) {
     return {
