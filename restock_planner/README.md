@@ -7,12 +7,12 @@ Ra quyết định **số lượng nhập hàng** cho seller nhỏ từ ba tín 
 | Tham số | Nguồn | Là dữ liệu gì |
 |---|---|---|
 | **SEASON** | Google Trends, 5 năm lịch sử tuần (SerpApi) | Thật — 262 điểm/keyword, 2021→nay |
-| **TREND** | Google Shopping, giá & giá gạch của big brand (SerpApi) | Thật — đo sale đang chạy ngay lúc gọi |
-| **MONEY** | Vốn + giá vốn/giá bán của chính shop | Thật — input của seller |
+| **TREND** | Google Shopping, giá & giá gạch của big brand (SerpApi) | Thật — bản đo có thời điểm, backend đọc từ cache |
+| **SHOP** | Đơn hợp lệ 45 ngày + tồn kho của shop | Dữ liệu vận hành — không tự gán tốc độ bán |
+| **MONEY** | Vốn + giá vốn/giá bán của chính shop | Dữ liệu shop + input của seller |
 
-Kế hoạch chia vốn theo **4 kênh bán** (Shopee / Lazada / TikTok Shop / Cửa hàng
-riêng), có trừ phí sàn. Xem [CHANNEL_LINK.md](CHANNEL_LINK.md) cho phần nối
-tài khoản bán hàng thật.
+Kế hoạch hiện là kế hoạch nhập **toàn cửa hàng**, mỗi SKU chỉ xuất hiện một lần.
+Không tự chia sang Shopee/Lazada/TikTok khi chưa có lịch sử đơn theo SKU đủ tin cậy.
 
 Không có con số thị trường nào được bịa. Mùa vụ học từ lịch sử thật; mức sale của
 big brand đo từ chênh lệch giá niêm yết ↔ giá bán đang hiển thị.
@@ -27,42 +27,22 @@ big brand đo từ chênh lệch giá niêm yết ↔ giá bán đang hiển th�
 
 Đây là feature duy nhất có **ràng buộc vốn** và **mùa vụ nhiều năm**.
 
-## 4 kênh bán
+## Dữ liệu phía shop
 
-Cùng một mã hàng chạy khác nhau trên từng nơi bán, nên kế hoạch chia vốn theo
-**cặp (kênh × mã)** — hàng gửi vào kho sàn nào là gắn với sàn đó.
-
-| Kênh | Phí mặc định | Đo được thị phần? |
-|---|---|---|
-| Shopee | 5% | ✅ Google Shopping trả về `source` = Shopee |
-| Lazada | 4% | ✅ |
-| TikTok Shop | 5% | ❌ **không đẩy hàng lên Google Shopping** |
-| Cửa hàng riêng | 2% (phí cổng thanh toán) | ❌ đúng bản chất — là shop của mình |
-
-**4 case** — hồ sơ bán hàng seller tự khai cho từng kênh:
-
-| Case | Ý nghĩa | Hệ số cầu (mùa cao → mùa thấp) |
-|---|---|---|
-| Bán chạy, nhiều đơn | Kênh chủ lực, ít bị đối thủ hút khách | 2.48 → 1.39 |
-| Bán ít, ít đơn | Đơn nhỏ giọt, dễ mất khách khi đối thủ sale | 0.38 → 0.24 |
-| Theo mùa & trend | Bùng nổ đúng mùa rồi nguội hẳn | 1.42 → 0.33 |
-| Không bán được | Chưa ra đơn — nhập thêm chỉ đọng vốn | 0 → 0 |
-
-> ⚠️ **Số đơn của shop bạn trên mỗi kênh là do bạn khai, không phải đo được.**
-> Shopee/Lazada/TikTok Shop đều khoá dữ liệu đơn hàng sau đăng nhập seller +
-> app được duyệt. Cái đo được thật là **thị phần và giá trên từng sàn** qua
-> trường `source` của Google Shopping.
+- Tốc độ bán của mỗi SKU = số lượng trong đơn hợp lệ 45 ngày gần nhất / 45.
+- Đơn `pending`, `cancelled`, `returned` không tạo nhu cầu nhập.
+- SKU không có đơn hợp lệ có tốc độ bán bằng 0; không dùng số sàn giả để lấp chỗ trống.
+- Giá vốn, giá bán và tồn kho lấy nguyên từ catalog shop demo. Khi nối shop thật,
+  ba trường này phải được thay bằng dữ liệu đồng bộ từ shop đó.
 
 ## Cách hoạt động
 
 ```
 Google Trends (5y)  ──► season_model.py   ──► chỉ số mùa vụ theo tháng (12 giá trị/ngành)
 Google Shopping     ──► competition.py    ──► hệ số cầu do big brand sale
-Google Shopping     ──► fetch_channel_market.py ──► thị phần & giá theo từng sàn (THẬT)
-Case do seller khai ──► channels.py       ──► hệ số cầu riêng từng kênh
-                                                    │
-Vốn + catalog shop  ─────────────────────────────► backend/app/services/restock.py
-                                                    └─► nhập mã nào, ở kênh nào, bao nhiêu cái
+Đơn hợp lệ + tồn kho ───────────────────────────────┐
+Vốn + catalog shop  ────────────────────────────────┴─► backend/app/services/restock.py
+                                                         └─► nhập mã nào, bao nhiêu cái
 ```
 
 **Phân bổ vốn nằm ở backend, không có bản sao.** Trước đây folder này có
@@ -79,11 +59,10 @@ giảm giá`. Nhân hai thành phần là có chủ đích: 1 món giảm 70% kh
 dịch, nhưng nửa catalog giảm 30% thì có. Hết sale → lần fetch sau pressure tụt →
 hệ số tự bò về 1.0, không ai phải sửa số bằng tay.
 
-**Phân bổ vốn** (backend) — xếp hạng theo `ROI × độ gấp × hệ số cầu của kênh`,
-với ROI tính trên **giá đã trừ phí sàn**. Trần 25%/SKU chia cho số kênh đang
-cần hàng, để vốn dàn ra thay vì 4 dòng là hết tiền; lượt 2 bỏ trần tiêu nốt.
-Hết tiền thì các dòng cuối bảng nhận 0 — đúng hành vi "hết vốn thì giảm bớt
-mặt hàng".
+**Phân bổ vốn** (backend) — tính nhu cầu của từng SKU một lần, xếp theo biên gộp,
+độ gấp của tồn kho và hai tín hiệu thị trường. Không có trần phần trăm tự đặt và
+không ép tiêu hết ngân sách khi nhu cầu đã đủ. Lợi nhuận hiển thị là **lãi gộp
+trước phí sàn và chi phí vận hành**, vì chưa có phân bổ SKU theo sàn đáng tin cậy.
 
 ## Chạy
 
@@ -93,7 +72,6 @@ echo SERPAPI_KEY=xxx > .env          # không commit, đã gitignore
 
 python fetch_trends.py               # 9 call  — lịch sử 5 năm
 python fetch_brand_sale.py           # 13 call — sale hiện tại của big brand
-python fetch_channel_market.py       # 9 call  — thị phần & giá theo từng sàn
 python prepare_demo_data.py          # gộp -> outputs/demo_data.json
 
 # backend đọc bản sao này:
@@ -107,7 +85,6 @@ Xem nhanh kết quả từng model:
 ```bash
 python season_model.py    # chỉ số mùa vụ 12 tháng/ngành
 python competition.py     # áp lực sale theo ngành
-python channels.py        # 4 kênh + hệ số cầu của 4 case
 ```
 
 ## Kết quả thật đo được (2026-08)
@@ -119,8 +96,8 @@ gần như phẳng (0.94–1.08). Đúng thực tế mùa Tết/đông ở VN.
 0.003–0.028 → hệ số 0.99. Con số thấp là **kết quả đo thật**, không phải lỗi;
 vào 11.11 / 12.12 nó sẽ tụt rõ.
 
-Tác dụng lên kế hoạch — cùng 50tr: T11 chia 24% vốn cho Thời trang (vào đỉnh),
-T8 chia **0%** (vào đáy). Mùa vụ đổi được cả cơ cấu nhập hàng.
+Tác dụng lên kế hoạch — đổi tháng hoặc số ngày phủ hàng làm thay đổi nhu cầu;
+tăng ngân sách chỉ làm tăng lượng nhập cho tới khi toàn bộ nhu cầu đã được đáp ứng.
 
 ## Giới hạn cần biết
 

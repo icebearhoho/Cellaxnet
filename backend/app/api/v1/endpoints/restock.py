@@ -2,28 +2,20 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter
 
 from app.core.responses import ApiResponse, PageMeta
-from app.db.session import get_db
 from app.schemas.restock import RestockPlanRequest, RestockPlanResponse
-from app.services import channel_link, restock
+from app.services import restock
 
 router = APIRouter()
 
 
 @router.post("/", response_model=ApiResponse[RestockPlanResponse])
 async def plan(
-    req: RestockPlanRequest, db: AsyncSession = Depends(get_db)
+    req: RestockPlanRequest,
 ) -> ApiResponse[RestockPlanResponse]:
-    # Channels whose orders have been synced drive their own demand; the rest
-    # fall back to the case the seller picked.
-    try:
-        rates = await channel_link.synced_rates(db)
-    except Exception:  # noqa: BLE001 — planning must survive a DB hiccup
-        rates = {}
-    data = await restock.build_plan(req, rates)
+    data = await restock.build_plan(req)
     return ApiResponse[RestockPlanResponse](
         success=True, data=data, meta=PageMeta(), error=None
     )

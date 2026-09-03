@@ -5,11 +5,11 @@ many units", from three signals:
 
   SEASON  a 12-month seasonal index per category, learned from 5 years of
           Google Trends history (SerpApi, TIMESERIES) — see restock_planner/
-  TREND   how deeply the big brands are discounting right now, read off live
-          Google Shopping listings (current price vs struck-through price)
+  TREND   how deeply big brands were discounting at the snapshot timestamp,
+          read from Google Shopping (current price vs struck-through price)
   MONEY   the seller's own budget, cost and price per SKU
 
-Market numbers are measured, not assumed. The one policy knob is
+Market numbers are measured and timestamped, not silently refreshed or assumed. The one policy knob is
 `competition_sensitivity` (how much a rival's sale dents our demand), which the
 caller may override per request — it is a business judgement, not a measurement,
 and is labelled as such in the response.
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 Category = Literal["Thời trang", "Mỹ phẩm", "Phụ kiện"]
 Outlook = Literal["expand", "hold", "contract"]
@@ -47,32 +47,6 @@ class RestockPlanRequest(BaseModel):
     refresh_live: bool = Field(
         False, description="Gọi lại Google Shopping để lấy mức sale mới nhất"
     )
-    channel_cases: dict[ChannelId, CaseId] | None = Field(
-        None,
-        description="Gán hồ sơ bán hàng cho từng kênh, vd {'shopee':'hot'}. "
-                    "Bỏ trống = dùng mặc định.",
-    )
-    channel_fees: dict[ChannelId, float] | None = Field(
-        None, description="Ghi đè phí sàn (%) từng kênh, 0-50. Bỏ trống = dùng mặc định.",
-    )
-
-    @field_validator("channel_fees")
-    @classmethod
-    def _fees_in_range(cls, v: dict[str, float] | None) -> dict[str, float] | None:
-        """Reject an out-of-range fee instead of quietly falling back.
-
-        The service used to skip any value outside 0-50, so a caller sending
-        -5 got a plan computed at the default 5% and no indication their
-        override had been thrown away.
-        """
-        for channel, pct in (v or {}).items():
-            if not 0.0 <= float(pct) <= 50.0:
-                raise ValueError(
-                    f"Phí sàn của '{channel}' phải trong khoảng 0-50%, nhận {pct}"
-                )
-        return v
-
-
 class ChannelMarketRow(BaseModel):
     """Measured presence of one platform in one category (Google Shopping).
 
@@ -202,6 +176,9 @@ class RestockPlanResponse(BaseModel):
     budget_vnd: int
     spent_vnd: int
     remaining_vnd: int
+    recommended_budget_vnd: int
+    unfunded_vnd: int
+    budget_status: Literal["insufficient", "fully_funded", "surplus"]
     budget_used_pct: float
     item_count: int
     skipped_count: int
@@ -227,3 +204,7 @@ class RestockPlanResponse(BaseModel):
     live_refresh: bool = False
     scenario: bool = False
     competition_sensitivity: float = 0.5
+    shop_data_source: str
+    shop_data_as_of: str | None = None
+    sales_history_days: int
+    profit_basis: Literal["gross_before_platform_and_operating_costs"]
