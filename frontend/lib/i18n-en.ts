@@ -168,6 +168,8 @@ export const EN: Record<string, string> = {
   "Khoảng giá thị trường": "Market price range",
   "Trung vị danh mục": "Category median",
   "Nhập tên hoặc chọn từ danh sách": "Type a name, or pick from the list",
+  "Chọn sản phẩm từ catalog": "Pick a product from the catalogue",
+  "Tìm sản phẩm trong catalog…": "Search the catalogue…",
   "Nhập tên sản phẩm để bắt đầu định giá.": "Enter a product name to start pricing.",
   "Nhập giá vốn để biết mức giá tham khảo có đủ lợi nhuận hay không.":
     "Enter the unit cost to see whether the reference price leaves enough profit.",
