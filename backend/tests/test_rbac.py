@@ -15,7 +15,8 @@ from app.core.security import create_access_token
 from app.main import app
 
 # One representative route per gating mechanism:
-#   - /kpis/summary + /dynamic-pricing/  → router-level dependencies
+#   - /kpis/summary                      → workspace-aware router dependency
+#   - /dynamic-pricing/                  → admin-only router dependency
 #   - /storefront/reviews/queue          → per-route dependency on a mixed router
 #   - /journey/sessions                  → per-route dependency on a mixed router
 ADMIN_ONLY_GETS = [

@@ -110,7 +110,7 @@ api_router.include_router(
     datasets.router, prefix="/datasets", tags=["datasets"], dependencies=_ADMIN_ONLY
 )
 api_router.include_router(
-    kpis.router, prefix="/kpis", tags=["kpis"], dependencies=_ADMIN_ONLY
+    kpis.router, prefix="/kpis", tags=["kpis"], dependencies=_SELLER_OR_ADMIN
 )
 api_router.include_router(
     content_generator.router,

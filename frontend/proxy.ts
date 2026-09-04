@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { WORKSPACE_COOKIE } from "@/lib/active-workspace";
 import { TOKEN_COOKIE, claimsValid, decodeJwtPayload } from "@/lib/auth-token";
 
 /** UX routing only. API authorization remains the security boundary. */
@@ -40,6 +41,20 @@ export function proxy(req: NextRequest) {
     url.pathname = "/seller/onboarding";
     url.search = "";
     return NextResponse.redirect(url);
+  }
+
+  // The seller overview is the home of an activated workspace.  A seller who
+  // has not selected one yet still belongs in onboarding; once the workspace
+  // cookie exists, /seller must remain reachable instead of looping back to
+  // the workspace-management screen.
+  if (path === "/seller") {
+    if (role === "seller" && !req.cookies.get(WORKSPACE_COOKIE)?.value) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/seller/onboarding";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
   }
 
   if (path === "/seller/content-generator" || path === "/seller/seller-coach") {

@@ -12,7 +12,7 @@ import {
   Store,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
   INTERNAL_TOOL_SLUGS,
@@ -29,6 +29,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
   const { user, isAdmin } = useAuth();
   const mounted = useMounted();
   const t = useT();
@@ -38,6 +39,32 @@ export function Sidebar() {
     setExpandedSection(null);
   }, [pathname]);
 
+  useEffect(() => () => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+    }
+  }, []);
+
+  function cancelScheduledClose() {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }
+
+  function showSection(sectionId: string) {
+    cancelScheduledClose();
+    setExpandedSection(sectionId);
+  }
+
+  function hideSectionSoon() {
+    cancelScheduledClose();
+    closeTimerRef.current = window.setTimeout(() => {
+      setExpandedSection(null);
+      closeTimerRef.current = null;
+    }, 350);
+  }
+
   const app: AppKind = pathname.startsWith("/seller") ? "seller" : "shop";
   const items = navForApp(app).filter(
     (item) => app !== "seller" || isAdmin || SELLER_SELF_SERVICE_SLUGS.has(item.slug),
@@ -46,7 +73,7 @@ export function Sidebar() {
     ? { label: t("Người bán"), icon: Store, other: "/shop", otherLabel: t("Cửa hàng") }
     : { label: t("Cửa hàng"), icon: ShoppingCart, other: "/seller", otherLabel: t("Người bán") };
   const BrandIcon = brand.icon;
-  const home = app === "seller" && user?.role !== "admin" ? "/seller/workspace" : app === "seller" ? "/seller" : "/shop";
+  const home = app === "seller" ? "/seller" : "/shop";
 
   const isActive = (href: string) =>
     href === home ? pathname === home : pathname.startsWith(href);
@@ -120,14 +147,23 @@ export function Sidebar() {
               <div
                 key={section.id}
                 className="relative"
-                onMouseEnter={() => setExpandedSection(section.id)}
-                onMouseLeave={() => setExpandedSection(null)}
+                onMouseEnter={() => showSection(section.id)}
+                onMouseLeave={hideSectionSoon}
+                onFocus={() => showSection(section.id)}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    hideSectionSoon();
+                  }
+                }}
               >
                 <button
                   type="button"
                   aria-expanded={expanded}
                   aria-controls={`nav-section-${section.id}`}
-                  onClick={() => setExpandedSection(expanded ? null : section.id)}
+                  onClick={() => {
+                    cancelScheduledClose();
+                    setExpandedSection(expanded ? null : section.id);
+                  }}
                   className={cn(
                     "group mb-1 flex h-11 w-full items-center gap-3 rounded-xl border-[1.5px] px-3 text-left text-sm font-semibold transition-all",
                     sectionActive || expanded
@@ -153,6 +189,10 @@ export function Sidebar() {
                     expanded ? "nav-flyout block" : "hidden",
                   )}
                 >
+                  <span
+                    aria-hidden="true"
+                    className="absolute -left-3 top-0 hidden h-full w-3 lg:block"
+                  />
                   <div className="hidden border-b border-dashed border-border px-2 pb-2.5 pt-1 lg:block">
                     <p className="text-xs font-semibold text-text">{t(section.title)}</p>
                     <p className="mt-0.5 text-2xs text-text-dim">

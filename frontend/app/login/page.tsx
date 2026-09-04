@@ -45,7 +45,7 @@ function LoginForm() {
           workspaces[0];
         if (active) {
           setActiveWorkspaceId(active.id);
-          sellerDestination = user.role === "admin" ? "/seller" : "/seller/workspace";
+          sellerDestination = "/seller";
         }
       }
       // Honour ?next= when the middleware bounced them here, else send admins

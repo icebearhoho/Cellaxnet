@@ -471,6 +471,39 @@ async def test_invited_member_with_stale_buyer_token_can_use_workspace_tool(fake
 
 
 @pytest.mark.asyncio
+async def test_workspace_seller_can_open_dashboard_summary(fake_workspaces):
+    workspace, _, _ = await fake_workspaces.create_workspace(
+        None, user_id=2, name="Workspace A", slug="a-shop"
+    )
+    headers = {**_headers(2, "seller"), "X-Workspace-ID": str(workspace.id)}
+
+    async with _client() as ac:
+        response = await ac.get("/api/v1/kpis/summary", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+
+@pytest.mark.asyncio
+async def test_dashboard_summary_rejects_missing_or_foreign_workspace(fake_workspaces):
+    workspace, _, _ = await fake_workspaces.create_workspace(
+        None, user_id=2, name="Workspace A", slug="a-shop"
+    )
+
+    async with _client() as ac:
+        missing = await ac.get(
+            "/api/v1/kpis/summary", headers=_headers(2, "seller")
+        )
+        foreign = await ac.get(
+            "/api/v1/kpis/summary",
+            headers={**_headers(3, "seller"), "X-Workspace-ID": str(workspace.id)},
+        )
+
+    assert missing.status_code == 422
+    assert foreign.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_stale_seller_token_cannot_use_workspace_after_removal(fake_workspaces):
     workspace, _, _ = await fake_workspaces.create_workspace(
         None, user_id=2, name="Workspace A", slug="a-shop"
