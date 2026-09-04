@@ -316,7 +316,7 @@ export function VirtualTryOnPanel() {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h3 className="font-bold">{t("Kết quả")}</h3>
-              <p className="text-xs text-text-muted">Ảnh được xử lý hoàn toàn trên máy này</p>
+              <p className="text-xs text-text-muted">{t("Ảnh được xử lý hoàn toàn trên máy này")}</p>
             </div>
             {personFile || garmentFile || resultUrl ? (
               <button

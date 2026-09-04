@@ -23,7 +23,7 @@ const METRIC_LABEL: Record<string, string> = {
 
 export function DecisionIntelligencePanel() {
   const t = useT();
-  const [situation, setSituation] = useState(t("Chuẩn bị chiến dịch cho mùa cao điểm quý 4"));
+  const [situation, setSituation] = useState("Chuẩn bị chiến dịch cho mùa cao điểm quý 4");
   const [category, setCategory] = useState<Category>("Thời trang");
   const [decisions, setDecisions] = useState<DecisionInput[]>([
     { kind: "ad", description: t("Chạy ads TikTok tháng 11"), metric: "ROAS", value: 4.2, month: 11 },

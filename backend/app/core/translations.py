@@ -94,6 +94,40 @@ EN: dict[str, str] = {
     "Mỹ phẩm": "Cosmetics",
     "Phụ kiện": "Accessories",
 
+    # --- Cảnh báo trên trang tổng quan ------------------------------------
+    #
+    # Tên sản phẩm và tên kho KHÔNG dịch — đó là dữ liệu của cửa hàng, không
+    # phải chữ của ứng dụng.
+    "Tồn kho": "Inventory",
+    "Rủi ro khách hàng": "Customer risk",
+    "Đánh giá khách hàng": "Customer reviews",
+    "Toàn quốc": "Nationwide",
+    "{số_đánh_giá} đánh giá ≤3 sao trong 30 ngày cần phân tích chủ đề":
+        "{số_đánh_giá} reviews rated 3 stars or lower in 30 days — worth reading for themes",
+    "{sản_phẩm} còn {tồn_kho} sản phẩm (~{số_ngày} ngày bán)":
+        "{sản_phẩm}: {tồn_kho} left (~{số_ngày} days of cover)",
+    "{số_khách} khách có recency cao hoặc bỏ giỏ ≥70% cần win-back":
+        "{số_khách} customers are long-inactive or abandon 70%+ of carts — worth winning back",
+
+    # --- Hành trình khách: kết luận ---------------------------------------
+    "Đã mua trong phiên — có thể mua thêm":
+        "Bought in this session — open to buying more",
+    "Sắp thanh toán": "About to check out",
+    "Đang phân vân (đã thêm giỏ nhưng chưa mua)":
+        "Hesitating — added to cart but has not bought",
+    "Nguy cơ rời đi": "At risk of leaving",
+    "Có khả năng thêm vào giỏ": "Likely to add to cart",
+    "Còn xem tiếp, chưa quyết": "Still browsing, undecided",
+
+    # --- Rủi ro khách hàng: nhóm hành động --------------------------------
+    "Rủi ro cao": "High risk",
+    "Trung bình": "Medium",
+    "An toàn": "Safe",
+    "Gửi ưu đãi giữ chân (giảm giá hoặc miễn phí vận chuyển) ngay tuần này.":
+        "Send a retention offer (a discount or free shipping) this week.",
+    "Gửi email gợi ý sản phẩm theo lịch sử mua của từng khách.":
+        "Email product suggestions based on each customer's purchase history.",
+
     # --- Rủi ro khách hàng ------------------------------------------------
     "Chưa cần can thiệp — tiếp tục chăm sóc như hiện tại.":
         "No action needed — carry on as you are.",

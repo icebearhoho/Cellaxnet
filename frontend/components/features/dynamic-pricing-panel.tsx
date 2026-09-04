@@ -604,7 +604,7 @@ export function DynamicPricingPanel() {
                     <p className="mt-3 flex items-start gap-1.5 rounded-md bg-info/10 px-3 py-2 text-xs leading-5 text-info">
                       <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       {tf(
-                        "Mức điều chỉnh khá lớn ({phần_trăm}%). Có thể thử {giá} trước để xem phản ứng của khách trước khi đi hết mức tham khảo.",
+                        t("Mức điều chỉnh khá lớn ({phần_trăm}%). Có thể thử {giá} trước để xem phản ứng của khách trước khi đi hết mức tham khảo."),
                         {
                           phần_trăm: `${result.change_pct && result.change_pct > 0 ? "+" : ""}${result.change_pct}`,
                           giá: VND.format(
@@ -630,8 +630,8 @@ export function DynamicPricingPanel() {
                       <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       {tf(
                         result.channel_name
-                          ? "Không nên bán dưới {sàn} nếu muốn giữ biên {biên}% sau phí {kênh}."
-                          : "Không nên bán dưới {sàn} nếu muốn giữ biên {biên}%.",
+                          ? t("Không nên bán dưới {sàn} nếu muốn giữ biên {biên}% sau phí {kênh}.")
+                          : t("Không nên bán dưới {sàn} nếu muốn giữ biên {biên}%."),
                         {
                           sàn: VND.format(result.price_floor),
                           biên: submitted?.minMarginPct ?? "",
@@ -730,7 +730,7 @@ export function DynamicPricingPanel() {
                           follows: the provenance badge beside it renders only
                           for observed data. */}
                       <span className="text-2xs text-text-dim">
-                        {tf("{số_mẫu} sản phẩm tương tự", { số_mẫu: result.sample_size })}
+                        {tf(t("{số_mẫu} sản phẩm tương tự"), { số_mẫu: result.sample_size })}
                       </span>
                       <SourceBadge
                         source={result.data_source}

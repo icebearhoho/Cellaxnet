@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/lib/i18n";
 
 const SERIES = [
   { key: "fashion",     color: "hsl(var(--series-1))", label: "Thời trang" },
@@ -23,13 +24,14 @@ export function TrafficChart({
 }: {
   data: Array<{ t: string; fashion: number; beauty: number; accessories: number }>;
 }) {
+  const t = useT();
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Nhịp doanh thu theo giờ</CardTitle>
+          <CardTitle>{t("Nhịp doanh thu theo giờ")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Triệu ₫ trung bình theo giờ trong 14 ngày, phân nhóm theo ngành hàng.
+            {t("Triệu ₫ trung bình theo giờ trong 14 ngày, phân nhóm theo ngành hàng.")}
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs text-text-muted">
@@ -39,10 +41,10 @@ export function TrafficChart({
                 className="h-2 w-2 rounded-sm"
                 style={{ backgroundColor: s.color }}
               />
-              {s.label}
+              {t(s.label)}
             </span>
           ))}
-          <Badge variant="live">Workspace hiện tại</Badge>
+          <Badge variant="live">{t("Workspace hiện tại")}</Badge>
         </div>
       </CardHeader>
       <div className="px-5 pb-5">

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/mock-data";
 import { getMockImageUrl } from "@/lib/mock-data";
-import { useT } from "@/lib/i18n";
+import { useT, useTf } from "@/lib/i18n";
 
 const VND = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -87,6 +87,7 @@ export function ProductCard({
   onInteract?: (kind: "click" | "cart") => void;
 }) {
   const t = useT();
+  const tf = useTf();
   const href = productUrl(product);
   const [broken, setBroken] = useState(false);
   const Icon = productIcon(product);
@@ -146,7 +147,7 @@ export function ProductCard({
         </div>
         {typeof similarity === "number" && (
           <Badge variant="live">
-            <span className="mono">Phù hợp {(similarity * 100).toFixed(0)}%</span>
+            <span className="mono">{tf("Phù hợp {phần_trăm}%", { phần_trăm: (similarity * 100).toFixed(0) })}</span>
           </Badge>
         )}
       </div>

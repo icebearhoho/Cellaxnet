@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PROVINCES, ProvinceNode } from "@/lib/mock-data";
+import { useT, useTf } from "@/lib/i18n";
 
 const statusColor: Record<ProvinceNode["status"], string> = {
   ok: "hsl(var(--accent))",
@@ -18,6 +19,8 @@ const statusLabel: Record<ProvinceNode["status"], string> = {
 };
 
 export function GeoMap({ nodes }: { nodes: typeof PROVINCES }) {
+  const t = useT();
+  const tf = useTf();
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,9 +65,13 @@ export function GeoMap({ nodes }: { nodes: typeof PROVINCES }) {
       name.className = "font-semibold";
       name.textContent = node.name;
       const risk = document.createElement("div");
-      risk.textContent = `Mức rủi ro: ${(node.load * 100).toFixed(0)}%`;
+      risk.textContent = tf("Mức rủi ro: {phần_trăm}%", {
+        phần_trăm: (node.load * 100).toFixed(0),
+      });
       const state = document.createElement("div");
-      state.textContent = `Trạng thái: ${statusLabel[node.status]}`;
+      state.textContent = tf("Trạng thái: {trạng_thái}", {
+        trạng_thái: t(statusLabel[node.status]),
+      });
       popup.append(name, risk, state);
       marker.bindPopup(popup);
     });
@@ -73,26 +80,26 @@ export function GeoMap({ nodes }: { nodes: typeof PROVINCES }) {
       map.remove();
       container.remove();
     };
-  }, [nodes]);
+  }, [nodes, t, tf]);
 
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Chuỗi cung ứng — 63 tỉnh thành</CardTitle>
+          <CardTitle>{t("Chuỗi cung ứng — 63 tỉnh thành")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Rủi ro vận hành theo kho vùng (màu = mức độ cảnh báo).
+            {t("Rủi ro vận hành theo kho vùng (màu = mức độ cảnh báo).")}
           </p>
         </div>
         <div className="flex items-center gap-3 text-2xs uppercase tracking-wider text-text-muted">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" /> ổn định
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" /> {t("ổn định")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-warning" /> cảnh báo
+            <span className="h-1.5 w-1.5 rounded-full bg-warning" /> {t("cảnh báo")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-danger" /> rủi ro
+            <span className="h-1.5 w-1.5 rounded-full bg-danger" /> {t("rủi ro")}
           </span>
         </div>
       </CardHeader>

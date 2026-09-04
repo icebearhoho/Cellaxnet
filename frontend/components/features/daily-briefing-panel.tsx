@@ -62,7 +62,7 @@ export function DailyBriefingPanel() {
           <div>
             <CardTitle>{t("Hôm nay cần làm gì")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Việc ưu tiên theo tác động doanh thu, tổng hợp từ các tín hiệu của cửa hàng.
+              {t("Việc ưu tiên theo tác động doanh thu, tổng hợp từ các tín hiệu của cửa hàng.")}
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={load} disabled={busy}>
@@ -72,7 +72,7 @@ export function DailyBriefingPanel() {
         </CardHeader>
         <CardContent>
           {error ? (
-            <p className="text-sm text-danger">Không lấy được briefing. Kiểm tra kết nối backend rồi thử lại.</p>
+            <p className="text-sm text-danger">{t("Không lấy được briefing. Kiểm tra kết nối backend rồi thử lại.")}</p>
           ) : !result ? (
             <p className="text-sm text-text-muted">
               {busy ? "Đang tổng hợp briefing…" : t("Chưa có dữ liệu.")}
@@ -81,7 +81,7 @@ export function DailyBriefingPanel() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-2xl text-sm leading-relaxed text-text">{result.summary}</p>
               <div className="shrink-0 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-right">
-                <div className="text-xs font-medium text-text-dim">Tổng tác động ước tính</div>
+                <div className="text-xs font-medium text-text-dim">{t("Tổng tác động ước tính")}</div>
                 <div className="mono mt-1 text-xl font-semibold text-accent">{vnd(result.total_impact_vnd)}</div>
               </div>
             </div>
@@ -123,7 +123,7 @@ export function DailyBriefingPanel() {
                       <p className="mt-2 text-xs leading-relaxed text-text-muted">{a.detail}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-xs font-medium text-text-dim">Tác động</div>
+                      <div className="text-xs font-medium text-text-dim">{t("Tác động")}</div>
                       <div className="mono mt-1 text-lg font-semibold text-accent">{vnd(a.impact_vnd)}</div>
                     </div>
                   </div>
@@ -137,7 +137,7 @@ export function DailyBriefingPanel() {
       {result && result.actions.length === 0 && !error && (
         <Card>
           <CardContent className="py-6">
-            <p className="text-sm text-text-muted">Hôm nay không có việc ưu tiên nào. Shop đang ổn định.</p>
+            <p className="text-sm text-text-muted">{t("Hôm nay không có việc ưu tiên nào. Shop đang ổn định.")}</p>
           </CardContent>
         </Card>
       )}

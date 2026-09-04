@@ -4,6 +4,7 @@ import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import type { Kpi } from "@/lib/mock-data";
+import { useT } from "@/lib/i18n";
 
 const VND = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -25,6 +26,7 @@ function formatValue(kpi: Kpi): string {
 }
 
 export function KpiCard({ kpi }: { kpi: Kpi }) {
+  const t = useT();
   const positive = kpi.delta >= 0;
   // For AOV, churn proxy, return rate — down is good. Toggle using kpi.id.
   const inverted = !!kpi.inverted;
@@ -35,7 +37,7 @@ export function KpiCard({ kpi }: { kpi: Kpi }) {
     <div className="kpi-motion-card card-surface group relative overflow-hidden rounded-lg border p-5 shadow-sm transition-all hover:-translate-y-1 hover:border-border-strong hover:shadow-lg">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-text-muted">
-          {kpi.label}
+          {t(kpi.label)}
         </span>
         <span
           className={cn(

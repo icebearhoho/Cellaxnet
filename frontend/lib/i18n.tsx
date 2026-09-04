@@ -87,7 +87,11 @@ export function useTf(): (template: string, values: Record<string, string | numb
   const t = useT();
   return useCallback(
     (template: string, values: Record<string, string | number>): string =>
-      t(template).replace(/\{(\w+)\}/g, (whole, key: string) =>
+      // \w trong JavaScript chỉ là [A-Za-z0-9_] — nó KHÔNG khớp chữ có dấu,
+      // nên {số_lượng} và {sàn} bị bỏ qua và hiện nguyên ngoặc ra màn hình.
+      // (Python thì \w hiểu Unicode sẵn, nên cùng mẫu này bên backend chạy
+      // đúng.) Dùng \p{L} với cờ u để khớp mọi chữ cái.
+      t(template).replace(/\{([\p{L}\p{N}_]+)\}/gu, (whole, key: string) =>
         key in values ? String(values[key]) : whole,
       ),
     [t],

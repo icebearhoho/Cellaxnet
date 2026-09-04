@@ -117,7 +117,7 @@ export function RecsysPanel() {
 
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-2xs font-medium uppercase tracking-wider text-text-dim">
-            Tín hiệu đang dùng
+            {t("Tín hiệu đang dùng")}
           </span>
           {PROFILE_CHIPS.map((s) => (
             <Badge key={s.label} variant="muted">
@@ -157,7 +157,7 @@ export function RecsysPanel() {
 
       {loading && (
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-text-muted">
-          Đang nạp gợi ý sản phẩm…
+          {t("Đang nạp gợi ý sản phẩm…")}
         </div>
       )}
 

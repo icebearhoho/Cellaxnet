@@ -164,7 +164,7 @@ export function ContentGeneratorPanel() {
 
         {!generating && variants.length === 0 && !error && (
           <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-text-muted">
-            Nhập thông tin sản phẩm rồi bấm “Tạo 3 phiên bản”.
+            {t("Nhập thông tin sản phẩm rồi bấm “Tạo 3 phiên bản”.")}
           </div>
         )}
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">

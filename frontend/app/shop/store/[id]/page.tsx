@@ -10,6 +10,7 @@ import { addToCart } from "@/lib/cart";
 import { StoreImage } from "@/components/store/store-image";
 import { StoreProductCard } from "@/components/store/store-product-card";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const VND = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -18,6 +19,7 @@ const VND = new Intl.NumberFormat("vi-VN", {
 });
 
 export default function StoreDetailPage() {
+  const t = useT();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params?.id;
@@ -119,7 +121,7 @@ export default function StoreDetailPage() {
     return (
       <div className="grid place-items-center rounded-lg border border-border bg-surface py-24 text-text-muted">
         <Loader2 className="h-6 w-6 animate-spin" />
-        <p className="mt-3 text-sm">Đang tải sản phẩm…</p>
+        <p className="mt-3 text-sm">{t("Đang tải sản phẩm…")}</p>
       </div>
     );
   }
@@ -128,9 +130,9 @@ export default function StoreDetailPage() {
     return (
       <div className="grid place-items-center rounded-lg border border-border bg-surface py-24 text-center">
         <PackageOpen className="h-8 w-8 text-text-dim" strokeWidth={1.5} />
-        <p className="mt-3 text-lg font-bold">Không tìm thấy sản phẩm</p>
+        <p className="mt-3 text-lg font-bold">{t("Không tìm thấy sản phẩm")}</p>
         <Link href="/shop/store" className="mt-4 inline-flex items-center gap-1.5 font-medium text-accent">
-          <ArrowLeft className="h-4 w-4" /> Về cửa hàng
+          <ArrowLeft className="h-4 w-4" /> {t("Về cửa hàng")}
         </Link>
       </div>
     );
@@ -148,7 +150,7 @@ export default function StoreDetailPage() {
   return (
     <div className="space-y-8">
       <Link href="/shop/store" className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text">
-        <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /> Về cửa hàng
+        <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /> {t("Về cửa hàng")}
       </Link>
 
       <div className="grid gap-10 md:grid-cols-2">
@@ -166,7 +168,7 @@ export default function StoreDetailPage() {
               <>
                 <button
                   type="button"
-                  aria-label="Ảnh trước"
+                  aria-label={t("Ảnh trước")}
                   onClick={() => moveImage(-1)}
                   className="absolute left-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/70 bg-black/45 text-white transition-colors hover:bg-black/65"
                 >
@@ -174,7 +176,7 @@ export default function StoreDetailPage() {
                 </button>
                 <button
                   type="button"
-                  aria-label="Ảnh tiếp theo"
+                  aria-label={t("Ảnh tiếp theo")}
                   onClick={() => moveImage(1)}
                   className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/70 bg-black/45 text-white transition-colors hover:bg-black/65"
                 >
@@ -186,7 +188,7 @@ export default function StoreDetailPage() {
               {selectedImage + 1} / {gallery.length}
             </span>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Thư viện ảnh sản phẩm">
+          <div className="flex gap-2 overflow-x-auto pb-1" aria-label={t("Thư viện ảnh sản phẩm")}>
             {gallery.map((src, index) => (
               <button
                 key={src}
@@ -243,7 +245,7 @@ export default function StoreDetailPage() {
                 }}
                 className="ml-2 border-b border-accent font-medium text-accent"
               >
-                Đọc đánh giá
+                {t("Đọc đánh giá")}
               </button>
             )}
           </div>
@@ -266,7 +268,7 @@ export default function StoreDetailPage() {
             {/* stock === null means "unknown", not "sold out" — say nothing then. */}
             {soldOut ? (
               <span className="rounded-full bg-text px-2.5 py-0.5 text-2xs font-semibold text-bg">
-                Hết hàng
+                {t("Hết hàng")}
               </span>
             ) : product.stock !== null ? (
               <span
@@ -287,14 +289,14 @@ export default function StoreDetailPage() {
                 <Flame className="h-4 w-4" strokeWidth={1.5} /> Ưu đãi dành cho bạn · giảm thêm {nudgeDiscount}%
               </div>
               <p className="mt-1 text-xs text-text-muted">
-                Đặt trong 10 phút để nhận thêm ưu đãi.
+                {t("Đặt trong 10 phút để nhận thêm ưu đãi.")}
               </p>
             </div>
           )}
 
           {soldOut ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-border-strong bg-surface-2 px-5 py-3 text-sm font-semibold text-text-muted">
-              <PackageOpen className="h-4 w-4" /> Sản phẩm đã hết hàng
+              <PackageOpen className="h-4 w-4" /> {t("Sản phẩm đã hết hàng")}
             </div>
           ) : (
             <div className="flex flex-wrap gap-3 pt-2">
@@ -309,7 +311,7 @@ export default function StoreDetailPage() {
                 )}
               >
                 {added ? <CheckCircle2 className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
-                {added ? "Đã thêm vào giỏ" : "Thêm vào giỏ"}
+                {added ? "Đã thêm vào giỏ" : t("Thêm vào giỏ")}
               </button>
               <button
                 type="button"
@@ -328,7 +330,7 @@ export default function StoreDetailPage() {
                 href="/shop/cart"
                 className="inline-flex items-center gap-2 border-b border-transparent px-1 py-3 text-sm font-medium text-text-muted transition-colors hover:border-accent hover:text-text"
               >
-                Xem giỏ →
+                {t("Xem giỏ →")}
               </Link>
             </div>
           )}
@@ -339,7 +341,7 @@ export default function StoreDetailPage() {
       <section ref={reviewsRef} className="border-t border-border pt-10">
         <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold">
           <MessageSquareText className="h-5 w-5 text-text-dim" strokeWidth={1.5} />
-          Đánh giá sản phẩm
+          {t("Đánh giá sản phẩm")}
           <span className="mono text-base font-normal text-text-dim">({reviews.length})</span>
         </h2>
         {reviews.length > 0 && (
@@ -377,7 +379,7 @@ export default function StoreDetailPage() {
       {/* Similar products */}
       {similar.length > 0 && (
         <section className="border-t border-border pt-10">
-          <h2 className="mb-6 text-2xl font-bold">Sản phẩm tương tự</h2>
+          <h2 className="mb-6 text-2xl font-bold">{t("Sản phẩm tương tự")}</h2>
           <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
             {similar.map((p) => (
               <StoreProductCard
@@ -400,6 +402,7 @@ function ReviewForm({
   productId: string;
   onPublished: (review: StoreReview) => void;
 }) {
+  const t = useT();
   const [authorName, setAuthorName] = useState("");
   const [rating, setRating] = useState(5);
   const [text, setText] = useState("");
@@ -412,7 +415,7 @@ function ReviewForm({
     setBanner(null);
     const res = await submitStoreReview(productId, authorName.trim(), rating, text.trim());
     if (!res) {
-      setBanner({ ok: false, message: "Không gửi được đánh giá. Hãy thử lại." });
+      setBanner({ ok: false, message: t("Không gửi được đánh giá. Hãy thử lại.") });
       setBusy(false);
       return;
     }
@@ -426,19 +429,19 @@ function ReviewForm({
 
   return (
     <div className="rounded-lg border border-border bg-bg-alt p-6">
-      <h3 className="text-sm font-medium text-text">Viết đánh giá</h3>
+      <h3 className="text-sm font-medium text-text">{t("Viết đánh giá")}</h3>
       <div className="mt-4 space-y-3">
         <input
           value={authorName}
           onChange={(e) => setAuthorName(e.target.value)}
-          placeholder="Tên của bạn"
+          placeholder={t("Tên của bạn")}
           className="h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text outline-none focus:border-accent"
         />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          placeholder="Chia sẻ cảm nhận của bạn về sản phẩm…"
+          placeholder={t("Chia sẻ cảm nhận của bạn về sản phẩm…")}
           className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text outline-none focus:border-accent"
         />
         <div className="flex flex-wrap items-center gap-3">

@@ -112,12 +112,10 @@ export function ChannelLinkPanel() {
         <div>
           <CardTitle>{t("Kết nối tài khoản bán hàng")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            {t("Nối qua")} <strong>KiotViet</strong> — nền tảng bán hàng đa kênh đã
-            được Shopee, Lazada và TikTok Shop cấp quyền sẵn. Một liên kết mang
-            về đơn của cả ba sàn, mỗi đơn có ghi rõ đến từ kênh nào.
+            {t("Nối qua")} <strong>KiotViet</strong> {t("— nền tảng bán hàng đa kênh đã được Shopee, Lazada và TikTok Shop cấp quyền sẵn. Một liên kết mang về đơn của cả ba sàn, mỗi đơn có ghi rõ đến từ kênh nào.")}
           </p>
         </div>
-        {s ? <Badge variant={s.variant}>{s.label}</Badge> : null}
+        {s ? <Badge variant={s.variant}>{t(s.label)}</Badge> : null}
       </CardHeader>
 
       <CardContent className="space-y-3">
@@ -151,7 +149,7 @@ export function ChannelLinkPanel() {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-medium">{data.name}</p>
-                  <p className="mt-0.5 text-2xs text-text-muted">{s?.hint}</p>
+                  <p className="mt-0.5 text-2xs text-text-muted">{s?.hint ? t(s.hint) : null}</p>
                   {data.retailer ? (
                     <p className="mt-0.5 text-2xs text-text-dim">
                       Cửa hàng: {data.retailer}

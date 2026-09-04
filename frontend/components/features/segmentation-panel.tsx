@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DEMO_CUSTOMERS } from "@/lib/demo-customers";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, useTf } from "@/lib/i18n";
 
 const PERSONAS = [
   "Active Buyers",
@@ -92,6 +92,7 @@ const PERSONA_META: Record<Persona, PersonaMeta> = {
 const PAGE_SIZE = 12;
 
 export function SegmentationPanel() {
+  const tf = useTf();
   const t = useT();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [query, setQuery] = useState("");
@@ -282,7 +283,7 @@ export function SegmentationPanel() {
               <p className="text-sm font-semibold text-text" aria-live="polite">
                 Hiển thị {customers.length} trên {segmentCounts[selectedPersona]} khách hàng
               </p>
-              {query && <p className="text-xs text-text-muted">Kết quả cho “{query}”</p>}
+              {query && <p className="text-xs text-text-muted">{tf("Kết quả cho “{từ_khoá}”", { từ_khoá: query })}</p>}
             </div>
 
             {customers.length === 0 ? (

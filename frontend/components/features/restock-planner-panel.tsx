@@ -23,7 +23,7 @@ import {
   type Category,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, useTf } from "@/lib/i18n";
 
 const CATEGORIES: Category[] = ["Thời trang", "Mỹ phẩm", "Phụ kiện"];
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
@@ -71,6 +71,7 @@ function PlanningGuide() {
 }
 
 function OutlookCard({ row }: { row: RestockPlan["outlook"][number] }) {
+  const tf = useTf();
   const outlook = OUTLOOK[row.outlook] ?? OUTLOOK.hold;
   const Icon = outlook.Icon;
   return (
@@ -80,7 +81,7 @@ function OutlookCard({ row }: { row: RestockPlan["outlook"][number] }) {
         <span className={cn("flex items-center gap-1 text-xs font-semibold", outlook.className)}><Icon className="h-4 w-4" />{outlook.label}</span>
       </div>
       <p className="mt-2 line-clamp-2 text-xs leading-5 text-text-muted">{row.advice}</p>
-      {row.peak_month ? <p className="mt-3 text-2xs text-text-dim">Cao điểm dự kiến: tháng {row.peak_month}</p> : null}
+      {row.peak_month ? <p className="mt-3 text-2xs text-text-dim">{tf("Cao điểm dự kiến: tháng {tháng}", { tháng: row.peak_month })}</p> : null}
     </div>
   );
 }
@@ -106,6 +107,7 @@ function PriorityRow({ item }: { item: RestockPlan["items"][number] }) {
 }
 
 export function RestockPlannerPanel() {
+  const tf = useTf();
   const t = useT();
   const now = new Date().getMonth() + 1;
   const [budgetText, setBudgetText] = useState("8000000");
@@ -168,7 +170,7 @@ export function RestockPlannerPanel() {
             <CardTitle>{t("Thông tin lập kế hoạch")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">{t("Chỉ cần nhập ba thông tin dưới đây. Bỏ trống ngành để xem toàn bộ cửa hàng.")}</p>
           </div>
-          <Badge variant="muted">Tối đa {HORIZON_MAX} ngày</Badge>
+          <Badge variant="muted">{tf("Tối đa {số_ngày} ngày", { số_ngày: HORIZON_MAX })}</Badge>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
           <div className="grid gap-4 md:grid-cols-3">
@@ -205,7 +207,7 @@ export function RestockPlannerPanel() {
           <CardContent className="p-0">
             <div className="hidden grid-cols-[minmax(0,1fr)_5rem_6.5rem_minmax(10rem,0.9fr)] gap-3 border-b border-border bg-surface-2/50 px-5 py-2.5 text-2xs font-medium uppercase tracking-wider text-text-muted sm:grid"><span>{t("Sản phẩm")}</span><span className="text-right">{t("Nhập")}</span><span className="text-right">{t("Vốn")}</span><span>{t("Lý do")}</span></div>
             {result.items.slice(0, 8).map((item) => <PriorityRow key={`${item.sku}-${item.channel}`} item={item} />)}
-            {result.items.length > 8 ? <p className="border-t border-border bg-surface-2/35 px-5 py-3 text-xs text-text-muted">Còn {result.items.length - 8} mã ít ưu tiên hơn — không đưa lên màn hình chính.</p> : null}
+            {result.items.length > 8 ? <p className="border-t border-border bg-surface-2/35 px-5 py-3 text-xs text-text-muted">{tf("Còn {số_mã} mã ít ưu tiên hơn — không đưa lên màn hình chính.", { số_mã: result.items.length - 8 })}</p> : null}
             {result.items.length === 0 ? <div className="flex flex-col items-center py-10 text-center"><PackagePlus className="h-7 w-7 text-text-dim" /><p className="mt-2 text-sm font-semibold text-text">{t("Chưa có sản phẩm cần nhập")}</p><p className="mt-1 text-xs text-text-muted">{t("Với ngân sách và thời gian hiện tại, hàng đang có là đủ.")}</p></div> : null}
           </CardContent>
         </Card>

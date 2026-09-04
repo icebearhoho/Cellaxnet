@@ -11,7 +11,7 @@ import {
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Alert, ALERTS } from "@/lib/mock-data";
-import { useT } from "@/lib/i18n";
+import { useT, useTf } from "@/lib/i18n";
 
 type AlertRow = (typeof ALERTS)[number];
 
@@ -47,26 +47,27 @@ const statusLabel: Record<Alert["status"], string> = {
 
 export function AlertsTable({ data }: { data: AlertRow[] }) {
   const t = useT();
+  const tf = useTf();
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Cảnh báo mới nhất</CardTitle>
+          <CardTitle>{t("Cảnh báo mới nhất")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Các sự kiện gần nhất cần người bán chú ý.
+            {t("Các sự kiện gần nhất cần người bán chú ý.")}
           </p>
         </div>
-        <Badge variant="muted">{data.length} hiển thị</Badge>
+        <Badge variant="muted">{tf("{số_lượng} hiển thị", { số_lượng: data.length })}</Badge>
       </CardHeader>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>Tính năng</TableHead>
-            <TableHead>Vùng</TableHead>
-            <TableHead>Mức độ</TableHead>
+            <TableHead>{t("Tính năng")}</TableHead>
+            <TableHead>{t("Vùng")}</TableHead>
+            <TableHead>{t("Mức độ")}</TableHead>
             <TableHead>{t("Trạng thái")}</TableHead>
-            <TableHead className="text-right">Bắt đầu</TableHead>
+            <TableHead className="text-right">{t("Bắt đầu lúc")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -81,10 +82,10 @@ export function AlertsTable({ data }: { data: AlertRow[] }) {
               </TableCell>
               <TableCell className="mono text-xs text-text-muted">{a.region}</TableCell>
               <TableCell>
-                <Badge variant={severityVariant[a.severity]}>{severityLabel[a.severity]}</Badge>
+                <Badge variant={severityVariant[a.severity]}>{t(severityLabel[a.severity])}</Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={statusVariant[a.status]}>{statusLabel[a.status]}</Badge>
+                <Badge variant={statusVariant[a.status]}>{t(statusLabel[a.status])}</Badge>
               </TableCell>
               <TableCell className="mono text-xs text-text-muted text-right">
                 {a.startedAt}

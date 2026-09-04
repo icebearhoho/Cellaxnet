@@ -20,6 +20,7 @@ function scoreBand(score: number): "good" | "warn" | "bad" {
 }
 
 function AuditRow({ step, index }: { step: AuditStep; index: number }) {
+  const t = useT();
   const band = scoreBand(step.score);
   return (
     <div className="flex items-start gap-3 rounded-md border border-border bg-surface px-3 py-2.5">
@@ -41,7 +42,7 @@ function AuditRow({ step, index }: { step: AuditStep; index: number }) {
             {step.score}
           </span>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-text-muted">{step.tip}</p>
+        <p className="mt-1 text-xs leading-relaxed text-text-muted">{t(step.tip)}</p>
       </div>
     </div>
   );
@@ -80,22 +81,22 @@ export function SellerCoachPanel() {
         <p className="col-span-full text-sm text-danger">{t("Không lấy được dữ liệu. Kiểm tra kết nối backend rồi thử lại.")}</p>
       )}
       {loading && (
-        <p className="col-span-full text-sm text-text-muted">Đang nạp dữ liệu cửa hàng…</p>
+        <p className="col-span-full text-sm text-text-muted">{t("Đang nạp dữ liệu cửa hàng…")}</p>
       )}
 
       {/* Audit summary */}
       <Card className="lg:col-span-4">
         <CardHeader>
           <div>
-            <CardTitle>Điểm sức khỏe cửa hàng</CardTitle>
+            <CardTitle>{t("Điểm sức khỏe cửa hàng")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               {t("Tính từ snapshot sản phẩm, đơn hàng, đánh giá và tồn kho của workspace hiện tại.")}
             </p>
           </div>
-          <Badge variant="live">Workspace hiện tại</Badge>
+          <Badge variant="live">{t("Workspace hiện tại")}</Badge>
         </CardHeader>
         <CardContent className="flex justify-center pb-6">
-          <ScoreGauge score={overall} label="Điểm tổng" />
+          <ScoreGauge score={overall} label={t("Điểm tổng")} />
         </CardContent>
       </Card>
 
@@ -121,7 +122,7 @@ export function SellerCoachPanel() {
           <div>
             <CardTitle>{t("Chi tiết đánh giá")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Điểm từng trục + gợi ý cụ thể.
+              {t("Điểm từng trục + gợi ý cụ thể.")}
             </p>
           </div>
         </CardHeader>

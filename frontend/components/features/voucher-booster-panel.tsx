@@ -217,7 +217,7 @@ export function VoucherBoosterPanel() {
                     <div className="flex flex-wrap items-center gap-2">
                       {campaign.status === "simulated" && <>
                         <Button size="sm" disabled={busy !== null} onClick={() => decide(campaign, "approve")}><Check className="h-3.5 w-3.5" /> {t("Duyệt")}</Button>
-                        <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => decide(campaign, "reject")}><X className="h-3.5 w-3.5" /> Bỏ</Button>
+                        <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => decide(campaign, "reject")}><X className="h-3.5 w-3.5" /> {t("Bỏ")}</Button>
                       </>}
                       {!terminal && campaign.status !== "simulated" && (
                         <Button asChild size="sm" variant="secondary">

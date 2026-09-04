@@ -8,10 +8,12 @@ import { cn } from "@/lib/utils";
 import { navForApp } from "@/lib/nav";
 import { ShopSessionBar } from "@/components/shell/shop-session-bar";
 import { CartButton } from "@/components/shell/cart-button";
+import { LanguageToggle } from "@/components/shell/language-toggle";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n";
 
 const items = navForApp("shop");
 
@@ -25,6 +27,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
   // the first client render agree — otherwise React reports a hydration
   // mismatch on every shop page.
   const mounted = useMounted();
+  const t = useT();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
@@ -52,7 +55,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                       : "border-transparent text-text-muted hover:bg-surface-2 hover:text-text",
                   )}
                 >
-                  {item.label}
+                  {t(item.label)}
                 </Link>
               );
             })}
@@ -65,19 +68,24 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                 href="/shop/orders"
                 className="hidden rounded-full px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text md:inline-flex"
               >
-                Đơn của tôi
+                {t("Đơn của tôi")}
               </Link>
             )}
             {mounted ? <ThemeToggle /> : <div className="h-9 w-9 shrink-0" />}
+            {mounted ? (
+              <LanguageToggle />
+            ) : (
+              <div className="shrink-0" style={{ width: 74, height: 32 }} />
+            )}
             <CartButton />
             {mounted && user && (
               <Button asChild variant="secondary" size="sm" className="hidden md:inline-flex">
-                <Link href={sellerHref}>{sellerLabel}</Link>
+                <Link href={sellerHref}>{t(sellerLabel)}</Link>
               </Button>
             )}
             {mounted && !user && (
               <Button asChild size="sm" className="hidden md:inline-flex">
-                <Link href="/login">Đăng nhập</Link>
+                <Link href="/login">{t("Đăng nhập")}</Link>
               </Button>
             )}
             {mounted && user && (
@@ -86,7 +94,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                 title={user.email}
                 className="hidden items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text md:inline-flex"
               >
-                <LogOut className="h-3.5 w-3.5" /> Đăng xuất
+                <LogOut className="h-3.5 w-3.5" /> {t("Đăng xuất")}
               </button>
             )}
           </div>
@@ -113,7 +121,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                     isActive(item.href) ? "bg-accent/10 text-accent" : "text-text-muted",
                   )}
                 >
-                  {item.label}
+                  {t(item.label)}
                 </Link>
               ))}
               {mounted && user && (
@@ -122,7 +130,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                   onClick={() => setOpen(false)}
                   className="rounded-xl px-3 py-2.5 text-sm font-medium text-text-muted"
                 >
-                  {sellerLabel}
+                  {t(sellerLabel)}
                 </Link>
               )}
               {mounted && !user ? (
@@ -131,7 +139,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                   onClick={() => setOpen(false)}
                   className="rounded-xl px-3 py-2.5 text-sm font-semibold text-accent"
                 >
-                  Đăng nhập
+                  {t("Đăng nhập")}
                 </Link>
               ) : mounted ? (
                 <button
@@ -141,7 +149,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                   }}
                   className="rounded-xl px-3 py-2.5 text-left text-sm font-medium text-text-muted"
                 >
-                  Đăng xuất
+                  {t("Đăng xuất")}
                 </button>
               ) : null}
             </div>
@@ -153,7 +161,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-8 text-center text-xs text-text-dim sm:px-6">
-          Cellaxnet · mua sắm thời trang & mỹ phẩm
+          {t("Cellaxnet · mua sắm thời trang & mỹ phẩm")}
         </div>
       </footer>
 

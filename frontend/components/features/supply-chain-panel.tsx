@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { checkSupplyChain, type SupplyChainResult } from "@/lib/features";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, useTf } from "@/lib/i18n";
 
 const REGIONS = ["Miền Bắc", "Miền Trung", "Miền Nam"] as const;
 const CATEGORIES = ["Thời trang", "Mỹ phẩm", "Phụ kiện"] as const;
@@ -19,6 +19,7 @@ const SEVERITY: Record<string, { label: string; cls: string; badge: "success" | 
 };
 
 export function SupplyChainPanel() {
+  const tf = useTf();
   const t = useT();
   const [region, setRegion] = useState<(typeof REGIONS)[number]>("Miền Trung");
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("Thời trang");
@@ -45,7 +46,7 @@ export function SupplyChainPanel() {
           <div>
             <CardTitle>{t("Khu vực & danh mục")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              {t("Cảnh báo sớm gián đoạn logistics +")} <span className="text-text">tin tức thật</span> (Google News) theo khu vực.
+              {t("Cảnh báo sớm gián đoạn logistics +")} <span className="text-text">{t("tin tức thật")}</span> (Google News) theo khu vực.
             </p>
           </div>
           <Badge variant="muted">scenario + optional news</Badge>
@@ -113,7 +114,7 @@ export function SupplyChainPanel() {
                       </div>
                       <Badge variant={SEVERITY[a.severity].badge}>{SEVERITY[a.severity].label}</Badge>
                     </div>
-                    <div className="mono text-2xs text-text-dim">Dự kiến chậm thêm {a.estimated_delay_days} ngày</div>
+                    <div className="mono text-2xs text-text-dim">{tf("Dự kiến chậm thêm {số_ngày} ngày", { số_ngày: a.estimated_delay_days })}</div>
                     <div className="rounded-md border border-border bg-bg-alt px-3 py-2 text-xs text-text-muted">
                       <span className="text-xs font-medium text-text-dim">{t("Phương án dự phòng:")} </span>
                       {a.contingency}

@@ -273,6 +273,12 @@ export const EN: Record<string, string> = {
   // --- Gợi ý sản phẩm (RecSys) ---------------------------------------------
   "Hồ sơ demo": "Demo profile",
   "Khách mẫu": "Sample customer",
+  "Tín hiệu đang dùng": "Signals in use",
+  "Hồ sơ": "Profile",
+  "Khách đang hoạt động": "An active shopper",
+  "Nguồn": "Source",
+  "Catalog và lịch sử đơn": "Catalogue and order history",
+  "AI đang hoạt động": "AI is running",
   "Gợi ý theo hồ sơ minh hoạ": "Suggestions for an illustrative profile",
   "Sản phẩm trong danh sách dành cho bạn": "Products in your For You list",
   "Sản phẩm mua cùng minh hoạ": "Illustrative frequently-bought-together",
@@ -318,6 +324,7 @@ export const EN: Record<string, string> = {
   "Mô phỏng tác động": "Simulate the impact",
   "Duyệt hành động": "Approve the action",
   "Bỏ qua": "Dismiss",
+  "Bỏ": "Reject",
   "Mở Voucher Booster": "Open Voucher Booster",
   "Digital Twin chỉ dùng dữ liệu có nguồn trong snapshot. LLM được phép giải thích, không được tự tạo chỉ số hoặc vượt qua bước seller duyệt.":
     "The Digital Twin only uses data sourced from the snapshot. The LLM may explain the numbers; it may not invent them.",
@@ -358,6 +365,36 @@ export const EN: Record<string, string> = {
   "Sau giá vốn và phí sàn, chưa tính quảng cáo, voucher hay chi phí vận hành.":
     "After unit cost and marketplace fees; ads, vouchers and operating costs are not included.",
   "Ba mốc giá của thị trường": "Three market price markers",
+  "Điểm do dự: {điểm}": "Hesitation score: {điểm}",
+  "Hạng #{hạng} toàn shop": "Rank #{hạng} in the store",
+  "Cao điểm dự kiến: tháng {tháng}": "Expected peak: month {tháng}",
+  "Tối đa {số_ngày} ngày": "Up to {số_ngày} days",
+  "Còn {số_mã} mã ít ưu tiên hơn — không đưa lên màn hình chính.":
+    "{số_mã} more lower-priority SKUs — not shown on the main screen.",
+  "Kết quả cho \u201c{từ_khoá}\u201d": "Results for \u201c{từ_khoá}\u201d",
+  "Dự kiến chậm thêm {số_ngày} ngày": "Expected delay: {số_ngày} more days",
+  "Phù hợp {phần_trăm}%": "{phần_trăm}% match",
+  "Workspace hiện tại": "Current workspace",
+  "Doanh thu hôm nay": "Revenue today",
+  "Mô tả ngắn, nên bổ sung 2-3 bullet về chất liệu + cách dùng.":
+    "The description is short — add 2-3 bullets on material and how to use it.",
+  "Đang cao hơn median category 8% — thử giảm 5-7% trong 7 ngày.":
+    "Sitting 8% above the category median — try cutting 5-7% for a week.",
+  "Ảnh chính thiếu sáng, hero subject chỉ chiếm 32% frame.":
+    "The main photo is underexposed, and the subject fills only 32% of the frame.",
+  "Reply rate 92%, nhưng phản hồi negative chậm (>24h).":
+    "92% reply rate, but negative reviews wait over 24 hours for a response.",
+  "SKU top bán stockout 3 lần trong 30 ngày — set reorder buffer.":
+    "The top-selling SKU ran out 3 times in 30 days — set a reorder buffer.",
+  "Đơn hàng hôm nay": "Orders today",
+  "Tỷ lệ chuyển đổi": "Conversion rate",
+  "Giá trị đơn trung bình": "Average order value",
+  "{số_lượng} hiển thị": "{số_lượng} shown",
+  // Cột thời gian trong bảng cảnh báo. Khoá "Bắt đầu" đã dùng cho nút bắt
+  // đầu ("Start"), nên cột này cần khoá riêng để không đụng nghĩa.
+  "Bắt đầu lúc": "Started",
+  "Trạng thái: {trạng_thái}": "Status: {trạng_thái}",
+  "Mức rủi ro: {phần_trăm}%": "Risk level: {phần_trăm}%",
   "{số_mẫu} sản phẩm tương tự": "{số_mẫu} comparable listings",
   "Lợi nhuận": "Profit",
   "Mức điều chỉnh khá lớn ({phần_trăm}%). Có thể thử {giá} trước để xem phản ứng của khách trước khi đi hết mức tham khảo.":
@@ -453,6 +490,17 @@ export const EN: Record<string, string> = {
   "So với sản phẩm đang xem": "vs. the product you are viewing",
   "Đã bán / đơn": "Sold / orders",
   "Dẫn đầu:": "Leading:",
+  "Top {hạng} danh mục": "Top {hạng} category",
+  "Top {hạng} danh mục {danh_mục}": "Top {hạng} in {danh_mục}",
+  "{phần_trăm}% tỷ trọng doanh thu shop": "{phần_trăm}% of store revenue",
+  "{số_lượng} sản phẩm": "{số_lượng} units",
+  "{số_đơn} đơn": "{số_đơn} orders",
+  "{số_lượng} SP · {số_đơn} đơn · Xem so sánh":
+    "{số_lượng} units · {số_đơn} orders · Compare",
+  "Nguồn số liệu bán hàng": "Sales data source",
+  "Nguồn số liệu: {sàn} · {cửa_hàng}": "Source: {sàn} · {cửa_hàng}",
+  "Kỳ tính {từ_ngày}–{đến_ngày} · dữ liệu cập nhật đến {cập_nhật}.":
+    "Period {từ_ngày}–{đến_ngày} · data current to {cập_nhật}.",
   "Tỷ trọng danh mục:": "Category share:",
   "Tăng/giảm doanh thu:": "Revenue change:",
   "Xem tất cả": "View all",
@@ -474,7 +522,6 @@ export const EN: Record<string, string> = {
     "The system will not pair a product from another category just to fill a slot.",
   "Tự ghép sản phẩm cùng shop, cùng danh mục theo thương hiệu, tên và mức giá.":
     "Automatically pairs products from the same store and category by brand, name and price level.",
-  "Nguồn số liệu bán hàng": "Sales data source",
   "Nguồn cửa hàng": "Store source",
   "Dữ liệu cửa hàng": "Store data",
   "Dữ liệu đồng bộ từ sàn": "Data synced from the marketplace",
@@ -620,6 +667,11 @@ export const EN: Record<string, string> = {
 
   // --- Hành trình khách -----------------------------------------------------
   "Phiên của bạn": "Your session",
+  "Hành trình tham khảo": "Reference journeys",
+  "Chọn một hành trình để xem lại.": "Pick a journey to review.",
+  "Video hành trình": "Journey video",
+  "Video tái hiện chuỗi hành động của phiên, không phải ghi màn hình thời gian thực.":
+    "The video reproduces the session's sequence of actions; it is not a live screen recording.",
   "Phiên demo dựng trước": "Pre-built demo session",
   "Video demo dựng trước": "Pre-built demo video",
   "Chọn một hành trình mẫu để xem video demo replay.":
@@ -893,6 +945,22 @@ export const EN: Record<string, string> = {
   "Hỏi gì đó — ví dụ: son cho da ngăm dưới 350k… hoặc bấm mic và nói \"Hey Cellaxnet\"":
     "Ask me something — say, lipstick for deeper skin tones under 350k… or tap the mic and say \"Hey Cellaxnet\"",
   "Gợi ý nhanh": "Quick suggestions",
+  "Gợi ý theo hồ sơ hiện tại": "Suggestions for the current profile",
+  "Gợi ý được tạo từ catalog hiện tại. Hãy kiểm tra giá và thông tin trên trang sản phẩm trước khi mua.":
+    "Suggestions come from the current catalogue. Check the price and details on the product page before buying.",
+  "Nhập thông tin sản phẩm rồi bấm “Tạo 3 phiên bản”.":
+    "Fill in the product details, then choose “Generate 3 versions”.",
+  "Sản phẩm thường được mua cùng": "Frequently bought together",
+  "Theo dữ liệu backend hiện tại": "From the current backend data",
+  "Tính từ snapshot sản phẩm, đơn hàng, đánh giá và tồn kho của workspace hiện tại.":
+    "Computed from this workspace's snapshot of products, orders, reviews and stock.",
+  "Xếp hạng từ lịch sử đồng mua trong dữ liệu cửa hàng.":
+    "Ranked from co-purchase history in the store data.",
+  "Xếp hạng từ tín hiệu phiên hiện tại và catalog backend.":
+    "Ranked from the current session's signals and the backend catalogue.",
+  "Đang nạp dữ liệu cửa hàng…": "Loading store data…",
+  "Đang nạp gợi ý sản phẩm…": "Loading product suggestions…",
+  "Catalog đang hoạt động": "Catalogue is live",
   "Nguồn gợi ý": "Suggestion source",
   "Nhu cầu, ngân sách và đánh giá": "Needs, budget and reviews",
   "Gợi ý được tạo từ danh mục mẫu. Hãy kiểm tra giá và thông tin trên trang sản phẩm trước khi mua.":
@@ -1267,6 +1335,8 @@ export const EN: Record<string, string> = {
   "Đăng ký": "Sign up",
   "Đăng xuất": "Sign out",
   "Tên của bạn": "Your name",
+  Email: "Email",
+  "(không bắt buộc)": "(optional)",
   "Đăng nhập không thành công.": "Sign-in failed.",
   "Đăng ký không thành công.": "Sign-up failed.",
   "Mật khẩu nhập lại không khớp.": "The passwords do not match.",

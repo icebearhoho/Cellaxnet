@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, cast
 
+from app.core.i18n import t
 from app.schemas.insights import ChurnRequest, RegretRequest, ReturnRequest
 from app.schemas.journey import JourneyEvent, JourneyRequest
 from app.services import commerce_store as store
@@ -149,11 +150,11 @@ def risk_portfolio() -> dict:
             "lifetime_value_vnd": ltv,
             "preferred_channel": c.get("preferred_channel"),
             "lead_kind": lead["kind"] if lead else None,
-            "lead_label": lead["label"] if lead else None,
+            "lead_label": t(lead["label"]) if lead else None,
             "lead_risk": lead["risk"] if lead else None,
             "lead_band": lead["band"] if lead else None,
             "lead_reason": lead["reason"] if lead else None,
-            "lead_action": lead["action"] if lead else None,
+            "lead_action": t(lead["action"]) if lead else None,
             "value_at_stake_vnd": at_stake,
             "churn_risk": churn["churn_risk"] if churn else None,
             "churn_band": churn["risk_band"] if churn else None,
@@ -225,9 +226,9 @@ def _action_groups(rows: list[dict]) -> list[dict]:
     return [
         {
             "key": g["key"],
-            "label": g["label"],
+            "label": t(g["label"]),
             "tone": g["tone"],
-            "action": g["action"],
+            "action": t(g["action"]),
             "count": counts[g["key"]],
             "value_at_stake_vnd": stakes[g["key"]],
         }

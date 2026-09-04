@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime
 
+from app.core.i18n import t, tf
 from app.services import commerce_store as store
 
 
@@ -80,12 +81,15 @@ def _alerts() -> list[dict]:
         alerts.append({
             "id": f"INV-{index:03d}",
             "feature": "sentiment-alert",
-            "featureLabel": "Tồn kho",
+            "featureLabel": t("Tồn kho"),
             "region": store.shop_profile()["warehouse"],
             "severity": "critical" if product["stock"] == 0 else "warning",
             "status": "open",
             "startedAt": store.shop_profile()["data_as_of"][:16].replace("T", " "),
-            "message": f"{product['name']} còn {product['stock']} sản phẩm (~{runway} ngày bán)",
+            "message": tf(
+                "{sản_phẩm} còn {tồn_kho} sản phẩm (~{số_ngày} ngày bán)",
+                sản_phẩm=product["name"], tồn_kho=product["stock"], số_ngày=runway,
+            ),
             "product_id": product["id"],
         })
 
@@ -96,12 +100,15 @@ def _alerts() -> list[dict]:
     alerts.append({
         "id": "RISK-001",
         "feature": "customer-risk",
-        "featureLabel": "Rủi ro khách hàng",
-        "region": "Toàn quốc",
+        "featureLabel": t("Rủi ro khách hàng"),
+        "region": t("Toàn quốc"),
         "severity": "warning",
         "status": "monitoring",
         "startedAt": store.shop_profile()["data_as_of"][:16].replace("T", " "),
-        "message": f"{len(at_risk)} khách có recency cao hoặc bỏ giỏ ≥70% cần win-back",
+        "message": tf(
+            "{số_khách} khách có recency cao hoặc bỏ giỏ ≥70% cần win-back",
+            số_khách=len(at_risk),
+        ),
     })
 
     negative_reviews = sum(
@@ -113,12 +120,15 @@ def _alerts() -> list[dict]:
     alerts.append({
         "id": "REV-001",
         "feature": "review-intelligence",
-        "featureLabel": "Đánh giá khách hàng",
+        "featureLabel": t("Đánh giá khách hàng"),
         "region": "—",
         "severity": "info",
         "status": "monitoring",
         "startedAt": store.shop_profile()["data_as_of"][:16].replace("T", " "),
-        "message": f"{negative_reviews} đánh giá ≤3 sao trong 30 ngày cần phân tích chủ đề",
+        "message": tf(
+            "{số_đánh_giá} đánh giá ≤3 sao trong 30 ngày cần phân tích chủ đề",
+            số_đánh_giá=negative_reviews,
+        ),
     })
     return alerts
 

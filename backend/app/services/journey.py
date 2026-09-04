@@ -14,6 +14,7 @@ import math
 import time
 from collections import Counter
 
+from app.core.i18n import t
 from app.schemas.journey import (
     FunnelStage,
     JourneyRequest,
@@ -69,21 +70,21 @@ def _next_action(stage: FunnelStage, prob: float, engagement: float,
         if counts["cart"] == 0:
             # Bought via "Mua ngay" with no cart step — a fast, low-friction
             # decision; the moment to upsell is now, before they leave.
-            return ("checkout", "Đã mua trong phiên — có thể mua thêm",
+            return ("checkout", t("Đã mua trong phiên — có thể mua thêm"),
                     f"Khách mua thẳng SP {cat} không qua giỏ hàng — quyết định rất nhanh, "
                     f"ít nhạy giá. Gợi ý thêm SP bổ sung cùng ngành {cat} ngay ở trang cảm ơn "
                     f"+ mời tích điểm/thành viên trước khi khách rời trang.")
-        return ("checkout", "Đã mua trong phiên — có thể mua thêm",
+        return ("checkout", t("Đã mua trong phiên — có thể mua thêm"),
                 f"Đã chốt đơn {cat} sau khi cân nhắc trong giỏ hàng. Cross-sell SP bổ sung "
                 f"cùng ngành + mời tích điểm/thành viên để tăng giá trị đơn tiếp theo.")
 
     if stage == "intent":
         if prob >= 0.6:
-            return ("checkout", "Sắp thanh toán",
+            return ("checkout", t("Sắp thanh toán"),
                     f"Đã thêm {cat} vào giỏ, mức độ quan tâm cao ({pct}%) — làm nổi bật nút "
                     f"thanh toán + freeship/quà nhỏ để chốt đơn ngay trước khi khách đổi ý."
                     f"{review_note}")
-        return ("compare", "Đang phân vân (đã thêm giỏ nhưng chưa mua)",
+        return ("compare", t("Đang phân vân (đã thêm giỏ nhưng chưa mua)"),
                 f"Đã thêm {cat} vào giỏ nhưng xác suất mua chỉ {pct}% — có thể đang so giá "
                 f"hoặc chờ khuyến mãi. Gửi mã giảm giá giới hạn thời gian + review nổi bật "
                 f"của SP này để thúc đẩy chốt đơn.{review_note}")
@@ -92,18 +93,18 @@ def _next_action(stage: FunnelStage, prob: float, engagement: float,
     # explicit search means the shopper is hunting for something, so treat that
     # as early-funnel browsing to nurture, not a bounce.
     if engagement < 0.2 and prob < 0.35 and not has_search:
-        return ("leave", "Nguy cơ rời đi",
+        return ("leave", t("Nguy cơ rời đi"),
                 f"Tương tác rất thấp ({round(engagement * 100)}%) với {cat}, không có tìm "
                 f"kiếm chủ động — nguy cơ rời trang cao. Bật popup ưu đãi/mã giảm ngay để "
                 f"giữ chân trước khi khách thoát.")
 
     if stage == "consideration":
         if prob >= 0.5:
-            return ("add_to_cart", "Có khả năng thêm vào giỏ",
+            return ("add_to_cart", t("Có khả năng thêm vào giỏ"),
                     f"Khách đã xem/click nhiều lần ngành {cat}, mức quan tâm {pct}% — nhắc "
                     f"lại lợi ích chính + hiển thị review nổi bật để tạo động lực thêm giỏ."
                     f"{review_note}")
-        return ("keep_browsing", "Còn xem tiếp, chưa quyết",
+        return ("keep_browsing", t("Còn xem tiếp, chưa quyết"),
                 f"Khách mới xem qua vài SP {cat}, chưa có dấu hiệu quyết định rõ ({pct}%) — "
                 f"đề xuất SP liên quan cùng danh mục để giữ chân và dẫn dắt tiếp.{review_note}")
 

@@ -43,14 +43,14 @@ import {
   type ProductPerformance,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n";
+import { useT, translate, useTf } from "@/lib/i18n";
 
 
 const PERIOD_DAYS = 30;
 const SHOPEE_PICKER_ID = -2;
 
 function vnd(value: number | null) {
-  if (value === null) return "Chưa có giá";
+  if (value === null) return translate("Chưa có giá");
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -59,7 +59,7 @@ function vnd(value: number | null) {
 }
 
 function dateTime(value: string | null) {
-  if (!value) return "Chưa đồng bộ";
+  if (!value) return translate("Chưa đồng bộ");
   return new Intl.DateTimeFormat("vi-VN", {
     dateStyle: "short",
     timeStyle: "short",
@@ -71,12 +71,17 @@ function shortDate(value: string) {
 }
 
 function platformName(platform: string) {
-  const names: Record<string, string> = { demo: "Cửa hàng", lazada: "Lazada", tiktok: "TikTok Shop", shopee: "Shopee" };
+  const names: Record<string, string> = {
+    demo: translate("Cửa hàng"), lazada: "Lazada",
+    tiktok: "TikTok Shop", shopee: "Shopee",
+  };
   return names[platform] ?? platform;
 }
 
 function shopLabel(shop: { platform: string; shop_name: string }) {
-  return shop.platform === "demo" ? "Dữ liệu cửa hàng" : platformName(shop.platform);
+  return shop.platform === "demo"
+    ? translate("Dữ liệu cửa hàng")
+    : platformName(shop.platform);
 }
 
 function Growth({ value }: { value: number | null }) {
@@ -110,6 +115,7 @@ function ProductThumb({ product, className }: { product: Pick<ProductPerformance
 }
 
 function ProductCard({ product, onSelect }: { product: ProductPerformance; onSelect: () => void }) {
+  const tf = useTf();
   const t = useT();
   return (
     <button
@@ -120,7 +126,7 @@ function ProductCard({ product, onSelect }: { product: ProductPerformance; onSel
       <ProductThumb product={product} className="h-24 w-24" />
       <div className="min-w-0 flex-1 py-0.5">
         <div className="flex items-center justify-between gap-2">
-          <Badge variant="info">Top {product.category_rank} danh mục {product.category}</Badge>
+          <Badge variant="info">{tf("Top {hạng} danh mục {danh_mục}", { hạng: product.category_rank, danh_mục: t(product.category) })}</Badge>
           <div className="shrink-0 text-right">
             <p className="mb-0.5 text-2xs text-text-dim">{t("So kỳ trước")}</p>
             <Growth value={product.sales_change_pct} />
@@ -128,13 +134,14 @@ function ProductCard({ product, onSelect }: { product: ProductPerformance; onSel
         </div>
         <p className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-text group-hover:text-accent">{product.name}</p>
         <p className="tnum mt-2 text-sm font-bold text-text">{vnd(product.revenue_vnd)}</p>
-        <p className="mt-1 text-2xs text-text-muted">{product.units_sold} SP · {product.orders_count} đơn · Xem so sánh <ArrowRight className="inline h-3 w-3" /></p>
+        <p className="mt-1 text-2xs text-text-muted">{tf("{số_lượng} SP · {số_đơn} đơn · Xem so sánh", { số_lượng: product.units_sold, số_đơn: product.orders_count })} <ArrowRight className="inline h-3 w-3" /></p>
       </div>
     </button>
   );
 }
 
 function SourceStrip({ source }: { source: GraphSource }) {
+  const tf = useTf();
   const t = useT();
   return (
     <Card className="overflow-hidden border-info/20 bg-info/[0.025]">
@@ -146,12 +153,21 @@ function SourceStrip({ source }: { source: GraphSource }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-semibold text-text">
-                {source.demo_data_used ? "Nguồn số liệu bán hàng" : `Nguồn số liệu: ${platformName(source.platform)} · ${source.shop_name}`}
+                {source.demo_data_used
+                  ? t("Nguồn số liệu bán hàng")
+                  : tf("Nguồn số liệu: {sàn} · {cửa_hàng}", {
+                      sàn: platformName(source.platform),
+                      cửa_hàng: source.shop_name,
+                    })}
               </p>
               {!source.demo_data_used && <Badge variant="success">{t("Dữ liệu đồng bộ từ sàn")}</Badge>}
             </div>
             <p className="mt-1 text-xs leading-5 text-text-muted">
-              Kỳ tính {shortDate(source.period_start)}–{shortDate(source.period_end)} · dữ liệu cập nhật đến {dateTime(source.last_synced_at)}.
+              {tf("Kỳ tính {từ_ngày}–{đến_ngày} · dữ liệu cập nhật đến {cập_nhật}.", {
+                từ_ngày: shortDate(source.period_start),
+                đến_ngày: shortDate(source.period_end),
+                cập_nhật: dateTime(source.last_synced_at),
+              })}
             </p>
           </div>
         </div>
@@ -212,13 +228,14 @@ function EmptyData({ overview, reload }: { overview: ProductGraphOverview; reloa
 }
 
 export function ProductGraphPanel() {
+  const tf = useTf();
   const t = useT();
   const [overview, setOverview] = useState<ProductGraphOverview | null>(null);
   const [detail, setDetail] = useState<ProductGraphResult | null>(null);
   const [shopId, setShopId] = useState<number | undefined>();
   const [sourcePickerOpen, setSourcePickerOpen] = useState(false);
   const [sourceCommandValue, setSourceCommandValue] = useState("");
-  const [category, setCategory] = useState(t("Tất cả"));
+  const [category, setCategory] = useState("Tất cả");
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -233,7 +250,7 @@ export function ProductGraphPanel() {
     } else {
       setOverview(response);
       setShopId(response.source?.shop_connection_id ?? selectedShop);
-      setCategory(t("Tất cả"));
+      setCategory("Tất cả");
     }
     setLoading(false);
   }
@@ -258,7 +275,7 @@ export function ProductGraphPanel() {
     if (!overview) return [];
     const orderedCategories = overview.categories
       .map((item) => item.category)
-      .filter((item) => category === t("Tất cả") || item === category);
+      .filter((item) => category === "Tất cả" || item === category);
     const grouped = new Map<string, ProductPerformance[]>();
     for (const product of overview.top_products) {
       if (!grouped.has(product.category)) grouped.set(product.category, []);
@@ -269,7 +286,7 @@ export function ProductGraphPanel() {
         a.category_rank - b.category_rank || b.revenue_vnd - a.revenue_vnd
       ))
     ));
-    if (category !== t("Tất cả")) return categories[0] ?? [];
+    if (category !== "Tất cả") return categories[0] ?? [];
 
     const products: Array<ProductPerformance | null> = [];
     const longestColumn = Math.max(0, ...categories.map((items) => items.length));
@@ -279,7 +296,7 @@ export function ProductGraphPanel() {
       }
     }
     return products;
-  }, [overview, category, t]);
+  }, [overview, category]);
 
   const selectedShop = overview?.available_shops.find((shop) => shop.id === shopId);
   const hasShopee = overview?.available_shops.some((shop) => shop.platform === "shopee") ?? false;
@@ -400,7 +417,7 @@ export function ProductGraphPanel() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-2xs font-semibold uppercase tracking-wider text-accent">Top {item.rank} danh mục</p>
+                      <p className="text-2xs font-semibold uppercase tracking-wider text-accent">{tf("Top {hạng} danh mục", { hạng: item.rank })}</p>
                       <p className="mt-1 truncate text-sm font-bold text-text">{item.category}</p>
                     </div>
                     <div className="shrink-0 text-right">
@@ -410,9 +427,9 @@ export function ProductGraphPanel() {
                   </div>
                   <p className="tnum mt-4 text-lg font-bold text-text">{vnd(item.revenue_vnd)}</p>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-muted">
-                    <span>{item.revenue_share_pct.toLocaleString("vi-VN")}% tỷ trọng doanh thu shop</span>
-                    <span>{item.units_sold.toLocaleString("vi-VN")} sản phẩm</span>
-                    <span>{item.orders_count.toLocaleString("vi-VN")} đơn</span>
+                    <span>{tf("{phần_trăm}% tỷ trọng doanh thu shop", { phần_trăm: item.revenue_share_pct.toLocaleString("vi-VN") })}</span>
+                    <span>{tf("{số_lượng} sản phẩm", { số_lượng: item.units_sold.toLocaleString("vi-VN") })}</span>
+                    <span>{tf("{số_đơn} đơn", { số_đơn: item.orders_count.toLocaleString("vi-VN") })}</span>
                   </div>
                   <p className="mt-3 line-clamp-2 text-xs leading-5 text-text-muted">{t("Dẫn đầu:")} <b className="text-text">{item.top_product_name}</b></p>
                 </button>
@@ -428,8 +445,8 @@ export function ProductGraphPanel() {
                   {t("Xếp hạng theo thành tiền của các dòng hàng thuộc đơn hợp lệ trong kỳ 30 ngày, không dựa trên lượt xem.")}
                 </p>
               </div>
-              {category !== t("Tất cả") && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setCategory(t("Tất cả"))}>{t("Xem tất cả")}</Button>
+              {category !== "Tất cả" && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setCategory("Tất cả")}>{t("Xem tất cả")}</Button>
               )}
             </CardHeader>
             <CardContent className="grid gap-4 pt-5 md:grid-cols-2 xl:grid-cols-3">
@@ -459,7 +476,7 @@ export function ProductGraphPanel() {
                   <div className="shrink-0 sm:text-right">
                     <p className="text-xs text-text-muted">Doanh thu {PERIOD_DAYS} ngày</p>
                     <p className="tnum mt-1 text-xl font-bold text-accent">{vnd(detail.product.revenue_vnd)}</p>
-                    <p className="mt-1 text-xs text-text-muted">Hạng #{detail.product.revenue_rank} toàn shop</p>
+                    <p className="mt-1 text-xs text-text-muted">{tf("Hạng #{hạng} toàn shop", { hạng: detail.product.revenue_rank })}</p>
                   </div>
                 </div>
               </div>

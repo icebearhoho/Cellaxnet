@@ -143,7 +143,7 @@ export function CustomerJourneyPanel() {
                       <Icon className="h-3 w-3" />
                       {meta?.label ?? e.type}
                       {e.query && <span className="text-text-dim">· &ldquo;{e.query}&rdquo;</span>}
-                      {e.category && <span className="text-text-dim">· {e.category}</span>}
+                      {e.category && <span className="text-text-dim">· {t(e.category)}</span>}
                     </span>
                   );
                 })}
@@ -201,7 +201,7 @@ export function CustomerJourneyPanel() {
                     )}
                   >
                     <div className="flex items-center gap-1.5 text-sm font-medium text-text">
-                      {s.label}
+                      {t(s.label)}
                       {s.video_url && <Video className="h-3.5 w-3.5 shrink-0 text-accent" />}
                     </div>
                     <div className="mono mt-1 text-xs font-medium text-text-dim">

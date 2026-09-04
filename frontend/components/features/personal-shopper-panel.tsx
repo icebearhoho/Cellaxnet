@@ -32,6 +32,8 @@ type Turn = {
 const INITIAL_GREETING: Turn = {
   id: "t0",
   role: "assistant",
+  // Dịch tại điểm hiển thị: đây là hằng số ở đầu module nên không gọi được
+  // hook ở chỗ khai báo.
   text:
     "Chào bạn! Mình có thể gợi ý quà, son, đồ đi làm hoặc sản phẩm chăm sóc da theo phong cách và ngân sách của bạn. Hôm nay bạn đang tìm gì?",
   products: [],
@@ -103,7 +105,7 @@ export function PersonalShopperPanel() {
     const total = reply.length * 18;
     window.setTimeout(() => {
       setTurns((prev) =>
-        prev.map((t) => (t.id === assistantTurn.id ? { ...t, streaming: false } : t)),
+        prev.map((turn) => (turn.id === assistantTurn.id ? { ...turn, streaming: false } : turn)),
       );
       setPending(false);
     }, Math.min(total, 6000));
@@ -124,33 +126,33 @@ export function PersonalShopperPanel() {
               </span>
             </div>
             <div className="flex items-center gap-2 text-2xs text-text-muted">
-              <Badge variant="live">Catalog đang hoạt động</Badge>
+              <Badge variant="live">{t("Catalog đang hoạt động")}</Badge>
             </div>
           </div>
 
           <div ref={listRef} className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
-            {turns.map((t) => (
-              <div key={t.id} className="space-y-3">
+            {turns.map((turn) => (
+              <div key={turn.id} className="space-y-3">
                 <ChatBubble
-                  role={t.role}
-                  timestamp={t.createdAt}
-                  streaming={t.streaming}
+                  role={turn.role}
+                  timestamp={turn.createdAt}
+                  streaming={turn.streaming}
                   content={
-                    t.streaming ? (
+                    turn.streaming ? (
                       <span className="whitespace-pre-wrap">
-                        {t.text.slice(0, Math.max(0, Math.floor((turns.length) * 0)))}
+                        {turn.text.slice(0, Math.max(0, Math.floor((turns.length) * 0)))}
                         {/* text is rendered fully below; caret indicates streaming */}
-                        <StreamingReplyText text={t.text} tick={pending} />
+                        <StreamingReplyText text={t(turn.text)} tick={pending} />
                       </span>
                     ) : (
-                      <span className="whitespace-pre-wrap">{t.text}</span>
+                      <span className="whitespace-pre-wrap">{t(turn.text)}</span>
                     )
                   }
                 />
 
-                {t.products && t.products.length > 0 && !t.streaming && (
+                {turn.products && turn.products.length > 0 && !turn.streaming && (
                   <div className="ml-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {t.products.map((p) => (
+                    {turn.products.map((p) => (
                       <ProductCard
                         key={p.id}
                         product={p}

@@ -74,7 +74,7 @@ export function CreatorPerformancePanel() {
                 <button key={c} type="button" onClick={() => setCategory(c)}
                   className={cn("px-3 py-2 text-xs font-medium transition-colors",
                     category === c ? "bg-accent/15 text-accent" : "text-text-muted hover:text-text")}>
-                  {c}
+                  {t(c)}
                 </button>
               ))}
             </div>
@@ -87,11 +87,11 @@ export function CreatorPerformancePanel() {
                   <Input value={it.creator} onChange={(e) => update(i, { creator: e.target.value })}
                     placeholder={t("Tên creator")} className="h-9 flex-1" />
                   <div className="inline-flex overflow-hidden rounded-md border border-border">
-                    {CONTENT_TYPES.map((t) => (
-                      <button key={t} type="button" onClick={() => update(i, { content_type: t })}
+                    {CONTENT_TYPES.map((kind) => (
+                      <button key={kind} type="button" onClick={() => update(i, { content_type: kind })}
                         className={cn("px-2.5 py-1.5 text-2xs font-medium transition-colors",
-                          it.content_type === t ? "bg-accent/15 text-accent" : "text-text-muted hover:text-text")}>
-                        {CONTENT_LABEL[t]}
+                          it.content_type === kind ? "bg-accent/15 text-accent" : "text-text-muted hover:text-text")}>
+                        {t(CONTENT_LABEL[kind])}
                       </button>
                     ))}
                   </div>

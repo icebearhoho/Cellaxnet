@@ -7,10 +7,12 @@ import { getStoreProducts, type StoreProduct } from "@/lib/features";
 import { trackEvent } from "@/lib/journey-track";
 import { addToCart } from "@/lib/cart";
 import { StoreProductCard } from "@/components/store/store-product-card";
+import { useT } from "@/lib/i18n";
 
 const CATEGORIES = ["Tất cả", "Thời trang", "Mỹ phẩm", "Phụ kiện"] as const;
 
 export default function StorePage() {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("Tất cả");
   const [products, setProducts] = useState<StoreProduct[] | null>(null);
@@ -25,22 +27,22 @@ export default function StorePage() {
       const res = await getStoreProducts(q || undefined, cat);
       if (!res) {
         setProducts(null);
-        setError("Chưa kết nối được cửa hàng. Máy chủ có thể đang khởi động, hãy thử lại.");
+        setError(t("Chưa kết nối được cửa hàng. Máy chủ có thể đang khởi động, hãy thử lại."));
         return;
       }
       setProducts(res.products);
     } catch {
       setProducts(null);
-      setError("Chưa kết nối được cửa hàng. Máy chủ có thể đang khởi động, hãy thử lại.");
+      setError(t("Chưa kết nối được cửa hàng. Máy chủ có thể đang khởi động, hãy thử lại."));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Load all products on mount.
   useEffect(() => {
     load("", "Tất cả");
-  }, [load]);
+  }, [load, t]);
 
   const activeCat = activeCategory === "Tất cả" ? undefined : activeCategory;
 
@@ -58,8 +60,8 @@ export default function StorePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-extrabold">Cửa hàng Cellaxnet</h1>
-        <p className="mt-1 text-text-muted">Thời trang, mỹ phẩm và phụ kiện.</p>
+        <h1 className="text-3xl font-extrabold">{t("Cửa hàng Cellaxnet")}</h1>
+        <p className="mt-1 text-text-muted">{t("Thời trang, mỹ phẩm và phụ kiện.")}</p>
       </div>
 
       {/* Search + filters */}
@@ -73,7 +75,7 @@ export default function StorePage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") submitSearch();
               }}
-              placeholder="Tìm sản phẩm, thương hiệu…"
+              placeholder={t("Tìm sản phẩm, thương hiệu…")}
               className="h-11 w-full rounded-full border border-border bg-surface pl-11 pr-4 text-sm text-text outline-none transition-colors focus:border-accent"
             />
           </div>
@@ -82,7 +84,7 @@ export default function StorePage() {
             onClick={submitSearch}
             className="inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
           >
-            Tìm
+            {t("Tìm")}
           </button>
         </div>
 
@@ -99,7 +101,7 @@ export default function StorePage() {
                   : "bg-surface-2 text-text-muted hover:text-text",
               )}
             >
-              {c}
+              {t(c)}
             </button>
           ))}
         </div>
@@ -109,26 +111,26 @@ export default function StorePage() {
       {loading ? (
         <div className="grid place-items-center rounded-lg border border-border bg-surface py-20 text-text-muted">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <p className="mt-3 text-sm">Đang tải sản phẩm…</p>
+          <p className="mt-3 text-sm">{t("Đang tải sản phẩm…")}</p>
         </div>
       ) : products === null ? (
         <div className="grid place-items-center rounded-lg border border-border bg-surface py-20 text-center">
           <PackageOpen className="h-8 w-8 text-text-dim" strokeWidth={1.5} />
-          <p className="mt-3 text-lg font-bold">Cửa hàng đang nghỉ một chút</p>
-          <p className="mt-1 text-text-muted">{error ?? "Chưa tải được sản phẩm. Bạn thử lại sau nhé!"}</p>
+          <p className="mt-3 text-lg font-bold">{t("Cửa hàng đang nghỉ một chút")}</p>
+          <p className="mt-1 text-text-muted">{error ?? t("Chưa tải được sản phẩm. Bạn thử lại sau nhé!")}</p>
           <button
             type="button"
             onClick={() => load(query, activeCategory)}
             className="mt-4 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
           >
-            Thử tải lại
+            {t("Thử tải lại")}
           </button>
         </div>
       ) : products.length === 0 ? (
         <div className="grid place-items-center rounded-lg border border-border bg-surface py-20 text-center">
           <PackageOpen className="h-8 w-8 text-text-dim" strokeWidth={1.5} />
-          <p className="mt-3 text-lg font-bold">Không có sản phẩm phù hợp</p>
-          <p className="mt-1 text-text-muted">Thử từ khoá khác hoặc chọn danh mục khác nhé.</p>
+          <p className="mt-3 text-lg font-bold">{t("Không có sản phẩm phù hợp")}</p>
+          <p className="mt-1 text-text-muted">{t("Thử từ khoá khác hoặc chọn danh mục khác nhé.")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">

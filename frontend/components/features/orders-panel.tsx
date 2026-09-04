@@ -73,8 +73,7 @@ export function OrdersPanel() {
         <div>
           <CardTitle>{t("Đơn hàng")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Đơn thật do khách đặt từ cửa hàng. Chưa có cổng thanh toán — người bán
-            xác nhận trạng thái thủ công.
+            {t("Đơn thật do khách đặt từ cửa hàng. Chưa có cổng thanh toán — người bán xác nhận trạng thái thủ công.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -94,15 +93,14 @@ export function OrdersPanel() {
       </CardHeader>
       <CardContent>
         {loading && !orders ? (
-          <p className="text-sm text-text-muted">Đang tải đơn…</p>
+          <p className="text-sm text-text-muted">{t("Đang tải đơn…")}</p>
         ) : orders === null ? (
           <p className="text-sm text-danger">
-            Không tải được đơn. Kiểm tra kết nối backend rồi thử lại.
+            {t("Không tải được đơn. Kiểm tra kết nối backend rồi thử lại.")}
           </p>
         ) : orders.length === 0 ? (
           <p className="flex items-center gap-2 text-sm text-text-muted">
-            <PackageOpen className="h-4 w-4" /> Chưa có đơn nào. Đặt thử một đơn từ
-            cửa hàng để thấy nó ở đây.
+            <PackageOpen className="h-4 w-4" /> {t("Chưa có đơn nào. Đặt thử một đơn từ cửa hàng để thấy nó ở đây.")}
           </p>
         ) : (
           <div className="space-y-3">
