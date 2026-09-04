@@ -11,12 +11,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-text bg-accent text-white shadow-[2px_3px_0_hsl(var(--text)/0.22)] hover:-translate-y-0.5 hover:bg-accent-hover",
+          "border-text bg-accent text-white shadow-[2px_3px_0_hsl(var(--text)/calc(0.22*var(--shadow-strength)))] hover:-translate-y-0.5 hover:bg-accent-hover",
         secondary:
-          "border-border-strong bg-surface text-text shadow-[2px_3px_0_hsl(var(--text)/0.10)] hover:-translate-y-0.5 hover:border-accent hover:text-accent",
+          "border-border-strong bg-surface text-text shadow-[2px_3px_0_hsl(var(--text)/calc(0.10*var(--shadow-strength)))] hover:-translate-y-0.5 hover:border-accent hover:text-accent",
         ghost: "border-transparent text-text-muted hover:bg-surface-2 hover:text-text",
         destructive:
-          "border-text bg-danger text-white shadow-[2px_3px_0_hsl(var(--text)/0.18)] hover:bg-danger/90",
+          "border-text bg-danger text-white shadow-[2px_3px_0_hsl(var(--text)/calc(0.18*var(--shadow-strength)))] hover:bg-danger/90",
         outline:
           "border-border-strong bg-surface text-text hover:-translate-y-0.5 hover:bg-surface-2",
       },

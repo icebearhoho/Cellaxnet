@@ -38,6 +38,17 @@ export default function RootLayout({
       lang="vi"
       className={`${inter.variable} ${jetbrainsMono.variable} ${patrickHand.variable}`}
     >
+      <head>
+        {/* Đặt theme TRƯỚC khi trang vẽ. Nếu để React làm sau khi mount thì
+            người chọn giao diện tối sẽ thấy một nháy sáng trắng trước khi
+            chuyển — lỗi này gọi là "flash of wrong theme", và cách duy nhất
+            tránh được là chạy đồng bộ ngay trong <head>. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("area303:theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-bg text-text antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>

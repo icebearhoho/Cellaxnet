@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { LanguageToggle } from "@/components/shell/language-toggle";
+import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { useMounted } from "@/lib/hooks/use-mounted";
 
 type Crumb = { label: string; href?: string };
@@ -79,6 +80,7 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
 
       {/* Ngôn ngữ. Chỉ hiện sau khi mount vì lựa chọn nằm trong localStorage,
           server render không thấy được. */}
+      {mounted ? <ThemeToggle /> : <div className="h-9 w-9 shrink-0" />}
       {mounted ? <LanguageToggle /> : <div className="shrink-0" style={{ width: 74, height: 32 }} />}
 
       {/* Signed-in identity + logout. Rendered after mount so the markup

@@ -155,7 +155,7 @@ export function AutopilotPanel() {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-md border-2 border-text/70 bg-surface p-4 shadow-[3px_4px_0_hsl(var(--text)/.1)]">
+                <div className="rounded-md border-2 border-text/70 bg-surface p-4 shadow-[3px_4px_0_hsl(var(--text)/calc(.1*var(--shadow-strength)))]">
                   <div className="flex items-start justify-between gap-3">
                     <div><div className="text-xs font-semibold text-accent-deep">HÀNH ĐỘNG ĐỀ XUẤT</div><div className="mt-1 font-semibold">{selected.label}</div></div>
                     <Badge variant={selected.risk === "low" ? "success" : "warning"}>Rủi ro {riskLabels[selected.risk] ?? selected.risk}</Badge>

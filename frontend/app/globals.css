@@ -9,8 +9,20 @@
  * huge tight-tracked black headlines, a vivid violet→blue accent pair used for
  * gradients and highlights, generous 16px radii and pill buttons.
  *
- * There is intentionally a SINGLE theme: /shop and /seller share these tokens
- * so the two apps read as one product.
+ * /shop and /seller share these tokens so the two apps read as one product.
+ *
+ * Two themes, one set of names. Every colour is an HSL triplet in a variable,
+ * so dark mode is a second set of values rather than a second stylesheet —
+ * nothing outside this file needs to know which theme is active.
+ *
+ * The dark palette is not the light one inverted. Inverting produces pure
+ * black and glaring white, which is why it looks harsh: real dark interfaces
+ * sit on a dark *blue-grey* and pull text back from white. Surfaces get
+ * lighter as they come forward (bg → surface → surface-3), the reverse of the
+ * light theme, because in the dark a raised card catches more light rather
+ * than casting a shadow. Accents are lifted in lightness and dropped in
+ * saturation: the same violet that reads as vivid on off-white reads as
+ * fluorescent on near-black.
  */
 @layer base {
   :root {
@@ -51,7 +63,58 @@
     --series-5: 205 66% 54%;
 
     --radius: 16px;
+
+    /* Độ đậm của bóng. Bóng vẽ từ hsl(var(--text)/…): trên nền sáng --text tối
+     * nên ra bóng đổ; trên nền tối --text sáng nên ra viền sáng. Cùng một công
+     * thức, hai hiệu ứng đúng — chỉ cần độ mờ khác nhau. */
+    --shadow-strength: 1;
   }
+
+  /* Dark theme.
+   *
+   * Only ever active when the user turns it on: `[data-theme="dark"]` is set by
+   * the toggle and read back from localStorage on load. The app deliberately
+   * does NOT follow the operating system's colour scheme — light is the
+   * default, and a machine set to dark still opens on the light theme. */
+  :root[data-theme="dark"] {
+    /* Viền sáng cần đậm hơn bóng đổ mới thấy được. */
+    --shadow-strength: 1.9;
+    /* canvas — dark blue-grey, not black, and lighter as it comes forward */
+    --bg: 228 22% 11%;
+    --bg-alt: 228 20% 14%;
+    --surface: 227 20% 16%;
+    --surface-2: 227 18% 20%;
+    --surface-3: 226 16% 25%;
+
+    /* text — pulled back from pure white, which glares on a dark ground */
+    --text: 220 25% 94%;
+    --text-muted: 222 14% 72%;
+    --text-dim: 223 11% 56%;
+
+    --border: 226 15% 28%;
+    --border-strong: 226 18% 44%;
+
+    /* accents — lighter and less saturated, or they fluoresce on near-black */
+    --accent: 252 78% 72%;
+    --accent-hover: 252 82% 78%;
+    --accent-deep: 252 70% 82%;
+    --accent-2: 171 52% 56%;
+    --accent-2-hover: 171 56% 64%;
+
+    /* semantic — lightened for contrast on a dark canvas */
+    --success: 153 46% 56%;
+    --warning: 31 84% 62%;
+    --danger: 4 76% 68%;
+    --info: 211 74% 66%;
+
+    /* series — chart colours, kept distinguishable side by side */
+    --series-1: 252 78% 72%;
+    --series-2: 171 52% 56%;
+    --series-3: 31 84% 64%;
+    --series-4: 4 76% 70%;
+    --series-5: 205 72% 66%;
+  }
+
 
   * {
     @apply border-border;
@@ -68,7 +131,7 @@
   body {
     background-image: radial-gradient(
       circle at 1px 1px,
-      hsl(var(--text) / 0.055) 1px,
+      hsl(var(--text) / calc(0.055 * var(--shadow-strength))) 1px,
       transparent 0
     );
     background-size: 24px 24px;
@@ -160,12 +223,12 @@
     background-color: hsl(var(--surface));
     border-color: hsl(var(--border-strong) / 0.48);
     border-width: 1.5px;
-    box-shadow: 3px 4px 0 hsl(var(--text) / 0.10);
+    box-shadow: 3px 4px 0 hsl(var(--text) / calc(0.10 * var(--shadow-strength)));
   }
 
   /* Generic soft elevation for one-off blocks that aren't Cards. */
   .shadow-soft {
-    box-shadow: 5px 6px 0 hsl(var(--text) / 0.11);
+    box-shadow: 5px 6px 0 hsl(var(--text) / calc(0.11 * var(--shadow-strength)));
   }
 
   /* Ambient colour field behind hero sections — the violet/blue atmosphere
@@ -190,7 +253,7 @@
   /* Faint dot grid — texture under hero/landing sections. */
   .dot-grid {
     background-image:
-      radial-gradient(hsl(var(--text) / 0.10) 1px, transparent 1px),
+      radial-gradient(hsl(var(--text) / calc(0.10 * var(--shadow-strength))) 1px, transparent 1px),
       linear-gradient(
         105deg,
         transparent 48%,
@@ -217,14 +280,14 @@
   .float-chip {
     @apply inline-flex items-center gap-2 rounded-md border bg-surface px-3 py-2 text-xs font-semibold;
     border-color: hsl(var(--border-strong) / 0.55);
-    box-shadow: 2px 3px 0 hsl(var(--text) / 0.12);
+    box-shadow: 2px 3px 0 hsl(var(--text) / calc(0.12 * var(--shadow-strength)));
     transform: rotate(-1deg);
   }
 
   .doodle-sticker {
     @apply inline-flex items-center justify-center border-2 border-text bg-accent/15 text-accent-deep;
     border-radius: 48% 52% 45% 55% / 55% 43% 57% 45%;
-    box-shadow: 2px 2px 0 hsl(var(--text) / 0.16);
+    box-shadow: 2px 2px 0 hsl(var(--text) / calc(0.16 * var(--shadow-strength)));
     transform: rotate(-3deg);
   }
 
@@ -391,7 +454,7 @@
   .landing-motion a:hover .doodle-sticker,
   .landing-motion .feature-doodle-card:hover .doodle-sticker {
     transform: rotate(7deg) scale(1.1);
-    box-shadow: 4px 5px 0 hsl(var(--text) / .16);
+    box-shadow: 4px 5px 0 hsl(var(--text) / calc(.16 * var(--shadow-strength)));
   }
 
   .feature-doodle-card:hover {

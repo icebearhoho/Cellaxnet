@@ -66,7 +66,7 @@ export function MarketplacePanel() {
           {MARKETPLACES.map((marketplace) => (
             <article
               key={marketplace.id}
-              className="group flex min-h-[270px] flex-col items-center rounded-xl border border-border bg-surface px-4 py-5 text-center shadow-[2px_3px_0_hsl(var(--text)/0.08)] transition duration-200 hover:-translate-y-1 hover:border-border-strong hover:shadow-[4px_6px_0_hsl(var(--text)/0.11)]"
+              className="group flex min-h-[270px] flex-col items-center rounded-xl border border-border bg-surface px-4 py-5 text-center shadow-[2px_3px_0_hsl(var(--text)/calc(0.08*var(--shadow-strength)))] transition duration-200 hover:-translate-y-1 hover:border-border-strong hover:shadow-[4px_6px_0_hsl(var(--text)/calc(0.11*var(--shadow-strength)))]"
             >
               <div className="h-20 w-40 transition-transform duration-200 group-hover:scale-105">
                 {/* Keep the original marketplace image bytes; optimization would transform the supplied logos. */}

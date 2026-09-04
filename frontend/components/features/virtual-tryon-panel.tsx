@@ -53,7 +53,7 @@ function UploadCard({
   onChange: (file: File | null) => void;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white p-4">
+    <div className="rounded-xl border border-border bg-surface p-4">
       <div className="mb-3 flex items-center gap-2">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent/10 text-accent">
           {icon}
@@ -272,7 +272,7 @@ export function VirtualTryOnPanel() {
                   className={`rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${
                     clothType === value
                       ? "border-accent bg-accent text-white"
-                      : "border-border bg-white hover:border-accent"
+                      : "border-border bg-surface hover:border-accent"
                   }`}
                 >
                   {label}

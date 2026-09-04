@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { navForApp } from "@/lib/nav";
 import { ShopSessionBar } from "@/components/shell/shop-session-bar";
 import { CartButton } from "@/components/shell/cart-button";
+import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
                 Đơn của tôi
               </Link>
             )}
+            {mounted ? <ThemeToggle /> : <div className="h-9 w-9 shrink-0" />}
             <CartButton />
             {mounted && user && (
               <Button asChild variant="secondary" size="sm" className="hidden md:inline-flex">
