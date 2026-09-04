@@ -42,6 +42,14 @@ services:
       redis:
         condition: service_healthy
     env_file:
+      # Khoá LLM nằm ở .env gốc (dùng chung cho cả script ngoài Docker), còn
+      # cấu hình riêng của backend ở backend/.env. Trước đây chỉ nạp file thứ
+      # hai, nên OLLAMA_API_KEY không bao giờ vào container và mọi tính năng
+      # cần LLM trả về 503 "not configured".
+      #
+      # Thứ tự quan trọng: file sau ghi đè file trước, nên backend/.env vẫn là
+      # nơi quyết định cuối cùng.
+      - ./.env
       - ./backend/.env
     environment:
       POSTGRES_HOST: postgres

@@ -119,7 +119,16 @@ async def _generate_variant(req, platform: str, llm) -> ContentVariant:  # noqa:
     ]
     resp = await llm.chat(messages, temperature=0.7, max_tokens=400)
 
+    # Dòng đầu là tiêu đề, phần còn lại là thân bài. Model đôi khi trả về một
+    # đoạn liền không xuống dòng — khi đó cắt ở câu đầu tiên thay vì báo lỗi,
+    # vì nội dung vẫn dùng được và người bán chỉ nhận một lần thất bại không
+    # giải thích được.
     raw_title, _, raw_body = resp.content.partition("\n")
+    if not raw_body.strip():
+        head, sep, tail = resp.content.partition(". ")
+        if sep and tail.strip():
+            raw_title, raw_body = head + ".", tail
+
     final_title = raw_title.strip()[:120]
     final_body = raw_body.strip()[:600]
     if not final_title or not final_body:
