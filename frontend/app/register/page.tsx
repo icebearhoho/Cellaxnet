@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { AuthCard } from "@/components/auth/auth-card";
 import { useAuth } from "@/lib/auth-context";
 import { ApiClientError } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 const MIN_PASSWORD = 8;
 
 export default function RegisterPage() {
+  const t = useT();
   const router = useRouter();
   const { register, busy } = useAuth();
 
@@ -58,7 +60,7 @@ export default function RegisterPage() {
         <>
           Đã có tài khoản?{" "}
           <Link href="/login" className="font-semibold text-accent hover:underline">
-            Đăng nhập
+            {t("Đăng nhập")}
           </Link>
         </>
       }
@@ -66,7 +68,7 @@ export default function RegisterPage() {
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
-            Tên <span className="font-normal text-text-dim">(không bắt buộc)</span>
+            {t("Tên")} <span className="font-normal text-text-dim">(không bắt buộc)</span>
           </label>
           <Input
             id="name"
@@ -92,7 +94,7 @@ export default function RegisterPage() {
         </div>
         <div>
           <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
-            Mật khẩu
+            {t("Mật khẩu")}
           </label>
           <Input
             id="password"
@@ -106,7 +108,7 @@ export default function RegisterPage() {
         </div>
         <div>
           <label htmlFor="confirm" className="mb-1.5 block text-sm font-medium">
-            Nhập lại mật khẩu
+            {t("Nhập lại mật khẩu")}
           </label>
           <Input
             id="confirm"
@@ -130,7 +132,7 @@ export default function RegisterPage() {
         </Button>
 
         <p className="text-center text-xs text-text-dim">
-          Sau khi đăng ký, bạn có thể tạo workspace để kích hoạt tài khoản người bán.
+          {t("Sau khi đăng ký, bạn có thể tạo workspace để kích hoạt tài khoản người bán.")}
         </p>
       </form>
     </AuthCard>

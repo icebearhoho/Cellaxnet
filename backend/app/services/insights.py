@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Literal, cast
 
 from app.core.config import settings
+from app.core.i18n import t, tf
 from app.core.logging import get_logger
 from app.schemas.insights import (
     ChurnRequest,
@@ -382,7 +383,7 @@ def _strategies(
         # the floor stated above the cards already say the cost rules it out,
         # and repeating that on all three crowded out what each marker means.
         out.append(PriceStrategy(
-            key=key, label=label, source=source, tradeoff=tradeoff,
+            key=key, label=t(label), source=t(source), tradeoff=t(tradeoff),
             price=price, margin_pct=margin,
             percentile=stats.percentile_of(price) if stats.percentile_of else None,
             below_cost_floor=lifted,
@@ -470,16 +471,24 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     median, p25, p75 = stats.median, stats.p25, stats.p75
 
     if stats.source == "demo":
-        basis = f"trung vị danh mục {req.category} trên {stats.sample_size} sản phẩm"
+        basis = tf(
+            "trung vị danh mục {danh_mục} trên {số_mẫu} sản phẩm",
+            danh_mục=t(req.category), số_mẫu=stats.sample_size,
+        )
     else:
-        shops = f" của {stats.shop_count} nhà bán" if stats.shop_count else ""
+        shops = tf(" của {số_shop} nhà bán", số_shop=stats.shop_count) if stats.shop_count else ""
         # The keyword, not the category: 60 listings for "áo khoác dù" is a
         # comparison against jackets, while "60 sản phẩm Thời trang" reads as
         # though a jacket were being priced off dresses and t-shirts too.
-        scope = f'"{stats.keyword}"' if stats.keyword else req.category
-        basis = (
-            f"trung vị {_vnd(stats.median)} từ {stats.sample_size} sản phẩm {scope}"
-            f"{shops} quan sát được trên {_market_label(stats.countries)}"
+        #
+        # The keyword itself stays Vietnamese in both languages: it is the
+        # search term that was actually captured on Shopee, and translating it
+        # would name a search nobody ran.
+        scope = f'"{stats.keyword}"' if stats.keyword else t(req.category)
+        basis = tf(
+            "trung vị {trung_vị} từ {số_mẫu} sản phẩm {phạm_vi}{nhà_bán} quan sát được trên {thị_trường}",
+            trung_vị=_vnd(stats.median), số_mẫu=stats.sample_size, phạm_vi=scope,
+            nhà_bán=shops, thị_trường=_market_label(stats.countries),
         )
 
     # Anchored to the market rather than to what the seller charges today.
@@ -509,15 +518,24 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
         recommended = max(recommended, cost_floor.floor)
 
     if req.current_price is None:
-        rationale = f"Chưa có giá hiện tại — lấy {basis}."
+        rationale = tf("Chưa có giá hiện tại — lấy {cơ_sở}.", cơ_sở=basis)
     else:
         cur = req.current_price
         if cur > median * 1.15:
-            rationale = f"{_vnd(cur)} cao hơn nhiều so với {basis} — đề xuất giảm để cạnh tranh hơn."
+            rationale = tf(
+                "{giá} cao hơn nhiều so với {cơ_sở} — đề xuất giảm để cạnh tranh hơn.",
+                giá=_vnd(cur), cơ_sở=basis,
+            )
         elif cur < median * 0.85:
-            rationale = f"{_vnd(cur)} thấp hơn nhiều so với {basis} — có thể đang bán dưới giá, đề xuất tăng."
+            rationale = tf(
+                "{giá} thấp hơn nhiều so với {cơ_sở} — có thể đang bán dưới giá, đề xuất tăng.",
+                giá=_vnd(cur), cơ_sở=basis,
+            )
         else:
-            rationale = f"{_vnd(cur)} đã sát {basis} — chỉ cần tinh chỉnh nhẹ."
+            rationale = tf(
+                "{giá} đã sát {cơ_sở} — chỉ cần tinh chỉnh nhẹ.",
+                giá=_vnd(cur), cơ_sở=basis,
+            )
 
     # Where the seller actually sits. A gap to the median says how far; the
     # percentile says how unusual — 502,000₫ against a 67,900₫ median reads as
@@ -597,66 +615,78 @@ async def recommend_price(req: PricingRequest) -> PricingResponse:
     # The chain that produced the number, in the order it was constrained.
     reasons: list[str] = []
     if req.current_price:
-        side = "thấp hơn" if req.current_price < median else "cao hơn"
-        reasons.append(
-            f"Giá hiện tại {_vnd(req.current_price)} đang {side} trung vị thị trường "
-            f"{_vnd(int(median))}."
-        )
+        # Two whole sentences rather than one with a "higher/lower" hole in it:
+        # a translator needs the finished sentence, and a fragment like
+        # "thấp hơn" has no single English form that fits every frame.
+        reasons.append(tf(
+            "Giá hiện tại {giá} đang thấp hơn trung vị thị trường {trung_vị}."
+            if req.current_price < median else
+            "Giá hiện tại {giá} đang cao hơn trung vị thị trường {trung_vị}.",
+            giá=_vnd(req.current_price), trung_vị=_vnd(int(median)),
+        ))
     if cost_floor is not None:
-        fee = f" sau phí {cost_floor.channel_name}" if cost_floor.channel_name else ""
-        reasons.append(
-            f"Với giá vốn {_vnd(req.unit_cost or 0)} và mục tiêu biên "
-            f"{req.min_margin_pct:g}%{fee}, mức thấp nhất là {_vnd(cost_floor.floor)}."
-        )
+        reasons.append(tf(
+            "Với giá vốn {giá_vốn} và mục tiêu biên {biên}% sau phí {kênh}, mức thấp nhất là {sàn}."
+            if cost_floor.channel_name else
+            "Với giá vốn {giá_vốn} và mục tiêu biên {biên}%, mức thấp nhất là {sàn}.",
+            giá_vốn=_vnd(req.unit_cost or 0), biên=f"{req.min_margin_pct:g}",
+            kênh=cost_floor.channel_name or "", sàn=_vnd(cost_floor.floor),
+        ))
     if cost_floor is None:
         # Said plainly, because the gap is easy to miss: the price is placed
         # against competitors, and nothing here knows whether it earns
         # anything. A seller whose cost is 230,000₫ would be advised to sell
         # at a loss with no warning.
-        reasons.append(
+        reasons.append(t(
             "Chưa có giá vốn nên mức tham khảo chỉ dựa trên thị trường — "
             "chưa kiểm tra được có đảm bảo lợi nhuận hay không."
-        )
+        ))
 
     if cost_floor is not None:
         # Which constraint is actually binding. Without this a seller who
         # raises their cost and sees the same price assumes the field was
         # ignored, when the truth is that the market is still the tighter one.
         if recommended <= round(median * 0.95) + 1:
-            reasons.append(
+            reasons.append(t(
                 "Giá vốn hiện còn thấp so với mặt bằng thị trường, nên mức tham khảo "
                 "được quyết định bởi giá thị trường."
-            )
+            ))
         elif stats.max_price and cost_floor.floor > stats.max_price:
             # Past the dearest listing observed, which is a different situation
             # from "priced at the top end": there is no competitor at this level
             # at all, so the honest reading is that the product cannot be sold
             # here at the margin asked for, not that it sits in a premium tier.
             over = round((cost_floor.floor - stats.max_price) / stats.max_price * 100)
-            reasons.append(
-                f"Mức thấp nhất {_vnd(cost_floor.floor)} còn cao hơn cả sản phẩm đắt nhất "
-                f"quan sát được ({_vnd(stats.max_price)}, chênh {over}%) — với giá vốn này "
-                "sản phẩm nằm ngoài vùng giá của thị trường."
-            )
+            reasons.append(tf(
+                "Mức thấp nhất {sàn} còn cao hơn cả sản phẩm đắt nhất quan sát được "
+                "({đắt_nhất}, chênh {chênh}%) — với giá vốn này sản phẩm nằm ngoài "
+                "vùng giá của thị trường.",
+                sàn=_vnd(cost_floor.floor), đắt_nhất=_vnd(stats.max_price), chênh=over,
+            ))
         else:
-            reasons.append(
+            reasons.append(t(
                 "Giá vốn cao nên mức tham khảo phải nhích lên so với mặt bằng thị trường "
                 "để giữ được biên lợi nhuận."
-            )
+            ))
 
     if median:
         gap = round((recommended - median) / median * 100)
-        where = f"vẫn thấp hơn trung vị thị trường khoảng {abs(gap)}%" if gap < 0 else (
-            f"cao hơn trung vị thị trường khoảng {gap}%" if gap > 0
-            else "ngang với trung vị thị trường"
-        )
-        reasons.append(f"Mức tham khảo {_vnd(int(recommended))} {where}.")
+        if gap < 0:
+            template = "Mức tham khảo {giá} vẫn thấp hơn trung vị thị trường khoảng {phần_trăm}%."
+        elif gap > 0:
+            template = "Mức tham khảo {giá} cao hơn trung vị thị trường khoảng {phần_trăm}%."
+        else:
+            template = "Mức tham khảo {giá} ngang với trung vị thị trường."
+        reasons.append(tf(
+            template, giá=_vnd(int(recommended)), phần_trăm=abs(gap),
+        ))
     if margin_at_rec is not None and margin_now is not None:
-        reasons.append(
-            f"Biên lợi nhuận tăng từ {margin_now:g}% lên {margin_at_rec:g}%."
+        reasons.append(tf(
+            "Biên lợi nhuận tăng từ {từ}% lên {đến}%."
             if margin_at_rec > margin_now else
-            f"Biên lợi nhuận giảm từ {margin_now:g}% xuống {margin_at_rec:g}%."
-        )
+            "Biên lợi nhuận giảm từ {từ}% xuống {đến}%.",
+            từ=f"{margin_now:g}", đến=f"{margin_at_rec:g}",
+        ))
 
     return PricingResponse(
         recommended_price=int(recommended), low=int(min(p25, recommended)),

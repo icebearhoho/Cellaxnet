@@ -18,6 +18,7 @@ import {
 import { getTracked, clearTracked, getSessionId, JOURNEY_EVENT, type TrackedEvent } from "@/lib/journey-track";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const EVENT_TYPES = [
   { type: "search", label: "Tìm kiếm", icon: Search },
@@ -45,6 +46,7 @@ const FUNNEL_ORDER = ["awareness", "consideration", "intent", "purchase"];
 type Result = JourneyResultMapped;
 
 export function CustomerJourneyPanel() {
+  const t = useT();
   // --- primary: real sessions ---
   const [sessions, setSessions] = useState<JourneySessions | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -118,9 +120,9 @@ export function CustomerJourneyPanel() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Phiên của bạn</CardTitle>
+            <CardTitle>{t("Phiên của bạn")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Hoạt động trong <Link href="/shop/store" className="text-accent hover:underline">Cửa hàng</Link> sẽ xuất hiện ở đây. Phiên này không ghi video.
+              {t("Hoạt động trong")} <Link href="/shop/store" className="text-accent hover:underline">{t("Cửa hàng")}</Link> {t("sẽ xuất hiện ở đây. Phiên này không ghi video.")}
             </p>
           </div>
           <Badge variant={live.length ? "live" : "muted"}>{live.length} hành động</Badge>
@@ -128,7 +130,7 @@ export function CustomerJourneyPanel() {
         <CardContent className="space-y-3">
           {live.length === 0 ? (
             <p className="text-sm text-text-muted">
-              Chưa có hoạt động. Hãy mở <Link href="/shop/store" className="text-accent hover:underline">Cửa hàng</Link> và xem vài sản phẩm.
+              {t("Chưa có hoạt động. Hãy mở")} <Link href="/shop/store" className="text-accent hover:underline">{t("Cửa hàng")}</Link> {t("và xem vài sản phẩm.")}
             </p>
           ) : (
             <>
@@ -152,7 +154,7 @@ export function CustomerJourneyPanel() {
                   Xem kết quả
                 </Button>
                 <Button variant="secondary" onClick={() => clearTracked()}>
-                  <X className="h-3.5 w-3.5" /> Xóa phiên
+                  <X className="h-3.5 w-3.5" /> {t("Xóa phiên")}
                 </Button>
               </div>
             </>
@@ -164,11 +166,11 @@ export function CustomerJourneyPanel() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Phiên demo dựng trước</CardTitle>
+            <CardTitle>{t("Phiên demo dựng trước")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               {sessions
                 ? `${sessions.total} hành trình mẫu có video demo replay để xem lại.`
-                : "Chọn một hành trình mẫu để xem video demo replay."}
+                : t("Chọn một hành trình mẫu để xem video demo replay.")}
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={loadSessions} disabled={sessionsLoading}>
@@ -178,11 +180,11 @@ export function CustomerJourneyPanel() {
         </CardHeader>
         <CardContent>
           {sessionsError ? (
-            <p className="text-sm text-danger">Không tải được phiên. Hãy thử lại.</p>
+            <p className="text-sm text-danger">{t("Không tải được phiên. Hãy thử lại.")}</p>
           ) : !sessions ? (
-            <p className="text-sm text-text-muted">{sessionsLoading ? "Đang tải phiên…" : "Chưa có dữ liệu."}</p>
+            <p className="text-sm text-text-muted">{sessionsLoading ? "Đang tải phiên…" : t("Chưa có dữ liệu.")}</p>
           ) : sessions.sessions.length === 0 ? (
-            <p className="text-sm text-text-muted">Chưa có phiên nào.</p>
+            <p className="text-sm text-text-muted">{t("Chưa có phiên nào.")}</p>
           ) : (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {sessions.sessions.map((s) => {
@@ -218,16 +220,16 @@ export function CustomerJourneyPanel() {
       </Card>
 
       {error && (
-        <p className="text-sm text-danger">Không tải được kết quả. Hãy thử lại.</p>
+        <p className="text-sm text-danger">{t("Không tải được kết quả. Hãy thử lại.")}</p>
       )}
 
       {result && videoUrl && !videoFailed && (
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Video demo dựng trước</CardTitle>
+              <CardTitle>{t("Video demo dựng trước")}</CardTitle>
               <p className="mt-1 text-xs text-text-muted">
-                Demo replay minh hoạ đúng chuỗi hành động của phiên, không phải ghi hình thời gian thực.
+                {t("Demo replay minh hoạ đúng chuỗi hành động của phiên, không phải ghi hình thời gian thực.")}
               </p>
             </div>
             <Badge variant="muted">
@@ -249,14 +251,14 @@ export function CustomerJourneyPanel() {
 
       {result && videoUrl && videoFailed && (
         <p className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-sm text-warning">
-          Không tải được video. Kết quả bên dưới vẫn dùng được.
+          {t("Không tải được video. Kết quả bên dưới vẫn dùng được.")}
         </p>
       )}
 
       {result && (
         <Card>
           <CardHeader>
-            <CardTitle>Bước tiếp theo</CardTitle>
+            <CardTitle>{t("Bước tiếp theo")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -283,14 +285,14 @@ export function CustomerJourneyPanel() {
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-md border border-border bg-bg-alt px-3 py-2">
-                <div className="text-xs font-medium text-text-dim">Mức quan tâm</div>
+                <div className="text-xs font-medium text-text-dim">{t("Mức quan tâm")}</div>
                 <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-surface-2">
                   <div className="h-full rounded-full bg-accent" style={{ width: `${Math.round(result.engagement_score * 100)}%` }} />
                 </div>
                 <div className="mono mt-1 text-2xs text-text-muted">{Math.round(result.engagement_score * 100)}%</div>
               </div>
               <div className="rounded-md border border-accent/30 bg-accent/5 px-3 py-2">
-                <div className="text-xs font-medium text-accent">Nên làm</div>
+                <div className="text-xs font-medium text-accent">{t("Nên làm")}</div>
                 <p className="mt-1 text-xs text-text">{result.nudge}</p>
               </div>
             </div>
@@ -299,21 +301,21 @@ export function CustomerJourneyPanel() {
               || result.cart_abandoned != null || result.time_to_purchase_seconds != null) && (
               <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-border pt-3 text-xs text-text-muted">
                 {result.session_duration_seconds != null && (
-                  <span>Thời gian trên trang: <span className="mono text-text">{Math.round(result.session_duration_seconds)}s</span></span>
+                  <span>{t("Thời gian trên trang:")} <span className="mono text-text">{Math.round(result.session_duration_seconds)}s</span></span>
                 )}
                 {result.avg_dwell_seconds != null && (
-                  <span>Dừng trung bình/bước: <span className="mono text-text">{Math.round(result.avg_dwell_seconds)}s</span></span>
+                  <span>{t("Dừng trung bình/bước:")} <span className="mono text-text">{Math.round(result.avg_dwell_seconds)}s</span></span>
                 )}
                 {result.cart_abandoned != null && (
                   <span>
                     Bỏ giỏ hàng:{" "}
                     <span className={cn("mono", result.cart_abandoned ? "text-danger" : "text-success")}>
-                      {result.cart_abandoned ? "có" : "không"}
+                      {result.cart_abandoned ? "có" : t("không")}
                     </span>
                   </span>
                 )}
                 {result.time_to_purchase_seconds != null && (
-                  <span>Thời gian đến khi mua: <span className="mono text-text">{Math.round(result.time_to_purchase_seconds)}s</span></span>
+                  <span>{t("Thời gian đến khi mua:")} <span className="mono text-text">{Math.round(result.time_to_purchase_seconds)}s</span></span>
                 )}
               </div>
             )}
@@ -324,10 +326,10 @@ export function CustomerJourneyPanel() {
       {result && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Card>
-            <CardHeader><CardTitle>Khả năng mua</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Khả năng mua")}</CardTitle></CardHeader>
             <CardContent>
               <div className={cn("text-2xl font-semibold", result.will_purchase ? "text-success" : "text-danger")}>
-                {result.will_purchase ? "Khả năng cao" : "Khả năng thấp"}
+                {result.will_purchase ? "Khả năng cao" : t("Khả năng thấp")}
               </div>
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2">
                 <div
@@ -342,13 +344,13 @@ export function CustomerJourneyPanel() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Danh mục quan tâm</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Danh mục quan tâm")}</CardTitle></CardHeader>
             <CardContent>
-              <div className="text-xl font-semibold text-text">{result.top_category ?? "Chưa rõ"}</div>
+              <div className="text-xl font-semibold text-text">{result.top_category ?? t("Chưa rõ")}</div>
               <div className="mt-3 space-y-1.5">
                 {Object.entries(result.category_breakdown).map(([cat, n]) => (
                   <div key={cat} className="flex items-center gap-2 text-xs">
-                    <span className="w-20 truncate text-text-muted">{cat}</span>
+                    <span className="w-20 truncate text-text-muted">{t(cat)}</span>
                     <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, n * 20)}%` }} />
                     </div>
@@ -360,7 +362,7 @@ export function CustomerJourneyPanel() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Lý do</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Lý do")}</CardTitle></CardHeader>
             <CardContent>
               <p className="text-sm text-text-muted">{result.reasoning}</p>
             </CardContent>
@@ -370,7 +372,7 @@ export function CustomerJourneyPanel() {
 
       {result && result.recommended_products.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Sản phẩm phù hợp</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("Sản phẩm phù hợp")}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {result.recommended_products.map((p) => (

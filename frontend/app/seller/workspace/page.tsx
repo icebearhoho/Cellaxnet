@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n";
 
 const ROLE_LABEL: Record<WorkspaceMember["role"], string> = {
   owner: "Chủ sở hữu",
@@ -56,6 +57,7 @@ function errorMessage(error: unknown): string {
 }
 
 export default function SellerWorkspacePage() {
+  const t = useT();
   const router = useRouter();
   const { user, isAdmin, logout } = useAuth();
   const [workspaces, setWorkspaces] = useState<SellerWorkspace[]>([]);
@@ -197,9 +199,9 @@ export default function SellerWorkspacePage() {
       <main className="grid min-h-screen place-items-center bg-bg px-6 text-text-dim">
         <div className="max-w-md text-center">
           <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-          <p className="mt-4 text-sm font-medium text-text">Đang mở workspace của bạn…</p>
+          <p className="mt-4 text-sm font-medium text-text">{t("Đang mở workspace của bạn…")}</p>
           <p className="mt-1 text-xs leading-5">
-            Máy chủ miễn phí có thể cần vài giây để khởi động. Bạn không cần tải lại trang.
+            {t("Máy chủ miễn phí có thể cần vài giây để khởi động. Bạn không cần tải lại trang.")}
           </p>
         </div>
       </main>
@@ -215,7 +217,7 @@ export default function SellerWorkspacePage() {
               <Store className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <p className="text-xs text-text-dim">Không gian bán hàng</p>
+              <p className="text-xs text-text-dim">{t("Không gian bán hàng")}</p>
               <h1 className="truncate text-lg font-bold">{workspace?.name}</h1>
             </div>
           </div>
@@ -224,7 +226,7 @@ export default function SellerWorkspacePage() {
               <label className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs">
                 <ArrowLeftRight className="h-3.5 w-3.5 text-text-dim" />
                 <select
-                  aria-label="Chuyển workspace"
+                  aria-label={t("Chuyển workspace")}
                   value={workspace?.id ?? ""}
                   disabled={loading}
                   onChange={(event) => void selectWorkspace(Number(event.target.value))}
@@ -239,9 +241,9 @@ export default function SellerWorkspacePage() {
               </label>
             )}
             <Button asChild variant="outline" size="sm">
-              <Link href="/seller/onboarding">Quản lý workspace</Link>
+              <Link href="/seller/onboarding">{t("Quản lý workspace")}</Link>
             </Button>
-            <Button variant="ghost" size="sm" onClick={logout} title="Đăng xuất">
+            <Button variant="ghost" size="sm" onClick={logout} title={t("Đăng xuất")}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -255,32 +257,32 @@ export default function SellerWorkspacePage() {
 
         {loading && workspace && (
           <div className="mb-6 flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text-muted">
-            <Loader2 className="h-4 w-4 animate-spin" /> Đang tải dữ liệu workspace...
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("Đang tải dữ liệu workspace...")}
           </div>
         )}
 
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="pt-5">
-              <p className="text-xs text-text-dim">Trạng thái</p>
+              <p className="text-xs text-text-dim">{t("Trạng thái")}</p>
               <div className="mt-2 flex items-center gap-2 text-sm font-semibold">
                 <Check className={workspace?.status === "active" ? "h-4 w-4 text-success" : "h-4 w-4 text-warning"} />
-                {workspace ? STATUS_LABEL[workspace.status] : "Chưa xác định"}
+                {workspace ? STATUS_LABEL[workspace.status] : t("Chưa xác định")}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-5">
-              <p className="text-xs text-text-dim">Vai trò của bạn</p>
+              <p className="text-xs text-text-dim">{t("Vai trò của bạn")}</p>
               <div className="mt-2 flex items-center gap-2 text-sm font-semibold">
                 <ShieldCheck className="h-4 w-4 text-info" />
-                {currentMember ? ROLE_LABEL[currentMember.role] : workspace?.current_role === "platform_admin" ? "Quản trị nền tảng" : "Thành viên"}
+                {currentMember ? ROLE_LABEL[currentMember.role] : workspace?.current_role === "platform_admin" ? "Quản trị nền tảng" : t("Thành viên")}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-5">
-              <p className="text-xs text-text-dim">Thành viên</p>
+              <p className="text-xs text-text-dim">{t("Thành viên")}</p>
               <div className="mt-2 flex items-center gap-2 text-sm font-semibold">
                 <Users className="h-4 w-4 text-accent" /> {members.length}
               </div>
@@ -290,10 +292,10 @@ export default function SellerWorkspacePage() {
 
         <div className="mb-6 flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/seller/content-generator">Tạo nội dung sản phẩm</Link>
+            <Link href="/seller/content-generator">{t("Tạo nội dung sản phẩm")}</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/seller/seller-coach">Kiểm tra cửa hàng</Link>
+            <Link href="/seller/seller-coach">{t("Kiểm tra cửa hàng")}</Link>
           </Button>
         </div>
 
@@ -301,8 +303,8 @@ export default function SellerWorkspacePage() {
           <Card>
             <CardHeader>
               <div>
-                <CardTitle className="text-base">Thành viên workspace</CardTitle>
-                <p className="mt-1 text-xs text-text-muted">Quyền truy cập chỉ áp dụng trong workspace này.</p>
+                <CardTitle className="text-base">{t("Thành viên workspace")}</CardTitle>
+                <p className="mt-1 text-xs text-text-muted">{t("Quyền truy cập chỉ áp dụng trong workspace này.")}</p>
               </div>
               <Badge variant="muted">{members.length} người</Badge>
             </CardHeader>
@@ -324,16 +326,16 @@ export default function SellerWorkspacePage() {
                       onChange={(event) => void changeRole(member, event.target.value as WorkspaceMember["role"])}
                       className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs outline-none"
                     >
-                      <option value="owner">Chủ sở hữu</option>
-                      <option value="manager">Quản lý</option>
-                      <option value="analyst">Phân tích</option>
-                      <option value="viewer">Chỉ xem</option>
+                      <option value="owner">{t("Chủ sở hữu")}</option>
+                      <option value="manager">{t("Quản lý")}</option>
+                      <option value="analyst">{t("Phân tích")}</option>
+                      <option value="viewer">{t("Chỉ xem")}</option>
                     </select>
                   ) : (
                     <Badge variant="muted">{ROLE_LABEL[member.role]}</Badge>
                   )}
                   {canManage && member.user_id !== user?.id && (
-                    <Button variant="ghost" size="sm" disabled={saving} onClick={() => void removeMember(member)} title="Xóa thành viên">
+                    <Button variant="ghost" size="sm" disabled={saving} onClick={() => void removeMember(member)} title={t("Xóa thành viên")}>
                       <Trash2 className="h-4 w-4 text-danger" />
                     </Button>
                   )}
@@ -346,15 +348,15 @@ export default function SellerWorkspacePage() {
             {canManage && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Thêm thành viên</CardTitle>
+                  <CardTitle className="text-base">{t("Thêm thành viên")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={addMember} className="space-y-3">
-                    <Input aria-label="Email thành viên" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@thanhvien.com" required />
-                    <select aria-label="Vai trò thành viên mới" value={role} onChange={(event) => setRole(event.target.value as typeof role)} className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none">
-                      <option value="manager">Quản lý</option>
-                      <option value="analyst">Phân tích</option>
-                      <option value="viewer">Chỉ xem</option>
+                    <Input aria-label={t("Email thành viên")} type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@thanhvien.com" required />
+                    <select aria-label={t("Vai trò thành viên mới")} value={role} onChange={(event) => setRole(event.target.value as typeof role)} className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm outline-none">
+                      <option value="manager">{t("Quản lý")}</option>
+                      <option value="analyst">{t("Phân tích")}</option>
+                      <option value="viewer">{t("Chỉ xem")}</option>
                     </select>
                     <Button type="submit" className="w-full" disabled={saving || !email.trim()}>
                       {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
@@ -367,7 +369,7 @@ export default function SellerWorkspacePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Kết nối bán hàng</CardTitle>
+                <CardTitle className="text-base">{t("Kết nối bán hàng")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {shops.length ? (
@@ -382,15 +384,15 @@ export default function SellerWorkspacePage() {
                               <p className="mt-1 text-xs capitalize text-text-muted">{shop.platform.replace("_", " ")}</p>
                             </div>
                             <Badge variant={shop.status === "connected" ? "success" : shop.status === "revoked" ? "muted" : "warning"}>
-                              {shop.status === "connected" ? "Đã kết nối" : shop.status === "revoked" ? "Đã ngắt" : "Cần xử lý"}
+                              {shop.status === "connected" ? "Đã kết nối" : shop.status === "revoked" ? "Đã ngắt" : t("Cần xử lý")}
                             </Badge>
                           </div>
                           <p className="mt-3 text-xs text-text-dim">
-                            Đồng bộ gần nhất: {shop.last_synced_at ? new Date(shop.last_synced_at).toLocaleString("vi-VN") : "Chưa đồng bộ"}
+                            Đồng bộ gần nhất: {shop.last_synced_at ? new Date(shop.last_synced_at).toLocaleString("vi-VN") : t("Chưa đồng bộ")}
                           </p>
                           {canManageShop && shop.status === "connected" && (
                             <Button variant="ghost" size="sm" className="mt-2 text-danger" disabled={saving} onClick={() => void disconnectShop(shop)}>
-                              Ngắt kết nối
+                              {t("Ngắt kết nối")}
                             </Button>
                           )}
                         </div>
@@ -402,24 +404,24 @@ export default function SellerWorkspacePage() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium">Shopee</p>
-                        <p className="mt-1 text-xs text-text-muted">Chưa kết nối với workspace này.</p>
+                        <p className="mt-1 text-xs text-text-muted">{t("Chưa kết nối với workspace này.")}</p>
                       </div>
-                      <Badge variant="warning">Chờ kết nối</Badge>
+                      <Badge variant="warning">{t("Chờ kết nối")}</Badge>
                     </div>
                   </div>
                 )}
                 <Button variant="outline" className="mt-4 w-full" disabled>
-                  <RefreshCw className="h-4 w-4" /> Kết nối Shopee — sắp có
+                  <RefreshCw className="h-4 w-4" /> {t("Kết nối Shopee — sắp có")}
                 </Button>
                 <p className="mt-3 text-xs leading-5 text-text-dim">
-                  Connector cần gửi header X-Workspace-ID; API sẽ tự kiểm tra thành viên và tenant.
+                  {t("Connector cần gửi header X-Workspace-ID; API sẽ tự kiểm tra thành viên và tenant.")}
                 </p>
               </CardContent>
             </Card>
 
             {isAdmin && (
               <Button asChild className="w-full">
-                <Link href="/seller">Mở dashboard quản trị</Link>
+                <Link href="/seller">{t("Mở dashboard quản trị")}</Link>
               </Button>
             )}
           </div>

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getBriefing, type BriefingResult, type BriefingAction } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 function vnd(n: number) {
   return n.toLocaleString("vi-VN") + "₫";
@@ -36,6 +37,7 @@ const PRIORITY: Record<BriefingAction["priority"], { label: string; variant: "da
 };
 
 export function DailyBriefingPanel() {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<BriefingResult | null>(null);
   const [error, setError] = useState(false);
@@ -58,7 +60,7 @@ export function DailyBriefingPanel() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Hôm nay cần làm gì</CardTitle>
+            <CardTitle>{t("Hôm nay cần làm gì")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               Việc ưu tiên theo tác động doanh thu, tổng hợp từ các tín hiệu của cửa hàng.
             </p>
@@ -73,7 +75,7 @@ export function DailyBriefingPanel() {
             <p className="text-sm text-danger">Không lấy được briefing. Kiểm tra kết nối backend rồi thử lại.</p>
           ) : !result ? (
             <p className="text-sm text-text-muted">
-              {busy ? "Đang tổng hợp briefing…" : "Chưa có dữ liệu."}
+              {busy ? "Đang tổng hợp briefing…" : t("Chưa có dữ liệu.")}
             </p>
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

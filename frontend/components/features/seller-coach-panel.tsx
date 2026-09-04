@@ -13,6 +13,7 @@ import {
 } from "@/lib/mock-data";
 import { sellerCoach } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 function scoreBand(score: number): "good" | "warn" | "bad" {
   if (score >= 75) return "good";
@@ -49,6 +50,7 @@ function AuditRow({ step, index }: { step: AuditStep; index: number }) {
 }
 
 export function SellerCoachPanel() {
+  const t = useT();
   const [audit, setAudit] = useState<AuditStep[]>(SELLER_AUDIT);
   const [roadmap, setRoadmap] = useState<RoadmapWeek[]>(SELLER_ROADMAP);
   const [error, setError] = useState(false);
@@ -75,7 +77,7 @@ export function SellerCoachPanel() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
       {error && (
-        <p className="col-span-full text-sm text-danger">Không lấy được dữ liệu. Kiểm tra kết nối backend rồi thử lại.</p>
+        <p className="col-span-full text-sm text-danger">{t("Không lấy được dữ liệu. Kiểm tra kết nối backend rồi thử lại.")}</p>
       )}
 
       {/* Audit summary */}
@@ -84,7 +86,7 @@ export function SellerCoachPanel() {
           <div>
             <CardTitle>Điểm sức khỏe cửa hàng</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Tính từ cùng snapshot 60 SKU, đơn hàng, đánh giá và tồn kho của Mây House demo.
+              {t("Tính từ cùng snapshot 60 SKU, đơn hàng, đánh giá và tồn kho của Mây House demo.")}
             </p>
           </div>
           <Badge variant="muted">shop demo thống nhất</Badge>
@@ -98,12 +100,12 @@ export function SellerCoachPanel() {
       <Card className="lg:col-span-8">
         <CardHeader>
           <div>
-            <CardTitle>5 nhóm đánh giá</CardTitle>
+            <CardTitle>{t("5 nhóm đánh giá")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              So sánh các điểm còn yếu để chọn việc cần làm trước.
+              {t("So sánh các điểm còn yếu để chọn việc cần làm trước.")}
             </p>
           </div>
-          <Badge variant="muted">5 tiêu chí</Badge>
+          <Badge variant="muted">{t("5 tiêu chí")}</Badge>
         </CardHeader>
         <CardContent>
           <AuditRadar data={radarData} />
@@ -114,7 +116,7 @@ export function SellerCoachPanel() {
       <Card className="lg:col-span-7">
         <CardHeader>
           <div>
-            <CardTitle>Chi tiết đánh giá</CardTitle>
+            <CardTitle>{t("Chi tiết đánh giá")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               Điểm từng trục + gợi ý cụ thể.
             </p>
@@ -131,12 +133,12 @@ export function SellerCoachPanel() {
       <Card className="lg:col-span-5">
         <CardHeader>
           <div>
-            <CardTitle>Kế hoạch 4 tuần</CardTitle>
+            <CardTitle>{t("Kế hoạch 4 tuần")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Các việc nên ưu tiên dựa trên tình trạng hiện tại.
+              {t("Các việc nên ưu tiên dựa trên tình trạng hiện tại.")}
             </p>
           </div>
-          <Badge variant="live">Sẵn sàng thực hiện</Badge>
+          <Badge variant="live">{t("Sẵn sàng thực hiện")}</Badge>
         </CardHeader>
         <CardContent>
           <ol className="relative space-y-4 border-l border-border-strong pl-5">
@@ -161,8 +163,7 @@ export function SellerCoachPanel() {
           <div className="mt-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3 text-2xs text-text-muted">
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-warning" />
             <span>
-              Ưu tiên tuần 1–2 trước khi chạy promotion. Nếu điểm Inventory &lt; 50,
-              hoãn flash sale.
+              {t("Ưu tiên tuần 1–2 trước khi chạy promotion. Nếu điểm Inventory < 50, hoãn flash sale.")}
             </span>
           </div>
         </CardContent>

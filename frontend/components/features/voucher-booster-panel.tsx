@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, BadgePercent, Check, CircleAlert, ExternalLink,
@@ -10,6 +10,7 @@ import { api, ApiClientError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useT } from "@/lib/i18n";
 
 type CheckRule = { code: string; passed: boolean; message: string };
 type Recommendation = {
@@ -41,13 +42,14 @@ const statusText: Record<string, string> = {
 };
 
 export function VoucherBoosterPanel() {
+  const t = useT();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -59,12 +61,12 @@ export function VoucherBoosterPanel() {
       setCampaigns(rows.data ?? []);
     } catch (cause) {
       setError(cause instanceof ApiClientError
-        ? cause.message : "Không thể tải Voucher Booster. Hãy kiểm tra workspace và backend.");
+        ? cause.message : t("Không thể tải Voucher Booster. Hãy kiểm tra workspace và backend."));
     } finally {
       setLoading(false);
     }
-  };
-  useEffect(() => { void load(); }, []);
+  }, [t]);
+  useEffect(() => { void load(); }, [load]);
 
   const create = async (id: string) => {
     setBusy(`create:${id}`); setError(null);
@@ -75,7 +77,7 @@ export function VoucherBoosterPanel() {
       if (response.data) setCampaigns((current) => current.some((row) => row.id === response.data!.id)
         ? current : [response.data!, ...current]);
     } catch (cause) {
-      setError(cause instanceof ApiClientError ? cause.message : "Không thể lập campaign.");
+      setError(cause instanceof ApiClientError ? cause.message : t("Không thể lập campaign."));
     } finally { setBusy(null); }
   };
 
@@ -88,7 +90,7 @@ export function VoucherBoosterPanel() {
       if (response.data) setCampaigns((rows) => rows.map((row) =>
         row.id === campaign.id ? response.data! : row));
     } catch (cause) {
-      setError(cause instanceof ApiClientError ? cause.message : "Không thể duyệt campaign.");
+      setError(cause instanceof ApiClientError ? cause.message : t("Không thể duyệt campaign."));
     } finally { setBusy(null); }
   };
 
@@ -102,17 +104,17 @@ export function VoucherBoosterPanel() {
             <div className="flex items-center gap-2 text-sm font-semibold text-accent-deep">
               <BadgePercent className="h-4 w-4" /> Voucher Booster
             </div>
-            <h2 className="mt-2 text-2xl">Một quyết định, có rule trước khi lên sàn</h2>
+            <h2 className="mt-2 text-2xl">{t("Một quyết định, có rule trước khi lên sàn")}</h2>
             <p className="mt-2 max-w-2xl text-sm text-text-muted">
-              Dữ liệu tồn kho và biên lợi nhuận tạo kịch bản. Seller duyệt ngân sách, sau đó hệ thống mới chuyển sang bước kết nối hoặc xác nhận trên Seller Center.
+              {t("Dữ liệu tồn kho và biên lợi nhuận tạo kịch bản. Seller duyệt ngân sách, sau đó hệ thống mới chuyển sang bước kết nối hoặc xác nhận trên Seller Center.")}
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs text-text-muted">
-            <span className="rounded-md border px-2.5 py-2">1 · Mô phỏng</span>
+            <span className="rounded-md border px-2.5 py-2">{t("1 · Mô phỏng")}</span>
             <ArrowRight className="h-3.5 w-3.5" />
-            <span className="rounded-md border px-2.5 py-2">2 · Duyệt rule</span>
+            <span className="rounded-md border px-2.5 py-2">{t("2 · Duyệt rule")}</span>
             <ArrowRight className="h-3.5 w-3.5" />
-            <span className="rounded-md border px-2.5 py-2">3 · Lên sàn</span>
+            <span className="rounded-md border px-2.5 py-2">{t("3 · Lên sàn")}</span>
           </div>
         </CardContent>
       </Card>
@@ -123,7 +125,7 @@ export function VoucherBoosterPanel() {
         <Card>
           <CardContent className="flex items-center gap-3 p-6 text-sm text-text-muted">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Đang đọc tồn kho, biên lợi nhuận và chuẩn bị kịch bản an toàn…
+            {t("Đang đọc tồn kho, biên lợi nhuận và chuẩn bị kịch bản an toàn…")}
           </CardContent>
         </Card>
       )}
@@ -131,10 +133,10 @@ export function VoucherBoosterPanel() {
       {!loading && !error && !top && (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-sm font-medium">Chưa tạo được kịch bản từ snapshot hiện tại.</p>
-            <p className="mt-1 text-xs text-text-muted">Hãy cập nhật dữ liệu vận hành rồi thử phân tích lại.</p>
+            <p className="text-sm font-medium">{t("Chưa tạo được kịch bản từ snapshot hiện tại.")}</p>
+            <p className="mt-1 text-xs text-text-muted">{t("Hãy cập nhật dữ liệu vận hành rồi thử phân tích lại.")}</p>
             <Button className="mt-4" variant="secondary" onClick={() => void load()}>
-              Phân tích lại
+              {t("Phân tích lại")}
             </Button>
           </CardContent>
         </Card>
@@ -145,21 +147,21 @@ export function VoucherBoosterPanel() {
           <CardHeader className="border-b border-border">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wide text-accent-deep">Kịch bản nên chạy</div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-accent-deep">{t("Kịch bản nên chạy")}</div>
                 <CardTitle className="mt-1">{top.plan.name}</CardTitle>
                 <p className="mt-2 max-w-3xl text-sm text-text-muted">{top.why}</p>
               </div>
               <Badge variant={top.guardrails.passed ? "success" : "danger"}>
-                {top.guardrails.passed ? "Qua toàn bộ rule" : "Chưa an toàn"}
+                {top.guardrails.passed ? "Qua toàn bộ rule" : t("Chưa an toàn")}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="p-5">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Metric label="Mức giảm" value={`${top.simulation.discount_pct}%`} />
-              <Metric label="Đơn dự kiến" value={`${top.simulation.expected_orders}`} />
-              <Metric label="Doanh thu dự kiến" value={money(top.simulation.expected_revenue_vnd)} />
-              <Metric label="Lợi nhuận tăng thêm" value={money(top.simulation.incremental_profit_vnd)}
+              <Metric label={t("Mức giảm")} value={`${top.simulation.discount_pct}%`} />
+              <Metric label={t("Đơn dự kiến")} value={`${top.simulation.expected_orders}`} />
+              <Metric label={t("Doanh thu dự kiến")} value={money(top.simulation.expected_revenue_vnd)} />
+              <Metric label={t("Lợi nhuận tăng thêm")} value={money(top.simulation.incremental_profit_vnd)}
                 good={top.simulation.incremental_profit_vnd >= 0} />
             </div>
             <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -187,11 +189,11 @@ export function VoucherBoosterPanel() {
 
       <section>
         <div className="mb-3 flex items-end justify-between">
-          <div><h2 className="text-xl">Hàng đợi thực thi</h2><p className="text-sm text-text-muted">Chỉ campaign đã qua rule mới được duyệt.</p></div>
+          <div><h2 className="text-xl">{t("Hàng đợi thực thi")}</h2><p className="text-sm text-text-muted">{t("Chỉ campaign đã qua rule mới được duyệt.")}</p></div>
           <span className="mono text-xs text-text-dim">{campaigns.length} campaign</span>
         </div>
         {!campaigns.length ? (
-          <Card><CardContent className="p-8 text-center text-sm text-text-muted">Chưa có campaign. Chọn kịch bản phía trên để tạo một bản mô phỏng có thể kiểm chứng.</CardContent></Card>
+          <Card><CardContent className="p-8 text-center text-sm text-text-muted">{t("Chưa có campaign. Chọn kịch bản phía trên để tạo một bản mô phỏng có thể kiểm chứng.")}</CardContent></Card>
         ) : (
           <div className="space-y-3">
             {campaigns.map((campaign) => {
@@ -206,20 +208,20 @@ export function VoucherBoosterPanel() {
                         <Badge variant={campaign.guardrails.passed ? "success" : "danger"}>{statusText[campaign.status] ?? campaign.status}</Badge>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-text-muted">
-                        <span>Giảm <b className="text-text">{campaign.simulation.discount_pct}%</b></span>
-                        <span>Ngân sách <b className="text-text">{money(campaign.budget_vnd)}</b></span>
-                        <span>Lợi nhuận tăng thêm <b className="text-text">{money(campaign.simulation.incremental_profit_vnd)}</b></span>
+                        <span>{t("Giảm")} <b className="text-text">{campaign.simulation.discount_pct}%</b></span>
+                        <span>{t("Ngân sách")} <b className="text-text">{money(campaign.budget_vnd)}</b></span>
+                        <span>{t("Lợi nhuận tăng thêm")} <b className="text-text">{money(campaign.simulation.incremental_profit_vnd)}</b></span>
                       </div>
                       <p className="mt-2 text-xs text-text-dim">{campaign.execution.message}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {campaign.status === "simulated" && <>
-                        <Button size="sm" disabled={busy !== null} onClick={() => decide(campaign, "approve")}><Check className="h-3.5 w-3.5" /> Duyệt</Button>
+                        <Button size="sm" disabled={busy !== null} onClick={() => decide(campaign, "approve")}><Check className="h-3.5 w-3.5" /> {t("Duyệt")}</Button>
                         <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => decide(campaign, "reject")}><X className="h-3.5 w-3.5" /> Bỏ</Button>
                       </>}
                       {!terminal && campaign.status !== "simulated" && (
                         <Button asChild size="sm" variant="secondary">
-                          <Link href={campaign.execution.seller_center_url} target="_blank" rel="noreferrer">Mở Seller Center <ExternalLink className="h-3.5 w-3.5" /></Link>
+                          <Link href={campaign.execution.seller_center_url} target="_blank" rel="noreferrer">{t("Mở Seller Center")} <ExternalLink className="h-3.5 w-3.5" /></Link>
                         </Button>
                       )}
                     </div>
@@ -239,7 +241,7 @@ export function VoucherBoosterPanel() {
               <div key={item.id} className="rounded-md border border-border p-4">
                 <div className="flex justify-between gap-2"><b>{item.plan.name}</b><span>{item.simulation.discount_pct}%</span></div>
                 <p className="mt-2 text-xs text-text-muted">{item.why}</p>
-                <Button className="mt-3" size="sm" variant="secondary" disabled={busy !== null || !item.guardrails.passed} onClick={() => create(item.id)}>Lập campaign</Button>
+                <Button className="mt-3" size="sm" variant="secondary" disabled={busy !== null || !item.guardrails.passed} onClick={() => create(item.id)}>{t("Lập campaign")}</Button>
               </div>
             ))}
           </div>

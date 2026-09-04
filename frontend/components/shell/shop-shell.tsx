@@ -151,7 +151,7 @@ export function ShopShell({ children }: { children: React.ReactNode }) {
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-8 text-center text-xs text-text-dim sm:px-6">
-          Cellaxnet · mua sắm thời trang &amp; mỹ phẩm
+          Cellaxnet · mua sắm thời trang & mỹ phẩm
         </div>
       </footer>
 

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/mock-data";
 import { getMockImageUrl } from "@/lib/mock-data";
+import { useT } from "@/lib/i18n";
 
 const VND = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -85,6 +86,7 @@ export function ProductCard({
   /** Provided in the Shop app to record real shopping behaviour. */
   onInteract?: (kind: "click" | "cart") => void;
 }) {
+  const t = useT();
   const href = productUrl(product);
   const [broken, setBroken] = useState(false);
   const Icon = productIcon(product);
@@ -173,7 +175,7 @@ export function ProductCard({
           onClick={() => onInteract("cart")}
           className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-bold text-accent transition-colors hover:bg-accent hover:text-white"
         >
-          <ShoppingBag className="h-3.5 w-3.5" /> Thêm vào giỏ
+          <ShoppingBag className="h-3.5 w-3.5" /> {t("Thêm vào giỏ")}
         </button>
       )}
     </div>

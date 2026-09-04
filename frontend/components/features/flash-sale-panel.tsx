@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { analyzeHesitation, type FlashSaleResult } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export function FlashSalePanel() {
+  const t = useT();
   const [dwell, setDwell] = useState(150);
   const [scroll, setScroll] = useState(85);
   const [revisits, setRevisits] = useState(2);
@@ -38,7 +40,7 @@ export function FlashSalePanel() {
           <div>
             <CardTitle>Hành vi trên trang sản phẩm</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Mô phỏng tín hiệu hành vi (thời gian dừng, tốc độ scroll, số lần quay lại) để phát hiện khách &ldquo;thích nhưng do dự&rdquo;.
+              {t("Mô phỏng tín hiệu hành vi (thời gian dừng, tốc độ scroll, số lần quay lại) để phát hiện khách “thích nhưng do dự”.")}
             </p>
           </div>
           <Badge variant="muted">behaviour simulator</Badge>
@@ -80,10 +82,10 @@ export function FlashSalePanel() {
       </Card>
 
       <Card className="lg:col-span-5">
-        <CardHeader><CardTitle>Kết quả</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t("Kết quả")}</CardTitle></CardHeader>
         <CardContent>
           {error ? (
-            <p className="text-sm text-danger">Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.</p>
+            <p className="text-sm text-danger">{t("Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.")}</p>
           ) : !result ? (
             <p className="text-sm text-text-muted">Bấm Phân tích để xem đề xuất.</p>
           ) : (
@@ -91,7 +93,7 @@ export function FlashSalePanel() {
               <div className={cn("flex items-center gap-2 text-xl font-semibold",
                 result.trigger_now ? "text-accent" : result.hesitating ? "text-warning" : "text-text-muted")}>
                 {result.trigger_now && <Zap className="h-5 w-5" />}
-                {result.trigger_now ? "Kích hoạt ưu đãi ngay" : result.hesitating ? "Khách đang do dự" : "Bình thường"}
+                {result.trigger_now ? "Kích hoạt ưu đãi ngay" : result.hesitating ? "Khách đang do dự" : t("Bình thường")}
               </div>
               <div className="mono text-xs text-text-muted">Điểm do dự: {result.hesitation_score}</div>
               {result.suggested_discount_pct > 0 && (

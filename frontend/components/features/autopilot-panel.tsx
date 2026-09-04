@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight, Bot, Check, CircleAlert, FlaskConical,
@@ -10,6 +10,7 @@ import { api, ApiClientError } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useT } from "@/lib/i18n";
 
 type Option = { id: string; label: string; risk: string; impact: Record<string, number> };
 type Opportunity = {
@@ -43,20 +44,21 @@ const showValue = (key: string, value: string | number) =>
   key.endsWith("_vnd") && typeof value === "number" ? money(value) : String(value);
 
 export function AutopilotPanel() {
+  const t = useT();
   const [items, setItems] = useState<Opportunity[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setError(null);
     try {
       const response = await api.get<Opportunity[]>("/autopilot/opportunities");
       setItems(response.data ?? []);
     } catch (cause) {
-      setError(cause instanceof ApiClientError ? cause.message : "Hãy chọn workspace đang hoạt động.");
+      setError(cause instanceof ApiClientError ? cause.message : t("Hãy chọn workspace đang hoạt động."));
     }
-  };
-  useEffect(() => { void load(); }, []);
+  }, [t]);
+  useEffect(() => { void load(); }, [load]);
 
   const refresh = async () => {
     setBusy("refresh"); setError(null);
@@ -64,7 +66,7 @@ export function AutopilotPanel() {
       const response = await api.post<Opportunity[]>("/autopilot/refresh", {});
       setItems(response.data ?? []);
     } catch (cause) {
-      setError(cause instanceof ApiClientError ? cause.message : "Không thể phân tích dữ liệu vận hành.");
+      setError(cause instanceof ApiClientError ? cause.message : t("Không thể phân tích dữ liệu vận hành."));
     } finally { setBusy(null); }
   };
 
@@ -80,7 +82,7 @@ export function AutopilotPanel() {
       if (response.data) setItems((rows) => rows.map((row) =>
         row.id === item.id ? response.data!.opportunity : row));
     } catch (cause) {
-      setError(cause instanceof ApiClientError ? cause.message : "Hành động không hợp lệ.");
+      setError(cause instanceof ApiClientError ? cause.message : t("Hành động không hợp lệ."));
     } finally { setBusy(null); }
   };
 
@@ -95,31 +97,31 @@ export function AutopilotPanel() {
             <span className="doodle-sticker h-11 w-11 shrink-0"><Bot className="h-5 w-5" /></span>
             <div>
               <div className="text-sm font-semibold text-accent-deep">Commerce Digital Twin</div>
-              <h2 className="mt-1 text-2xl">Từ tín hiệu thành một quyết định có thể thực thi</h2>
+              <h2 className="mt-1 text-2xl">{t("Từ tín hiệu thành một quyết định có thể thực thi")}</h2>
               <p className="mt-2 max-w-2xl text-sm text-text-muted">
-                Các module phân tích chạy phía sau để cung cấp bằng chứng. Màn hình này chỉ giữ lại vấn đề cần quyết định, tác động và hành động tiếp theo.
+                {t("Các module phân tích chạy phía sau để cung cấp bằng chứng. Màn hình này chỉ giữ lại vấn đề cần quyết định, tác động và hành động tiếp theo.")}
               </p>
             </div>
           </div>
           <Button onClick={refresh} disabled={busy !== null}>
             <RefreshCw className={`h-4 w-4 ${busy === "refresh" ? "animate-spin" : ""}`} />
-            {busy === "refresh" ? "Đang dựng snapshot…" : "Cập nhật Digital Twin"}
+            {busy === "refresh" ? t("Đang dựng snapshot…") : t("Cập nhật Digital Twin")}
           </Button>
         </CardContent>
       </Card>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Stage icon={Target} number="01" title="Phát hiện" detail={`${active.length} việc cần quyết định`} active />
-        <Stage icon={FlaskConical} number="02" title="Mô phỏng" detail="So sánh tác động trước khi duyệt" />
-        <Stage icon={ShieldCheck} number="03" title="Thực thi" detail={`${completed} quyết định đã ghi nhận`} />
+        <Stage icon={Target} number="01" title={t("Phát hiện")} detail={`${active.length} việc cần quyết định`} active />
+        <Stage icon={FlaskConical} number="02" title={t("Mô phỏng")} detail={t("So sánh tác động trước khi duyệt")} />
+        <Stage icon={ShieldCheck} number="03" title={t("Thực thi")} detail={`${completed} quyết định đã ghi nhận`} />
       </div>
 
       {error && <div className="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{error}</div>}
       {!items.length && !error && (
         <Card><CardContent className="p-10 text-center">
           <Target className="mx-auto h-8 w-8 text-accent" />
-          <h3 className="mt-3 text-lg">Chưa có snapshot quyết định</h3>
-          <p className="mt-1 text-sm text-text-muted">Cập nhật Digital Twin để đọc tồn kho, khách hàng và review từ cùng một snapshot.</p>
+          <h3 className="mt-3 text-lg">{t("Chưa có snapshot quyết định")}</h3>
+          <p className="mt-1 text-sm text-text-muted">{t("Cập nhật Digital Twin để đọc tồn kho, khách hàng và review từ cùng một snapshot.")}</p>
         </CardContent></Card>
       )}
 
@@ -140,16 +142,16 @@ export function AutopilotPanel() {
                     <CardTitle className="mt-3">{item.title}</CardTitle>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-text-muted">{item.explanation}</p>
                   </div>
-                  {item.llm_used && <span className="text-xs text-text-dim">Ollama giải thích · số liệu do rule tính</span>}
+                  {item.llm_used && <span className="text-xs text-text-dim">{t("Ollama giải thích · số liệu do rule tính")}</span>}
                 </div>
               </CardHeader>
               <CardContent className="grid gap-5 p-5 lg:grid-cols-[.8fr_1.2fr]">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-text-dim">Bằng chứng đủ để quyết định</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-text-dim">{t("Bằng chứng đủ để quyết định")}</div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                     {evidence.map(([key, value]) => (
                       <div key={key} className="flex items-center justify-between gap-4 border-b border-dashed border-border pb-2 text-sm">
-                        <span className="text-text-muted">{evidenceLabels[key]}</span>
+                        <span className="text-text-muted">{t(evidenceLabels[key])}</span>
                         <b>{showValue(key, value)}</b>
                       </div>
                     ))}
@@ -157,31 +159,31 @@ export function AutopilotPanel() {
                 </div>
                 <div className="rounded-md border-2 border-text/70 bg-surface p-4 shadow-[3px_4px_0_hsl(var(--text)/.1)]">
                   <div className="flex items-start justify-between gap-3">
-                    <div><div className="text-xs font-semibold text-accent-deep">HÀNH ĐỘNG ĐỀ XUẤT</div><div className="mt-1 font-semibold">{selected.label}</div></div>
-                    <Badge variant={selected.risk === "low" ? "success" : "warning"}>Rủi ro {riskLabels[selected.risk] ?? selected.risk}</Badge>
+                    <div><div className="text-xs font-semibold text-accent-deep">{t("HÀNH ĐỘNG ĐỀ XUẤT")}</div><div className="mt-1 font-semibold">{selected.label}</div></div>
+                    <Badge variant={selected.risk === "low" ? "success" : "warning"}>{t("Rủi ro")} {riskLabels[selected.risk] ? t(riskLabels[selected.risk]) : selected.risk}</Badge>
                   </div>
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     {Object.entries(selected.impact).slice(0, 4).map(([key, value]) => (
                       <div key={key} className="rounded-md bg-surface-2 p-2.5 text-xs text-text-muted">
-                        {impactLabels[key] ?? key.replaceAll("_", " ")}<div className="mono mt-1 font-bold text-text">{showValue(key, value)}</div>
+                        {impactLabels[key] ? t(impactLabels[key]) : key.replaceAll("_", " ")}<div className="mono mt-1 font-bold text-text">{showValue(key, value)}</div>
                       </div>
                     ))}
                   </div>
                   {!terminal && <div className="mt-4 flex flex-wrap gap-2">
                     {item.status !== "simulated" ? (
                       <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => act(item, selected)}>
-                        <FlaskConical className="h-3.5 w-3.5" /> Mô phỏng tác động
+                        <FlaskConical className="h-3.5 w-3.5" /> {t("Mô phỏng tác động")}
                       </Button>
                     ) : (
                       <Button size="sm" disabled={busy !== null} onClick={() => act(item, selected, "approve")}>
-                        <Check className="h-3.5 w-3.5" /> Duyệt hành động
+                        <Check className="h-3.5 w-3.5" /> {t("Duyệt hành động")}
                       </Button>
                     )}
                     <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => act(item, selected, "reject")}>
-                      <X className="h-3.5 w-3.5" /> Bỏ qua
+                      <X className="h-3.5 w-3.5" /> {t("Bỏ qua")}
                     </Button>
                     {item.kind === "customer_risk" && (
-                      <Button asChild size="sm" variant="ghost"><Link href="/seller/voucher-booster">Mở Voucher Booster <ArrowRight className="h-3.5 w-3.5" /></Link></Button>
+                      <Button asChild size="sm" variant="ghost"><Link href="/seller/voucher-booster">{t("Mở Voucher Booster")} <ArrowRight className="h-3.5 w-3.5" /></Link></Button>
                     )}
                   </div>}
                   {item.options.length > 1 && !terminal && (
@@ -224,7 +226,7 @@ export function AutopilotPanel() {
 
       <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-xs text-text-muted">
         <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-        Digital Twin chỉ dùng dữ liệu có nguồn trong snapshot. LLM được phép giải thích, không được tự tạo chỉ số hoặc vượt qua bước seller duyệt.
+        {t("Digital Twin chỉ dùng dữ liệu có nguồn trong snapshot. LLM được phép giải thích, không được tự tạo chỉ số hoặc vượt qua bước seller duyệt.")}
       </div>
     </div>
   );

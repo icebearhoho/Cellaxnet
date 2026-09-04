@@ -11,8 +11,10 @@ import { useAuth } from "@/lib/auth-context";
 import { ApiClientError } from "@/lib/api";
 import { readActiveWorkspaceId, setActiveWorkspaceId } from "@/lib/active-workspace";
 import { listWorkspaces } from "@/lib/workspaces";
+import { useT } from "@/lib/i18n";
 
 function LoginForm() {
+  const t = useT();
   const router = useRouter();
   const params = useSearchParams();
   const { login, busy } = useAuth();
@@ -79,7 +81,7 @@ function LoginForm() {
         <>
           Chưa có tài khoản?{" "}
           <Link href="/register" className="font-semibold text-accent hover:underline">
-            Đăng ký
+            {t("Đăng ký")}
           </Link>
         </>
       }
@@ -101,7 +103,7 @@ function LoginForm() {
         </div>
         <div>
           <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
-            Mật khẩu
+            {t("Mật khẩu")}
           </label>
           <Input
             id="password"

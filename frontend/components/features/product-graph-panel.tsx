@@ -43,6 +43,7 @@ import {
   type ProductPerformance,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 
 const PERIOD_DAYS = 30;
@@ -79,8 +80,9 @@ function shopLabel(shop: { platform: string; shop_name: string }) {
 }
 
 function Growth({ value }: { value: number | null }) {
+  const t = useT();
   if (value === null) {
-    return <span className="text-2xs text-text-dim">Chưa có kỳ trước</span>;
+    return <span className="text-2xs text-text-dim">{t("Chưa có kỳ trước")}</span>;
   }
   const positive = value >= 0;
   const Icon = positive ? ArrowUpRight : ArrowDownRight;
@@ -93,6 +95,7 @@ function Growth({ value }: { value: number | null }) {
 }
 
 function ProductThumb({ product, className }: { product: Pick<ProductPerformance, "image_url" | "name">; className?: string }) {
+  const t = useT();
   return (
     <div className={cn("grid shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-surface-2", className)}>
       {product.image_url ? (
@@ -100,13 +103,14 @@ function ProductThumb({ product, className }: { product: Pick<ProductPerformance
         // eslint-disable-next-line @next/next/no-img-element
         <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
       ) : (
-        <Package className="h-7 w-7 text-text-dim" aria-label="Sàn chưa trả ảnh sản phẩm" />
+        <Package className="h-7 w-7 text-text-dim" aria-label={t("Sàn chưa trả ảnh sản phẩm")} />
       )}
     </div>
   );
 }
 
 function ProductCard({ product, onSelect }: { product: ProductPerformance; onSelect: () => void }) {
+  const t = useT();
   return (
     <button
       type="button"
@@ -118,7 +122,7 @@ function ProductCard({ product, onSelect }: { product: ProductPerformance; onSel
         <div className="flex items-center justify-between gap-2">
           <Badge variant="info">Top {product.category_rank} danh mục {product.category}</Badge>
           <div className="shrink-0 text-right">
-            <p className="mb-0.5 text-2xs text-text-dim">So kỳ trước</p>
+            <p className="mb-0.5 text-2xs text-text-dim">{t("So kỳ trước")}</p>
             <Growth value={product.sales_change_pct} />
           </div>
         </div>
@@ -131,6 +135,7 @@ function ProductCard({ product, onSelect }: { product: ProductPerformance; onSel
 }
 
 function SourceStrip({ source }: { source: GraphSource }) {
+  const t = useT();
   return (
     <Card className="overflow-hidden border-info/20 bg-info/[0.025]">
       <CardContent className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
@@ -143,7 +148,7 @@ function SourceStrip({ source }: { source: GraphSource }) {
               <p className="text-sm font-semibold text-text">
                 {source.demo_data_used ? "Nguồn số liệu bán hàng" : `Nguồn số liệu: ${platformName(source.platform)} · ${source.shop_name}`}
               </p>
-              {!source.demo_data_used && <Badge variant="success">Dữ liệu đồng bộ từ sàn</Badge>}
+              {!source.demo_data_used && <Badge variant="success">{t("Dữ liệu đồng bộ từ sàn")}</Badge>}
             </div>
             <p className="mt-1 text-xs leading-5 text-text-muted">
               Kỳ tính {shortDate(source.period_start)}–{shortDate(source.period_end)} · dữ liệu cập nhật đến {dateTime(source.last_synced_at)}.
@@ -151,9 +156,9 @@ function SourceStrip({ source }: { source: GraphSource }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-lg border border-border bg-surface px-3 py-2"><b>{source.product_records}</b> bản ghi sản phẩm</span>
-          <span className="rounded-lg border border-border bg-surface px-3 py-2"><b>{source.order_records}</b> đơn hàng</span>
-          <span className="rounded-lg border border-border bg-surface px-3 py-2"><b>{source.order_item_records}</b> dòng hàng</span>
+          <span className="rounded-lg border border-border bg-surface px-3 py-2"><b>{source.product_records}</b> {t("bản ghi sản phẩm")}</span>
+          <span className="rounded-lg border border-border bg-surface px-3 py-2"><b>{source.order_records}</b> {t("đơn hàng")}</span>
+          <span className="rounded-lg border border-border bg-surface px-3 py-2"><b>{source.order_item_records}</b> {t("dòng hàng")}</span>
         </div>
       </CardContent>
     </Card>
@@ -161,6 +166,7 @@ function SourceStrip({ source }: { source: GraphSource }) {
 }
 
 function EmptyData({ overview, reload }: { overview: ProductGraphOverview; reload: () => void }) {
+  const t = useT();
   return (
     <div className="space-y-5">
       {overview.source && <SourceStrip source={overview.source} />}
@@ -170,24 +176,24 @@ function EmptyData({ overview, reload }: { overview: ProductGraphOverview; reloa
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-warning/10 text-warning">
               <Database className="h-6 w-6" />
             </span>
-            <h2 className="mt-4 text-xl font-bold text-text">Chưa có dữ liệu thật để xếp hạng</h2>
+            <h2 className="mt-4 text-xl font-bold text-text">{t("Chưa có dữ liệu thật để xếp hạng")}</h2>
             <p className="mt-2 text-sm leading-6 text-text-muted">{overview.missing_reason}</p>
             <div className="mt-4 flex items-start gap-2 rounded-xl border border-success/20 bg-success/[0.04] p-3 text-xs leading-5 text-text-muted">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-              Khi có sản phẩm và đơn hàng, xếp hạng sẽ xuất hiện tự động theo công thức được ghi rõ trên trang.
+              {t("Khi có sản phẩm và đơn hàng, xếp hạng sẽ xuất hiện tự động theo công thức được ghi rõ trên trang.")}
             </div>
             <Button type="button" variant="outline" onClick={reload} className="mt-5 w-fit">
-              <RefreshCw className="h-4 w-4" /> Kiểm tra lại dữ liệu
+              <RefreshCw className="h-4 w-4" /> {t("Kiểm tra lại dữ liệu")}
             </Button>
           </div>
 
           <div className="rounded-2xl border border-border bg-surface-2/55 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-text-dim">Khi có dữ liệu, trang sẽ trả lời 3 câu hỏi</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-dim">{t("Khi có dữ liệu, trang sẽ trả lời 3 câu hỏi")}</p>
             <div className="mt-4 space-y-3">
               {[
-                { icon: Trophy, title: "Danh mục nào đang tạo doanh thu?", text: "Xếp theo tổng thành tiền dòng hàng của các đơn hợp lệ." },
-                { icon: BarChart3, title: "Sản phẩm nào thật sự nổi bật?", text: "Hiện hạng doanh thu, số bán, số đơn và so sánh với 30 ngày trước." },
-                { icon: Layers3, title: "Khách còn lựa chọn tương tự nào?", text: "Tự ghép sản phẩm cùng shop, cùng danh mục theo thương hiệu, tên và mức giá." },
+                { icon: Trophy, title: t("Danh mục nào đang tạo doanh thu?"), text: t("Xếp theo tổng thành tiền dòng hàng của các đơn hợp lệ.") },
+                { icon: BarChart3, title: t("Sản phẩm nào thật sự nổi bật?"), text: t("Hiện hạng doanh thu, số bán, số đơn và so sánh với 30 ngày trước.") },
+                { icon: Layers3, title: t("Khách còn lựa chọn tương tự nào?"), text: t("Tự ghép sản phẩm cùng shop, cùng danh mục theo thương hiệu, tên và mức giá.") },
               ].map((item, index) => (
                 <div key={item.title} className="flex gap-3 rounded-xl border border-border bg-surface p-4">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent"><item.icon className="h-4 w-4" /></span>
@@ -206,12 +212,13 @@ function EmptyData({ overview, reload }: { overview: ProductGraphOverview; reloa
 }
 
 export function ProductGraphPanel() {
+  const t = useT();
   const [overview, setOverview] = useState<ProductGraphOverview | null>(null);
   const [detail, setDetail] = useState<ProductGraphResult | null>(null);
   const [shopId, setShopId] = useState<number | undefined>();
   const [sourcePickerOpen, setSourcePickerOpen] = useState(false);
   const [sourceCommandValue, setSourceCommandValue] = useState("");
-  const [category, setCategory] = useState("Tất cả");
+  const [category, setCategory] = useState(t("Tất cả"));
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -222,11 +229,11 @@ export function ProductGraphPanel() {
     setDetail(null);
     const response = await getProductGraphOverview(selectedShop, PERIOD_DAYS);
     if (!response) {
-      setError("Không đọc được dữ liệu sản phẩm đã đồng bộ. Kiểm tra backend rồi thử lại.");
+      setError(t("Không đọc được dữ liệu sản phẩm đã đồng bộ. Kiểm tra backend rồi thử lại."));
     } else {
       setOverview(response);
       setShopId(response.source?.shop_connection_id ?? selectedShop);
-      setCategory("Tất cả");
+      setCategory(t("Tất cả"));
     }
     setLoading(false);
   }
@@ -242,7 +249,7 @@ export function ProductGraphPanel() {
     setDetailLoading(true);
     setError(null);
     const response = await getProductGraphDetail(productId, shopId, PERIOD_DAYS);
-    if (!response) setError("Không tải được bảng so sánh sản phẩm.");
+    if (!response) setError(t("Không tải được bảng so sánh sản phẩm."));
     else setDetail(response);
     setDetailLoading(false);
   }
@@ -251,7 +258,7 @@ export function ProductGraphPanel() {
     if (!overview) return [];
     const orderedCategories = overview.categories
       .map((item) => item.category)
-      .filter((item) => category === "Tất cả" || item === category);
+      .filter((item) => category === t("Tất cả") || item === category);
     const grouped = new Map<string, ProductPerformance[]>();
     for (const product of overview.top_products) {
       if (!grouped.has(product.category)) grouped.set(product.category, []);
@@ -262,7 +269,7 @@ export function ProductGraphPanel() {
         a.category_rank - b.category_rank || b.revenue_vnd - a.revenue_vnd
       ))
     ));
-    if (category !== "Tất cả") return categories[0] ?? [];
+    if (category !== t("Tất cả")) return categories[0] ?? [];
 
     const products: Array<ProductPerformance | null> = [];
     const longestColumn = Math.max(0, ...categories.map((items) => items.length));
@@ -272,13 +279,13 @@ export function ProductGraphPanel() {
       }
     }
     return products;
-  }, [overview, category]);
+  }, [overview, category, t]);
 
   const selectedShop = overview?.available_shops.find((shop) => shop.id === shopId);
   const hasShopee = overview?.available_shops.some((shop) => shop.platform === "shopee") ?? false;
 
   function openSourcePicker() {
-    setSourceCommandValue(selectedShop ? shopLabel(selectedShop) : "Dữ liệu cửa hàng");
+    setSourceCommandValue(selectedShop ? shopLabel(selectedShop) : t("Dữ liệu cửa hàng"));
     setSourcePickerOpen(true);
   }
 
@@ -290,7 +297,7 @@ export function ProductGraphPanel() {
   if (loading && !overview) {
     return (
       <Card><CardContent className="flex min-h-72 flex-col items-center justify-center gap-3 text-sm text-text-muted">
-        <Loader2 className="h-6 w-6 animate-spin text-accent" /> Đang đọc dữ liệu sản phẩm và đơn hàng đã đồng bộ…
+        <Loader2 className="h-6 w-6 animate-spin text-accent" /> {t("Đang đọc dữ liệu sản phẩm và đơn hàng đã đồng bộ…")}
       </CardContent></Card>
     );
   }
@@ -302,9 +309,9 @@ export function ProductGraphPanel() {
           <div className="flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent"><Trophy className="h-5 w-5" /></span>
             <div>
-              <h2 className="text-lg font-bold text-text">Sản phẩm nổi bật của shop</h2>
+              <h2 className="text-lg font-bold text-text">{t("Sản phẩm nổi bật của shop")}</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">
-                Không cần tìm kiếm. Hệ thống tự chỉ ra danh mục và sản phẩm tạo doanh thu, rồi so sánh ngay với các lựa chọn tương tự trong cùng shop.
+                {t("Không cần tìm kiếm. Hệ thống tự chỉ ra danh mục và sản phẩm tạo doanh thu, rồi so sánh ngay với các lựa chọn tương tự trong cùng shop.")}
               </p>
             </div>
           </div>
@@ -320,18 +327,18 @@ export function ProductGraphPanel() {
               >
                 <Store className="h-4 w-4 shrink-0 text-text-dim" />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-2xs font-medium leading-3 text-text-muted">Nguồn cửa hàng</span>
-                  <span className="block truncate text-xs font-semibold text-text">{selectedShop ? shopLabel(selectedShop) : "Dữ liệu cửa hàng"}</span>
+                  <span className="block text-2xs font-medium leading-3 text-text-muted">{t("Nguồn cửa hàng")}</span>
+                  <span className="block truncate text-xs font-semibold text-text">{selectedShop ? shopLabel(selectedShop) : t("Dữ liệu cửa hàng")}</span>
                 </span>
                 <ChevronDown className="h-4 w-4 shrink-0 text-text-dim" />
               </Button>
               <Dialog open={sourcePickerOpen} onOpenChange={setSourcePickerOpen}>
                 <DialogContent className="overflow-hidden p-0">
                   <Command value={sourceCommandValue} onValueChange={setSourceCommandValue} className="[&_[cmdk-group-heading]]:text-text-dim">
-                    <CommandInput placeholder="Tìm cửa hàng…" autoFocus />
+                    <CommandInput placeholder={t("Tìm cửa hàng…")} autoFocus />
                     <CommandList>
-                      <CommandEmpty>Không tìm thấy cửa hàng.</CommandEmpty>
-                      <CommandGroup heading="Nguồn cửa hàng">
+                      <CommandEmpty>{t("Không tìm thấy cửa hàng.")}</CommandEmpty>
+                      <CommandGroup heading={t("Nguồn cửa hàng")}>
                         {overview.available_shops.map((shop) => (
                           <CommandItem
                             key={shop.id}
@@ -375,8 +382,8 @@ export function ProductGraphPanel() {
           <Card>
             <CardHeader className="border-b border-border">
               <div>
-                <CardTitle className="flex items-center gap-2"><Boxes className="h-4 w-4 text-accent" /> Danh mục dẫn đầu doanh thu</CardTitle>
-                <p className="mt-1 text-xs text-text-muted">Chọn danh mục để lọc danh sách sản phẩm phía dưới.</p>
+                <CardTitle className="flex items-center gap-2"><Boxes className="h-4 w-4 text-accent" /> {t("Danh mục dẫn đầu doanh thu")}</CardTitle>
+                <p className="mt-1 text-xs text-text-muted">{t("Chọn danh mục để lọc danh sách sản phẩm phía dưới.")}</p>
               </div>
               <Badge variant="muted">{overview.categories.length} danh mục có dữ liệu</Badge>
             </CardHeader>
@@ -397,7 +404,7 @@ export function ProductGraphPanel() {
                       <p className="mt-1 truncate text-sm font-bold text-text">{item.category}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className="mb-0.5 text-2xs text-text-dim">So với 30 ngày trước</p>
+                      <p className="mb-0.5 text-2xs text-text-dim">{t("So với 30 ngày trước")}</p>
                       <Growth value={item.growth_pct} />
                     </div>
                   </div>
@@ -407,7 +414,7 @@ export function ProductGraphPanel() {
                     <span>{item.units_sold.toLocaleString("vi-VN")} sản phẩm</span>
                     <span>{item.orders_count.toLocaleString("vi-VN")} đơn</span>
                   </div>
-                  <p className="mt-3 line-clamp-2 text-xs leading-5 text-text-muted">Dẫn đầu: <b className="text-text">{item.top_product_name}</b></p>
+                  <p className="mt-3 line-clamp-2 text-xs leading-5 text-text-muted">{t("Dẫn đầu:")} <b className="text-text">{item.top_product_name}</b></p>
                 </button>
               ))}
             </CardContent>
@@ -416,13 +423,13 @@ export function ProductGraphPanel() {
           <Card>
             <CardHeader className="border-b border-border">
               <div>
-                <CardTitle className="flex items-center gap-2"><ShoppingBag className="h-4 w-4 text-info" /> Sản phẩm nổi bật</CardTitle>
+                <CardTitle className="flex items-center gap-2"><ShoppingBag className="h-4 w-4 text-info" /> {t("Sản phẩm nổi bật")}</CardTitle>
                 <p className="mt-1 text-xs text-text-muted">
-                  Xếp hạng theo thành tiền của các dòng hàng thuộc đơn hợp lệ trong kỳ 30 ngày, không dựa trên lượt xem.
+                  {t("Xếp hạng theo thành tiền của các dòng hàng thuộc đơn hợp lệ trong kỳ 30 ngày, không dựa trên lượt xem.")}
                 </p>
               </div>
-              {category !== "Tất cả" && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setCategory("Tất cả")}>Xem tất cả</Button>
+              {category !== t("Tất cả") && (
+                <Button type="button" variant="outline" size="sm" onClick={() => setCategory(t("Tất cả"))}>{t("Xem tất cả")}</Button>
               )}
             </CardHeader>
             <CardContent className="grid gap-4 pt-5 md:grid-cols-2 xl:grid-cols-3">
@@ -435,18 +442,18 @@ export function ProductGraphPanel() {
           </Card>
 
           {detailLoading && (
-            <Card><CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-text-muted"><Loader2 className="h-5 w-5 animate-spin text-accent" /> Đang đối chiếu các sản phẩm cùng shop…</CardContent></Card>
+            <Card><CardContent className="flex items-center justify-center gap-2 py-12 text-sm text-text-muted"><Loader2 className="h-5 w-5 animate-spin text-accent" /> {t("Đang đối chiếu các sản phẩm cùng shop…")}</CardContent></Card>
           )}
 
           {!detailLoading && detail?.product && (
             <Card className="overflow-hidden">
               <div className="border-b border-border bg-gradient-to-r from-accent/[0.055] to-transparent p-5">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-accent">Chi tiết vì sao nổi bật</p>
+                <p className="text-2xs font-semibold uppercase tracking-wider text-accent">{t("Chi tiết vì sao nổi bật")}</p>
                 <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-center">
                   <ProductThumb product={detail.product} className="h-20 w-20" />
                   <div className="min-w-0 flex-1">
                     <h3 className="text-lg font-bold text-text">{detail.product.name}</h3>
-                    <p className="mt-1 text-xs text-text-muted">{detail.product.brand || "Chưa có thương hiệu"} · {detail.product.category} · SKU {detail.product.sku || "sàn chưa trả"}</p>
+                    <p className="mt-1 text-xs text-text-muted">{detail.product.brand || t("Chưa có thương hiệu")} · {detail.product.category} · SKU {detail.product.sku || t("sàn chưa trả")}</p>
                     <p className="mt-2 text-sm leading-6 text-text">{detail.product.highlight_reason}</p>
                   </div>
                   <div className="shrink-0 sm:text-right">
@@ -460,25 +467,25 @@ export function ProductGraphPanel() {
               <CardContent className="p-0">
                 <div className="flex items-start gap-2 border-b border-border bg-surface-2/60 px-5 py-3 text-xs leading-5 text-text-muted">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-info" />
-                  Sản phẩm tương tự được chọn trong cùng cửa hàng và cùng danh mục, ưu tiên cùng loại sản phẩm, thương hiệu, từ khoá tên và khoảng giá gần nhau.
+                  {t("Sản phẩm tương tự được chọn trong cùng cửa hàng và cùng danh mục, ưu tiên cùng loại sản phẩm, thương hiệu, từ khoá tên và khoảng giá gần nhau.")}
                 </div>
                 {detail.similar_products.length === 0 ? (
                   <div className="flex flex-col items-center py-10 text-center">
                     <Layers3 className="h-7 w-7 text-text-dim" />
-                    <p className="mt-2 text-sm font-semibold text-text">Chưa có sản phẩm cùng danh mục để so sánh</p>
-                    <p className="mt-1 text-xs text-text-muted">Hệ thống không ghép một sản phẩm khác danh mục chỉ để lấp chỗ trống.</p>
+                    <p className="mt-2 text-sm font-semibold text-text">{t("Chưa có sản phẩm cùng danh mục để so sánh")}</p>
+                    <p className="mt-1 text-xs text-text-muted">{t("Hệ thống không ghép một sản phẩm khác danh mục chỉ để lấp chỗ trống.")}</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[880px] text-left text-xs">
                       <thead className="border-b border-border bg-surface-2/35 text-text-muted">
                         <tr>
-                          <th className="px-5 py-3 font-medium">Lựa chọn tương tự</th>
-                          <th className="px-4 py-3 font-medium">Giá bán</th>
+                          <th className="px-5 py-3 font-medium">{t("Lựa chọn tương tự")}</th>
+                          <th className="px-4 py-3 font-medium">{t("Giá bán")}</th>
                           <th className="px-4 py-3 font-medium">Doanh thu</th>
-                          <th className="px-4 py-3 font-medium">Đã bán / đơn</th>
-                          <th className="px-4 py-3 font-medium">Hạng trong nhóm</th>
-                          <th className="px-5 py-3 font-medium">So với sản phẩm đang xem</th>
+                          <th className="px-4 py-3 font-medium">{t("Đã bán / đơn")}</th>
+                          <th className="px-4 py-3 font-medium">{t("Hạng trong nhóm")}</th>
+                          <th className="px-5 py-3 font-medium">{t("So với sản phẩm đang xem")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
@@ -512,21 +519,21 @@ export function ProductGraphPanel() {
             <CardContent className="grid gap-4 p-5 lg:grid-cols-[auto_minmax(0,1fr)]">
               <span className="grid h-9 w-9 place-items-center rounded-lg bg-surface-2 text-text-muted"><Info className="h-4 w-4" /></span>
               <div>
-                <p className="text-sm font-semibold text-text">Cách các con số được tính</p>
+                <p className="text-sm font-semibold text-text">{t("Cách các con số được tính")}</p>
                 <p className="mt-1 text-xs leading-5 text-text-muted">
-                  Doanh thu = tổng thành tiền từng sản phẩm trong các đơn đã thanh toán, đang giao hoặc đã giao; không tính đơn chờ thanh toán, đã huỷ hay hoàn trả.
+                  {t("Doanh thu = tổng thành tiền từng sản phẩm trong các đơn đã thanh toán, đang giao hoặc đã giao; không tính đơn chờ thanh toán, đã huỷ hay hoàn trả.")}
                 </p>
                 <div className="mt-3 grid gap-2 text-2xs leading-5 text-text-dim md:grid-cols-2">
-                  <p><b className="text-text-muted">Tăng/giảm doanh thu:</b> (doanh thu 30 ngày hiện tại − doanh thu 30 ngày trước) ÷ doanh thu 30 ngày trước × 100. Kỳ trước bằng 0 thì không hiện phần trăm.</p>
-                  <p><b className="text-text-muted">Tỷ trọng danh mục:</b> doanh thu danh mục ÷ tổng doanh thu cửa hàng trong cùng 30 ngày × 100.</p>
+                  <p><b className="text-text-muted">{t("Tăng/giảm doanh thu:")}</b> (doanh thu 30 ngày hiện tại − doanh thu 30 ngày trước) ÷ doanh thu 30 ngày trước × 100. Kỳ trước bằng 0 thì không hiện phần trăm.</p>
+                  <p><b className="text-text-muted">{t("Tỷ trọng danh mục:")}</b> {t("doanh thu danh mục ÷ tổng doanh thu cửa hàng trong cùng 30 ngày × 100.")}</p>
                 </div>
-                <p className="mt-2 flex items-center gap-1.5 text-2xs text-text-dim"><Clock3 className="h-3.5 w-3.5" /> Các biến thể có cùng mã sản phẩm được gộp thành một sản phẩm khi xếp hạng.</p>
+                <p className="mt-2 flex items-center gap-1.5 text-2xs text-text-dim"><Clock3 className="h-3.5 w-3.5" /> {t("Các biến thể có cùng mã sản phẩm được gộp thành một sản phẩm khi xếp hạng.")}</p>
               </div>
             </CardContent>
           </Card>
         </>
       ) : (
-        <Card><CardContent className="flex flex-col items-center py-12 text-center"><Store className="h-8 w-8 text-text-dim" /><p className="mt-3 text-sm font-semibold text-text">Chưa có nguồn cửa hàng</p></CardContent></Card>
+        <Card><CardContent className="flex flex-col items-center py-12 text-center"><Store className="h-8 w-8 text-text-dim" /><p className="mt-3 text-sm font-semibold text-text">{t("Chưa có nguồn cửa hàng")}</p></CardContent></Card>
       )}
     </div>
   );

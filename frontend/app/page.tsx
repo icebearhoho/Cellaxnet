@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -12,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppChooser } from "@/components/shell/app-chooser";
+import { useT } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +58,7 @@ const STATS = [
 ];
 
 export default function LandingPage() {
+  const t = useT();
   return (
     <div className="landing-motion relative overflow-hidden">
       {/* Ambient colour field + dot texture behind the hero. */}
@@ -74,10 +78,10 @@ export default function LandingPage() {
         </Link>
         <div className="ml-auto flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
-            <Link href="/login">Đăng nhập</Link>
+            <Link href="/login">{t("Đăng nhập")}</Link>
           </Button>
           <Button asChild size="sm">
-            <Link href="/register">Bắt đầu miễn phí</Link>
+            <Link href="/register">{t("Bắt đầu miễn phí")}</Link>
           </Button>
         </div>
       </header>
@@ -86,27 +90,26 @@ export default function LandingPage() {
       <section className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-12 text-center sm:px-6 sm:pb-24 sm:pt-20">
         <span className="hero-chip float-chip mx-auto">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
-          Nền tảng thương mại điện tử có AI
+          {t("Nền tảng thương mại điện tử có AI")}
         </span>
 
         <h1 className="hero-title mx-auto mt-7 max-w-3xl text-5xl font-extrabold sm:text-6xl">
           Bán hàng thông minh hơn,{" "}
-          <span className="text-gradient">không phải nhiều việc hơn.</span>
+          <span className="text-gradient">{t("không phải nhiều việc hơn.")}</span>
         </h1>
 
         <p className="hero-copy mx-auto mt-6 max-w-xl text-base text-text-muted sm:text-lg">
-          Cellaxnet gom phân tích đánh giá, hành trình khách hàng, gợi ý giá và trợ lý
-          vận hành vào một nơi — cho cả người mua và người bán.
+          {t("Cellaxnet gom phân tích đánh giá, hành trình khách hàng, gợi ý giá và trợ lý vận hành vào một nơi — cho cả người mua và người bán.")}
         </p>
 
         <div className="hero-actions mt-9 flex flex-wrap items-center justify-center gap-3">
           <Button asChild size="lg">
             <Link href="/register">
-              Bắt đầu miễn phí <ArrowRight className="h-4 w-4" />
+              {t("Bắt đầu miễn phí")} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
           <Button asChild size="lg" variant="secondary">
-            <Link href="/shop/store">Xem cửa hàng demo</Link>
+            <Link href="/shop/store">{t("Xem cửa hàng demo")}</Link>
           </Button>
         </div>
 
@@ -143,11 +146,10 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-extrabold sm:text-4xl">
-              Mọi thứ người bán cần, trong một cổng
+              {t("Mọi thứ người bán cần, trong một cổng")}
             </h2>
             <p className="mt-4 text-text-muted">
-              Không phải một tá dashboard rời rạc — các tính năng dùng chung dữ liệu nên
-              câu trả lời luôn khớp nhau.
+              {t("Không phải một tá dashboard rời rạc — các tính năng dùng chung dữ liệu nên câu trả lời luôn khớp nhau.")}
             </p>
           </div>
 
@@ -175,11 +177,10 @@ export default function LandingPage() {
       <section className="relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="relative overflow-hidden rounded-lg border-2 border-text bg-text px-8 py-14 text-center shadow-[6px_7px_0_hsl(var(--accent)/0.28)] sm:px-14">
           <h2 className="text-3xl font-extrabold text-bg sm:text-4xl">
-            Thử toàn bộ hệ thống ngay
+            {t("Thử toàn bộ hệ thống ngay")}
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-bg/70">
-            Tạo tài khoản người mua trong vài giây, hoặc mở cửa hàng demo để xem sản
-            phẩm, đánh giá và giỏ hàng hoạt động thật.
+            {t("Tạo tài khoản người mua trong vài giây, hoặc mở cửa hàng demo để xem sản phẩm, đánh giá và giỏ hàng hoạt động thật.")}
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button
@@ -188,7 +189,7 @@ export default function LandingPage() {
               className="bg-bg text-text hover:bg-bg-alt hover:text-text"
             >
               <Link href="/register">
-                Tạo tài khoản <ArrowRight className="h-4 w-4" />
+                {t("Tạo tài khoản")} <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button
@@ -197,7 +198,7 @@ export default function LandingPage() {
               variant="ghost"
               className="text-bg/80 hover:bg-white/10 hover:text-bg"
             >
-              <Link href="/shop/store">Xem cửa hàng</Link>
+              <Link href="/shop/store">{t("Xem cửa hàng")}</Link>
             </Button>
           </div>
         </div>
@@ -205,7 +206,7 @@ export default function LandingPage() {
 
       <footer className="relative z-10 border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-8 text-center text-xs text-text-dim sm:px-6">
-          Cellaxnet · thương mại điện tử thời trang &amp; mỹ phẩm
+          {t("Cellaxnet · thương mại điện tử thời trang & mỹ phẩm")}
         </div>
       </footer>
     </div>

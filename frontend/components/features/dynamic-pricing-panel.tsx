@@ -40,6 +40,7 @@ import {
   type StoreProduct,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT, useTf } from "@/lib/i18n";
 
 const CATEGORIES = ["Thời trang", "Mỹ phẩm", "Phụ kiện"] as const;
 
@@ -134,6 +135,7 @@ function SourceBadge(
   { source, shopCount, marketLabel }:
   { source: PriceSource; shopCount: number | null; marketLabel: string | null },
 ) {
+  const t = useT();
   // Silent for the demo catalogue: the provenance is answered in person during
   // the walkthrough rather than on screen. `data_source` still carries it, so a
   // badge can come back without touching the API.
@@ -153,6 +155,8 @@ function markerPosition(value: number, low: number, high: number): number {
 }
 
 export function DynamicPricingPanel() {
+  const t = useT();
+  const tf = useTf();
   const [name, setName] = useState("Serum Vitamin C 15%");
   const [category, setCategory] = useState<Category>("Mỹ phẩm");
   // Empty, not pre-filled: a seeded price is submitted as if the seller typed
@@ -235,11 +239,11 @@ export function DynamicPricingPanel() {
 
     const productName = name.trim();
     if (!productName) {
-      setError("Nhập tên sản phẩm để bắt đầu định giá.");
+      setError(t("Nhập tên sản phẩm để bắt đầu định giá."));
       return;
     }
     if (!unitCost) {
-      setError("Nhập giá vốn để biết mức giá tham khảo có đủ lợi nhuận hay không.");
+      setError(t("Nhập giá vốn để biết mức giá tham khảo có đủ lợi nhuận hay không."));
       return;
     }
 
@@ -262,7 +266,7 @@ export function DynamicPricingPanel() {
       setSubmitted(null);
       setError(
         response.status === 403
-          ? "Tài khoản chưa có quyền định giá. Hãy dùng tài khoản người bán hoặc quản trị viên."
+          ? t("Tài khoản chưa có quyền định giá. Hãy dùng tài khoản người bán hoặc quản trị viên.")
           : response.message,
       );
     } finally {
@@ -296,13 +300,13 @@ export function DynamicPricingPanel() {
               <SlidersHorizontal className="h-4.5 w-4.5" aria-hidden="true" />
             </span>
             <h2 id="pricing-workspace-title" className="text-base font-semibold text-text">
-              Thiết lập định giá
+              {t("Thiết lập định giá")}
             </h2>
           </div>
 
           <form onSubmit={run} className="space-y-6 px-5 py-6 sm:px-6" noValidate>
             <fieldset>
-              <legend className="text-sm font-medium text-text">Danh mục</legend>
+              <legend className="text-sm font-medium text-text">{t("Danh mục")}</legend>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {CATEGORIES.map((item) => {
                   const meta = CATEGORY_META[item];
@@ -321,7 +325,7 @@ export function DynamicPricingPanel() {
                       )}
                     >
                       <CategoryIcon className={cn("h-4 w-4 shrink-0", category === item ? "" : meta.iconColor)} aria-hidden="true" />
-                      <span>{item}</span>
+                      <span>{t(item)}</span>
                     </button>
                   );
                 })}
@@ -330,7 +334,7 @@ export function DynamicPricingPanel() {
 
             <div>
               <label htmlFor={nameId} className="text-sm font-medium text-text">
-                Tên sản phẩm <span className="text-danger" aria-hidden="true">*</span>
+                {t("Tên sản phẩm")} <span className="text-danger" aria-hidden="true">*</span>
               </label>
               <div className="mt-2 flex gap-2">
                 <div className="relative min-w-0 flex-1">
@@ -342,7 +346,7 @@ export function DynamicPricingPanel() {
                     className="rounded-lg pl-10"
                     aria-required="true"
                     aria-invalid={Boolean(error && !name.trim())}
-                    placeholder="Nhập tên hoặc chọn từ danh sách"
+                    placeholder={t("Nhập tên hoặc chọn từ danh sách")}
                   />
                 </div>
                 <Button
@@ -358,14 +362,14 @@ export function DynamicPricingPanel() {
                 </Button>
               </div>
               <p className="mt-2 text-xs leading-5 text-text-muted">
-                Có thể nhập sản phẩm mới hoặc chọn nhanh từ catalog của cửa hàng.
+                {t("Có thể nhập sản phẩm mới hoặc chọn nhanh từ catalog của cửa hàng.")}
               </p>
             </div>
 
             <div>
               <label htmlFor={priceId} className="flex items-center gap-2 text-sm font-medium text-text">
                 <CircleDollarSign className="h-4 w-4 text-success" aria-hidden="true" />
-                <span>Giá bán hiện tại <span className="font-normal text-text-muted">(không bắt buộc)</span></span>
+                <span>{t("Giá bán hiện tại")} <span className="font-normal text-text-muted">(không bắt buộc)</span></span>
               </label>
               <div className="relative mt-2">
                 <Input
@@ -382,15 +386,14 @@ export function DynamicPricingPanel() {
                 </span>
               </div>
               <p id={`${priceId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
-                Nhập nếu sản phẩm đang bán, để biết nên tăng hay giảm bao nhiêu. Bỏ trống
-                nếu đang định giá sản phẩm mới.
+                {t("Nhập nếu sản phẩm đang bán, để biết nên tăng hay giảm bao nhiêu. Bỏ trống nếu đang định giá sản phẩm mới.")}
               </p>
             </div>
 
             <div className="rounded-lg border border-border bg-surface-2/40 p-4">
               <label htmlFor={costId} className="flex items-center gap-2 text-sm font-medium text-text">
                 <Wallet className="h-4 w-4 text-warning" aria-hidden="true" />
-                <span>Giá vốn <span className="text-danger" aria-hidden="true">*</span></span>
+                <span>{t("Giá vốn")} <span className="text-danger" aria-hidden="true">*</span></span>
               </label>
               <div className="relative mt-2">
                 <Input
@@ -407,14 +410,14 @@ export function DynamicPricingPanel() {
                 </span>
               </div>
               <p id={`${costId}-hint`} className="mt-2 text-xs leading-5 text-text-muted">
-                Dùng để tính mức giá thấp nhất còn giữ được biên lợi nhuận sau phí sàn.
+                {t("Dùng để tính mức giá thấp nhất còn giữ được biên lợi nhuận sau phí sàn.")}
               </p>
 
               {cost && (
                 <div className="mt-4 space-y-4 border-t border-border pt-4">
                   <div>
                     <label htmlFor={marginId} className="flex items-center justify-between text-sm font-medium text-text">
-                      <span>Biên lợi nhuận tối thiểu</span>
+                      <span>{t("Biên lợi nhuận tối thiểu")}</span>
                       <span className="tnum text-warning">{margin}%</span>
                     </label>
                     <input
@@ -445,27 +448,25 @@ export function DynamicPricingPanel() {
                         >
                           {mark}%
                           {mark === guide.hint && (
-                            <span className="ml-1 text-2xs opacity-70">ngành</span>
+                            <span className="ml-1 text-2xs opacity-70">{t("ngành")}</span>
                           )}
                         </button>
                       ))}
                     </div>
                     {guide.note && (
-                      <p className="mt-2 text-xs leading-5 text-text-dim">{guide.note}</p>
+                      <p className="mt-2 text-xs leading-5 text-text-dim">{t(guide.note)}</p>
                     )}
                     {/* Naming what is *not* deducted matters more than what is:
                         a seller reading "you keep 20%" will plan around it, and
                         ads, vouchers, shipping support and returns come out of
                         that 20% without ever appearing here. */}
                     <p className="mt-1.5 text-xs leading-5 text-text-muted">
-                      Lợi nhuận sau giá vốn và phí sàn, tính trên giá bán. Chưa trừ quảng cáo,
-                      voucher, phí đóng gói, vận chuyển shop hỗ trợ hay hoàn hàng — hãy để biên
-                      cao hơn mức tối thiểu bạn cần.
+                      {t("Lợi nhuận sau giá vốn và phí sàn, tính trên giá bán. Chưa trừ quảng cáo, voucher, phí đóng gói, vận chuyển shop hỗ trợ hay hoàn hàng — hãy để biên cao hơn mức tối thiểu bạn cần.")}
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-sm font-medium text-text">Kênh bán</span>
+                    <span className="text-sm font-medium text-text">{t("Kênh bán")}</span>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {CHANNELS.map((option) => (
                         <button
@@ -479,7 +480,7 @@ export function DynamicPricingPanel() {
                               : "border-border text-text-muted hover:bg-surface-2",
                           )}
                         >
-                          {option.label}
+                          {t(option.label)}
                           <span className="ml-1 text-text-dim">{option.fee}</span>
                         </button>
                       ))}
@@ -501,11 +502,11 @@ export function DynamicPricingPanel() {
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />}
               {!busy && <Calculator className="h-4 w-4" aria-hidden="true" />}
-              {busy ? "Đang lấy dữ liệu giá…" : result ? "Cập nhật giá tham khảo" : "Xem giá tham khảo"}
+              {busy ? t("Đang lấy dữ liệu giá…") : result ? t("Cập nhật giá tham khảo") : t("Xem giá tham khảo")}
             </Button>
 
             <p className="text-center text-xs text-text-dim">
-              Kết quả mang tính tham khảo, chưa tự động thay đổi giá bán.
+              {t("Kết quả mang tính tham khảo, chưa tự động thay đổi giá bán.")}
             </p>
           </form>
         </section>
@@ -516,7 +517,7 @@ export function DynamicPricingPanel() {
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-success/10 text-success">
                 <BarChart3 className="h-4.5 w-4.5" aria-hidden="true" />
               </span>
-              <h2 id="pricing-result-title" className="text-base font-semibold text-text">Kết quả định giá</h2>
+              <h2 id="pricing-result-title" className="text-base font-semibold text-text">{t("Kết quả định giá")}</h2>
             </div>
             {result && (
               <span className={cn(
@@ -524,7 +525,7 @@ export function DynamicPricingPanel() {
                 isDirty ? "bg-warning/10 text-warning" : "bg-success/10 text-success",
               )}>
                 {isDirty ? <RefreshCw className="h-3 w-3" aria-hidden="true" /> : <Check className="h-3 w-3" aria-hidden="true" />}
-                {isDirty ? "Cần cập nhật" : "Đã cập nhật"}
+                {isDirty ? t("Cần cập nhật") : t("Đã cập nhật")}
               </span>
             )}
           </div>
@@ -534,7 +535,7 @@ export function DynamicPricingPanel() {
               <div className="space-y-5" role="status" aria-live="polite">
                 <p className="flex items-center gap-2 text-sm font-medium text-text">
                   <Loader2 className="h-4 w-4 animate-spin text-accent motion-reduce:animate-none" aria-hidden="true" />
-                  Đang đối chiếu mặt bằng giá
+                  {t("Đang đối chiếu mặt bằng giá")}
                 </p>
                 <div className="h-24 animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -548,10 +549,10 @@ export function DynamicPricingPanel() {
                 <div className="flex gap-3">
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger" aria-hidden="true" />
                   <div>
-                    <p className="font-medium text-text">Không thể lấy giá tham khảo</p>
+                    <p className="font-medium text-text">{t("Không thể lấy giá tham khảo")}</p>
                     <p className="mt-1 text-sm leading-6 text-text-muted">{error}</p>
                     <Button type="button" variant="secondary" size="sm" className="mt-4 rounded-lg" onClick={() => run()}>
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> Thử lại
+                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" /> {t("Thử lại")}
                     </Button>
                   </div>
                 </div>
@@ -563,14 +564,14 @@ export function DynamicPricingPanel() {
                     <BarChart3 className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-text">Chưa có kết quả</p>
+                    <p className="text-sm font-medium text-text">{t("Chưa có kết quả")}</p>
                     <p className="mt-1 text-sm leading-6 text-text-muted">
-                      Điền thông tin sản phẩm và chọn “Xem giá tham khảo”.
+                      {t("Điền thông tin sản phẩm và chọn “Xem giá tham khảo”.")}
                     </p>
                   </div>
                 </div>
                 <dl className="divide-y divide-border px-5">
-                  {["Giá tham khảo", "Khoảng giá thị trường", "Trung vị danh mục"].map((label) => (
+                  {[t("Giá tham khảo"), t("Khoảng giá thị trường"), t("Trung vị danh mục")].map((label) => (
                     <div key={label} className="flex items-center justify-between gap-4 py-4">
                       <dt className="text-sm text-text-muted">{label}</dt>
                       <dd className="tnum text-sm font-medium text-text-dim">—</dd>
@@ -583,11 +584,11 @@ export function DynamicPricingPanel() {
                 {/* The verdict, then what it buys. A seller who reads only the
                     first line should already know what to do. */}
                 {/* Neutral now that the heading no longer names a direction:
-                    a green card above a plain "Giá tham khảo" was signalling
+                    a green card above a plain t("Giá tham khảo") was signalling
                     something the words no longer said. */}
                 <div className="rounded-lg border border-accent/25 bg-accent/[0.03] p-5 sm:p-6">
                   <p className="text-xs font-semibold uppercase tracking-wider text-accent">
-                    Giá tham khảo
+                    {t("Giá tham khảo")}
                   </p>
 
                   {/* The move is in the impact table below, where it sits
@@ -602,12 +603,15 @@ export function DynamicPricingPanel() {
                   {result.large_move && submitted?.currentPrice && (
                     <p className="mt-3 flex items-start gap-1.5 rounded-md bg-info/10 px-3 py-2 text-xs leading-5 text-info">
                       <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      Mức điều chỉnh khá lớn ({result.change_pct && result.change_pct > 0 ? "+" : ""}
-                      {result.change_pct}%). Có thể thử{" "}
-                      <span className="tnum font-medium">
-                        {VND.format(Math.round((submitted.currentPrice + result.recommended_price) / 2000) * 1000)}
-                      </span>{" "}
-                      trước để xem phản ứng của khách trước khi đi hết mức tham khảo.
+                      {tf(
+                        "Mức điều chỉnh khá lớn ({phần_trăm}%). Có thể thử {giá} trước để xem phản ứng của khách trước khi đi hết mức tham khảo.",
+                        {
+                          phần_trăm: `${result.change_pct && result.change_pct > 0 ? "+" : ""}${result.change_pct}`,
+                          giá: VND.format(
+                            Math.round((submitted.currentPrice + result.recommended_price) / 2000) * 1000,
+                          ),
+                        },
+                      )}
                     </p>
                   )}
 
@@ -617,17 +621,23 @@ export function DynamicPricingPanel() {
                   {result.margin_unverified && (
                     <p className="mt-3 flex items-start gap-1.5 rounded-md bg-warning/10 px-3 py-2 text-xs leading-5 text-warning">
                       <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      Chưa nhập giá vốn — mức này dựa trên thị trường, chưa kiểm tra được
-                      có đảm bảo lợi nhuận hay không.
+                      {t("Chưa nhập giá vốn — mức này dựa trên thị trường, chưa kiểm tra được có đảm bảo lợi nhuận hay không.")}
                     </p>
                   )}
 
                   {result.price_floor !== null && (
                     <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-text-dim">
                       <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      Không nên bán dưới {VND.format(result.price_floor)} nếu muốn giữ biên{" "}
-                      {submitted?.minMarginPct}%
-                      {result.channel_name && ` sau phí ${result.channel_name}`}.
+                      {tf(
+                        result.channel_name
+                          ? "Không nên bán dưới {sàn} nếu muốn giữ biên {biên}% sau phí {kênh}."
+                          : "Không nên bán dưới {sàn} nếu muốn giữ biên {biên}%.",
+                        {
+                          sàn: VND.format(result.price_floor),
+                          biên: submitted?.minMarginPct ?? "",
+                          kênh: result.channel_name ?? "",
+                        },
+                      )}
                     </p>
                   )}
                 </div>
@@ -639,28 +649,28 @@ export function DynamicPricingPanel() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border text-2xs uppercase tracking-wider text-text-dim">
-                          <th className="px-4 py-2 text-left font-medium">Nếu áp dụng</th>
-                          <th className="px-4 py-2 text-right font-medium">Hiện tại</th>
-                          <th className="px-4 py-2 text-right font-medium">Tham khảo</th>
+                          <th className="px-4 py-2 text-left font-medium">{t("Nếu áp dụng")}</th>
+                          <th className="px-4 py-2 text-right font-medium">{t("Hiện tại")}</th>
+                          <th className="px-4 py-2 text-right font-medium">{t("Tham khảo")}</th>
                         </tr>
                       </thead>
                       <tbody className="tnum">
                         <tr className="border-b border-border/50">
-                          <td className="px-4 py-2.5 text-text-muted">Giá bán</td>
+                          <td className="px-4 py-2.5 text-text-muted">{t("Giá bán")}</td>
                           <td className="px-4 py-2.5 text-right">{VND.format(submitted?.currentPrice ?? 0)}</td>
                           <td className="px-4 py-2.5 text-right font-medium text-text">
                             {VND.format(result.recommended_price)}
                           </td>
                         </tr>
                         <tr className="border-b border-border/50">
-                          <td className="px-4 py-2.5 text-text-muted">Lãi mỗi sản phẩm</td>
+                          <td className="px-4 py-2.5 text-text-muted">{t("Lãi mỗi sản phẩm")}</td>
                           <td className="px-4 py-2.5 text-right">{VND.format(result.profit_per_unit_now)}</td>
                           <td className="px-4 py-2.5 text-right font-medium text-success">
                             {VND.format(result.profit_per_unit_at_recommended ?? 0)}
                           </td>
                         </tr>
                         <tr>
-                          <td className="px-4 py-2.5 text-text-muted">Biên lợi nhuận</td>
+                          <td className="px-4 py-2.5 text-text-muted">{t("Biên lợi nhuận")}</td>
                           <td className="px-4 py-2.5 text-right">{result.margin_pct_now}%</td>
                           <td className="px-4 py-2.5 text-right font-medium text-success">
                             {result.margin_pct_at_recommended}%
@@ -669,7 +679,7 @@ export function DynamicPricingPanel() {
                       </tbody>
                     </table>
                     <p className="border-t border-border px-4 py-2 text-2xs text-text-dim">
-                      Sau giá vốn và phí sàn, chưa tính quảng cáo, voucher hay chi phí vận hành.
+                      {t("Sau giá vốn và phí sàn, chưa tính quảng cáo, voucher hay chi phí vận hành.")}
                     </p>
                   </div>
                 )}
@@ -714,13 +724,13 @@ export function DynamicPricingPanel() {
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <p className="flex items-center gap-2 text-xs font-medium text-text-muted">
                         <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                        Ba mốc giá của thị trường
+                        {t("Ba mốc giá của thị trường")}
                       </p>
                       {/* The separator belongs to this label, not to whatever
                           follows: the provenance badge beside it renders only
                           for observed data. */}
                       <span className="text-2xs text-text-dim">
-                        {result.sample_size} sản phẩm tương tự
+                        {tf("{số_mẫu} sản phẩm tương tự", { số_mẫu: result.sample_size })}
                       </span>
                       <SourceBadge
                         source={result.data_source}
@@ -752,7 +762,7 @@ export function DynamicPricingPanel() {
                               </span>
                               {chosen && (
                                 <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-2xs font-medium text-accent">
-                                  Đề xuất
+                                  {t("Đề xuất")}
                                 </span>
                               )}
                             </div>
@@ -761,7 +771,7 @@ export function DynamicPricingPanel() {
                             </p>
                             {s.margin_pct !== null && (
                               <p className="mt-2 text-2xs text-text-dim">
-                                Lợi nhuận{" "}
+                                {t("Lợi nhuận")}{" "}
                                 <span className={cn(
                                   "tnum",
                                   s.below_cost_floor ? "text-danger" : "text-success",
@@ -795,7 +805,7 @@ export function DynamicPricingPanel() {
         <CommandInput placeholder={`Tìm sản phẩm trong ${category}…`} autoFocus />
         <CommandList>
           <CommandEmpty>
-            {productsLoading ? "Đang tải danh sách sản phẩm…" : "Không tìm thấy sản phẩm phù hợp."}
+            {productsLoading ? t("Đang tải danh sách sản phẩm…") : t("Không tìm thấy sản phẩm phù hợp.")}
           </CommandEmpty>
           {!productsLoading && products.length > 0 && (
             <CommandGroup heading={`${category} · ${products.length} sản phẩm`}>

@@ -9,6 +9,7 @@ import {
   type ProductReviews, type ScoredReview, type StoreProduct,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const TONE = {
   positive: { label: "Tích cực", chip: "bg-success/10 text-success", dot: "bg-success" },
@@ -26,10 +27,12 @@ const FILTERS = [
 ];
 
 export function ReviewIntelligencePanel() {
+  const t = useT();
   return <ProductReviewsPanel />;
 }
 
 function ProductReviewsPanel() {
+  const t = useT();
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [productId, setProductId] = useState<string | null>(null);
   const [data, setData] = useState<ProductReviews | null>(null);
@@ -57,10 +60,10 @@ function ProductReviewsPanel() {
       setData(result);
     } else {
       setData(null);
-      setError("Không lấy được đánh giá của sản phẩm này.");
+      setError(t("Không lấy được đánh giá của sản phẩm này."));
     }
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (productId) void load(productId);
@@ -83,9 +86,9 @@ function ProductReviewsPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Trải nghiệm khách hàng</CardTitle>
+        <CardTitle>{t("Trải nghiệm khách hàng")}</CardTitle>
         <p className="mt-1 text-xs text-text-muted">
-          Chọn một sản phẩm để đọc toàn bộ đánh giá, đã phân loại sẵn theo cảm xúc.
+          {t("Chọn một sản phẩm để đọc toàn bộ đánh giá, đã phân loại sẵn theo cảm xúc.")}
         </p>
       </CardHeader>
 
@@ -95,7 +98,7 @@ function ProductReviewsPanel() {
             hand is read every review on a product and see the shape of it. */}
         <div>
           <label htmlFor="review-product" className="text-sm font-medium text-text">
-            Sản phẩm
+            {t("Sản phẩm")}
           </label>
           <div className="relative mt-2">
             <select
@@ -105,7 +108,7 @@ function ProductReviewsPanel() {
               disabled={products.length === 0}
               className="h-10 w-full appearance-none rounded-lg border border-border bg-surface px-3 pr-9 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
             >
-              {products.length === 0 && <option>Đang tải danh sách sản phẩm…</option>}
+              {products.length === 0 && <option>{t("Đang tải danh sách sản phẩm…")}</option>}
               {products.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
@@ -122,11 +125,11 @@ function ProductReviewsPanel() {
         ) : loading || !data ? (
           <p className="flex items-center gap-2 py-8 text-sm text-text-muted">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            Đang đọc đánh giá…
+            {t("Đang đọc đánh giá…")}
           </p>
         ) : data.total === 0 ? (
           <p className="py-8 text-center text-sm text-text-muted">
-            Sản phẩm này chưa có đánh giá nào.
+            {t("Sản phẩm này chưa có đánh giá nào.")}
           </p>
         ) : (
           <>
@@ -160,7 +163,7 @@ function ProductReviewsPanel() {
                   {(["positive", "neutral", "negative"] as const).map((key) => (
                     <li key={key} className="flex items-center gap-2 text-xs text-text-muted">
                       <span className={cn("h-2.5 w-2.5 rounded-full", TONE[key].dot)} aria-hidden="true" />
-                      {TONE[key].label}
+                      {t(TONE[key].label)}
                       <span className="tnum text-text-dim">{data[key]}</span>
                     </li>
                   ))}
@@ -186,7 +189,7 @@ function ProductReviewsPanel() {
                           : "bg-surface-2 text-text-muted hover:text-text",
                       )}
                     >
-                      {f.label} <span className="tnum opacity-70">{count}</span>
+                      {t(f.label)} <span className="tnum opacity-70">{count}</span>
                     </button>
                   );
                 })}
@@ -196,16 +199,16 @@ function ProductReviewsPanel() {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Tìm trong đánh giá…"
+                  placeholder={t("Tìm trong đánh giá…")}
                   className="h-9 pl-9 text-xs"
-                  aria-label="Tìm trong đánh giá"
+                  aria-label={t("Tìm trong đánh giá")}
                 />
               </div>
             </div>
 
             {shown.length === 0 ? (
               <p className="py-8 text-center text-sm text-text-muted">
-                Không có đánh giá nào khớp bộ lọc này.
+                {t("Không có đánh giá nào khớp bộ lọc này.")}
               </p>
             ) : (
               <ul className="space-y-2">
@@ -222,6 +225,7 @@ function ProductReviewsPanel() {
 }
 
 function ReviewRow({ review }: { review: ScoredReview }) {
+  const t = useT();
   const tone = TONE[review.sentiment];
   return (
     <li className="rounded-lg border border-border bg-surface-2/40 p-4">
@@ -232,11 +236,11 @@ function ReviewRow({ review }: { review: ScoredReview }) {
           <Star className="h-3 w-3 fill-current" aria-hidden="true" />
         </span>
         <span className={cn("rounded-md px-1.5 py-0.5 text-2xs font-medium", tone.chip)}>
-          {tone.label}
+          {t(tone.label)}
         </span>
         {review.from_customers && (
           <span className="rounded-md bg-accent/10 px-1.5 py-0.5 text-2xs font-medium text-accent">
-            Khách gửi
+            {t("Khách gửi")}
           </span>
         )}
         {review.days_ago !== null && (

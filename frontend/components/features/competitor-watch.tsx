@@ -34,6 +34,7 @@ import {
 } from "@/lib/features";
 import { ApiClientError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 function fmtNum(v: number | null): string {
   return v === null || v === undefined ? "—" : v.toLocaleString("vi-VN");
@@ -57,10 +58,11 @@ const SOURCE_LABEL: Record<SalesSource, string> = {
  * where a percentage of a 4.9 average would say nothing).
  */
 function Trend({ value, suffix = "%" }: { value: number | null; suffix?: string }) {
+  const t = useT();
   if (value === null) {
-    return <span className="text-2xs text-text-dim">chưa đủ dữ liệu</span>;
+    return <span className="text-2xs text-text-dim">{t("chưa đủ dữ liệu")}</span>;
   }
-  if (value === 0) return <span className="text-2xs text-text-dim">đi ngang</span>;
+  if (value === 0) return <span className="text-2xs text-text-dim">{t("đi ngang")}</span>;
   const up = value > 0;
   return (
     <span
@@ -77,6 +79,7 @@ function Trend({ value, suffix = "%" }: { value: number | null; suffix?: string 
 }
 
 export function CompetitorWatch() {
+  const t = useT();
   const [rows, setRows] = useState<TrackedCompetitor[] | null>(null);
   const [insight, setInsight] = useState<CompetitorInsight | null>(null);
   const [conn, setConn] = useState<ShopeeConnection | null>(null);
@@ -119,16 +122,16 @@ export function CompetitorWatch() {
       // rather than leaving the row looking silently empty.
       if (added.last_attempt && !added.last_attempt.ok) {
         setNote(
-          `Đã thêm ${added.display_name ?? "cửa hàng"}, nhưng lần thu thập đầu chưa thành công: ` +
-            (added.last_attempt.error ?? "không rõ lý do"),
+          `Đã thêm ${added.display_name ?? t("cửa hàng")}, nhưng lần thu thập đầu chưa thành công: ` +
+            (added.last_attempt.error ?? t("không rõ lý do")),
         );
       }
       await load();
     } catch (err) {
       setError(
         err instanceof ApiClientError
-          ? (err.envelope.error?.message ?? "Không thêm được cửa hàng.")
-          : "Không kết nối được máy chủ.",
+          ? (err.envelope.error?.message ?? t("Không thêm được cửa hàng."))
+          : t("Không kết nối được máy chủ."),
       );
     } finally {
       setAdding(false);
@@ -147,7 +150,7 @@ export function CompetitorWatch() {
           (run.notes.length ? ` Ghi chú: ${run.notes[0]}` : ""),
       );
     } else {
-      setError("Không chạy được thu thập.");
+      setError(t("Không chạy được thu thập."));
     }
     // A collection is what discovers an expired session, so refresh the
     // connection card too rather than leaving it claiming "Đã kết nối".
@@ -165,10 +168,9 @@ export function CompetitorWatch() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Theo dõi đối thủ</CardTitle>
+            <CardTitle>{t("Theo dõi đối thủ")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Dán link cửa hàng Shopee. Mỗi lần thu thập lưu lại một mốc số liệu —
-              xu hướng chỉ xuất hiện từ lần thu thập thứ hai.
+              {t("Dán link cửa hàng Shopee. Mỗi lần thu thập lưu lại một mốc số liệu — xu hướng chỉ xuất hiện từ lần thu thập thứ hai.")}
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={collect} disabled={collecting}>
@@ -205,9 +207,7 @@ export function CompetitorWatch() {
           )}
 
           <p className="text-2xs text-text-dim">
-            Lấy được ngay, không cần kết nối gì: tên shop, follower, điểm đánh giá,
-            số sản phẩm. Lazada hiện chặn mọi yêu cầu tự động nên chỉ theo dõi được
-            cửa hàng Shopee.
+            {t("Lấy được ngay, không cần kết nối gì: tên shop, follower, điểm đánh giá, số sản phẩm. Lazada hiện chặn mọi yêu cầu tự động nên chỉ theo dõi được cửa hàng Shopee.")}
           </p>
         </CardContent>
       </Card>
@@ -219,16 +219,16 @@ export function CompetitorWatch() {
         <Card>
           <CardHeader>
             <div>
-              <CardTitle>Nhận định</CardTitle>
+              <CardTitle>{t("Nhận định")}</CardTitle>
               <p className="mt-1 text-sm font-semibold text-text">{insight.headline}</p>
             </div>
             <Badge variant={insight.ai_generated ? "live" : "muted"}>
-              {insight.ai_generated ? "AI" : "Quy tắc"}
+              {insight.ai_generated ? "AI" : t("Quy tắc")}
             </Badge>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
-              <div className="text-xs font-medium text-text-dim">Quan sát</div>
+              <div className="text-xs font-medium text-text-dim">{t("Quan sát")}</div>
               <ul className="mt-2 space-y-1.5">
                 {insight.findings.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-text-muted">
@@ -239,7 +239,7 @@ export function CompetitorWatch() {
               </ul>
             </div>
             <div>
-              <div className="text-xs font-medium text-text-dim">Nên làm</div>
+              <div className="text-xs font-medium text-text-dim">{t("Nên làm")}</div>
               <ul className="mt-2 space-y-1.5">
                 {insight.actions.map((a, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-text-muted">
@@ -256,15 +256,15 @@ export function CompetitorWatch() {
       {/* Watchlist */}
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách theo dõi</CardTitle>
+          <CardTitle>{t("Danh sách theo dõi")}</CardTitle>
           <Badge variant="muted">{rows?.length ?? 0} cửa hàng</Badge>
         </CardHeader>
         <CardContent>
           {rows === null ? (
-            <p className="text-sm text-text-muted">Đang tải…</p>
+            <p className="text-sm text-text-muted">{t("Đang tải…")}</p>
           ) : rows.length === 0 ? (
             <p className="text-sm text-text-muted">
-              Chưa theo dõi cửa hàng nào. Dán link ở trên để bắt đầu thu thập.
+              {t("Chưa theo dõi cửa hàng nào. Dán link ở trên để bắt đầu thu thập.")}
             </p>
           ) : (
             <div className="space-y-3">
@@ -292,13 +292,13 @@ export function CompetitorWatch() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-text-dim hover:text-accent"
-                        aria-label="Mở trang cửa hàng"
+                        aria-label={t("Mở trang cửa hàng")}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                       <button
                         onClick={() => remove(c.id)}
-                        aria-label="Bỏ theo dõi"
+                        aria-label={t("Bỏ theo dõi")}
                         className="ml-auto text-text-dim transition-colors hover:text-danger"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -322,12 +322,12 @@ export function CompetitorWatch() {
                             trend={c.follower_trend_pct}
                           />
                           <Metric
-                            label="Số sản phẩm"
+                            label={t("Số sản phẩm")}
                             value={fmtNum(snap.product_count)}
                             trend={c.product_trend_pct}
                           />
                           <Metric
-                            label="Đánh giá"
+                            label={t("Đánh giá")}
                             value={snap.rating ? snap.rating.toFixed(2) : "—"}
                             trend={c.rating_delta}
                             trendSuffix=""
@@ -343,12 +343,12 @@ export function CompetitorWatch() {
                                 label={
                                   c.period_sales
                                     ? `Bán trong ${c.period_sales.days} ngày`
-                                    : "Bán trong kỳ"
+                                    : t("Bán trong kỳ")
                                 }
                                 value={
                                   c.period_sales
                                     ? fmtNum(c.period_sales.units)
-                                    : "cần 2 lần thu thập"
+                                    : t("cần 2 lần thu thập")
                                 }
                                 sub={
                                   c.period_sales
@@ -358,23 +358,23 @@ export function CompetitorWatch() {
                                 highlight
                               />
                               <Metric
-                                label="GMV ước tính"
+                                label={t("GMV ước tính")}
                                 value={fmtVnd(snap.revenue_est_vnd)}
                                 trend={c.revenue_trend_pct}
-                                sub="tích luỹ"
+                                sub={t("tích luỹ")}
                               />
                               <Metric
-                                label="Đã bán"
+                                label={t("Đã bán")}
                                 value={fmtNum(snap.items_sold_total)}
                                 trend={c.sold_trend_pct}
-                                sub="tích luỹ"
+                                sub={t("tích luỹ")}
                               />
                               <Metric
-                                label="Khuyến mãi"
+                                label={t("Khuyến mãi")}
                                 value={fmtNum(
                                   snap.promotions?.length ?? snap.voucher_count ?? null,
                                 )}
-                                sub="sản phẩm đang giảm"
+                                sub={t("sản phẩm đang giảm")}
                               />
                             </div>
 
@@ -400,7 +400,7 @@ export function CompetitorWatch() {
                             {snap.top_products && snap.top_products.length > 0 && (
                               <div className="mt-3">
                                 <div className="text-2xs font-medium text-text-dim">
-                                  Bán chạy nhất
+                                  {t("Bán chạy nhất")}
                                 </div>
                                 <div className="mt-1.5 space-y-1">
                                   {snap.top_products
@@ -429,16 +429,14 @@ export function CompetitorWatch() {
                           /* Say which cards are missing and why, rather than
                              showing four dashes that look like a loading state. */
                           <p className="mt-3 rounded-lg border border-border bg-bg-alt px-3 py-2 text-2xs text-text-dim">
-                            Chưa có số liệu bán hàng cho shop này — Shopee chỉ trả số đã
-                            bán / GMV / khuyến mãi cho phiên đã đăng nhập. Cấu hình một
-                            nguồn ở phần hướng dẫn bên trên để bật 4 chỉ số đó.
+                            {t("Chưa có số liệu bán hàng cho shop này — Shopee chỉ trả số đã bán / GMV / khuyến mãi cho phiên đã đăng nhập. Cấu hình một nguồn ở phần hướng dẫn bên trên để bật 4 chỉ số đó.")}
                           </p>
                         )}
                       </>
                     ) : (
                       !failed && (
                         <p className="mt-2 text-xs text-text-muted">
-                          Chưa có dữ liệu — bấm “Thu thập ngay”.
+                          {t("Chưa có dữ liệu — bấm “Thu thập ngay”.")}
                         </p>
                       )
                     )}
@@ -476,6 +474,7 @@ function ShopeeConnectionCard({
   conn: ShopeeConnection | null;
   onChange: () => void;
 }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
 
   async function disconnect() {
@@ -499,24 +498,23 @@ function ShopeeConnectionCard({
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Số liệu bán hàng của đối thủ</CardTitle>
+          <CardTitle>{t("Số liệu bán hàng của đối thủ")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Shopee chỉ trả doanh thu / đã bán / bán chạy / khuyến mãi cho phiên đã
-            đăng nhập. Kết nối tài khoản Shopee của bạn để bật 4 chỉ số đó.
+            {t("Shopee chỉ trả doanh thu / đã bán / bán chạy / khuyến mãi cho phiên đã đăng nhập. Kết nối tài khoản Shopee của bạn để bật 4 chỉ số đó.")}
           </p>
         </div>
-        {state === "connected" && <Badge variant="live">Đã kết nối</Badge>}
-        {state === "expired" && <Badge variant="muted">Hết hạn</Badge>}
-        {state === "none" && <Badge variant="muted">Chưa kết nối</Badge>}
+        {state === "connected" && <Badge variant="live">{t("Đã kết nối")}</Badge>}
+        {state === "expired" && <Badge variant="muted">{t("Hết hạn")}</Badge>}
+        {state === "none" && <Badge variant="muted">{t("Chưa kết nối")}</Badge>}
       </CardHeader>
       <CardContent className="space-y-3">
-        {state === "loading" && <p className="text-sm text-text-muted">Đang tải…</p>}
+        {state === "loading" && <p className="text-sm text-text-muted">{t("Đang tải…")}</p>}
 
         {state === "unavailable" && (
           <p className="flex items-start gap-1.5 rounded-xl border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              Máy chủ chưa cấu hình <span className="mono">CREDENTIAL_ENCRYPTION_KEY</span>{" "}
+              {t("Máy chủ chưa cấu hình")} <span className="mono">CREDENTIAL_ENCRYPTION_KEY</span>{" "}
               nên không thể lưu kết nối. Hệ thống từ chối lưu thay vì lưu ở dạng không
               mã hoá — liên hệ người quản trị.
             </span>
@@ -554,8 +552,7 @@ function ShopeeConnectionCard({
               Ngắt kết nối &amp; xoá dữ liệu đăng nhập
             </Button>
             <p className="text-2xs text-text-dim">
-              Ngắt kết nối sẽ <span className="font-semibold">xoá hẳn</span> cookie
-              phiên khỏi máy chủ, không phải chỉ ẩn đi.
+              {t("Ngắt kết nối sẽ")} <span className="font-semibold">{t("xoá hẳn")}</span> {t("cookie phiên khỏi máy chủ, không phải chỉ ẩn đi.")}
             </p>
           </div>
         )}
@@ -565,13 +562,11 @@ function ShopeeConnectionCard({
             <p className="flex items-start gap-1.5 text-xs text-warning">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
-                <span className="font-semibold">Đọc trước khi kết nối.</span> Shopee cấm
-                truy cập tự động. Tài khoản bạn kết nối có thể bị giới hạn hoặc khoá.
-                Hãy dùng tài khoản phụ, không dùng tài khoản đang bán hàng.
+                <span className="font-semibold">{t("Đọc trước khi kết nối.")}</span> {t("Shopee cấm truy cập tự động. Tài khoản bạn kết nối có thể bị giới hạn hoặc khoá. Hãy dùng tài khoản phụ, không dùng tài khoản đang bán hàng.")}
               </span>
             </p>
             <p className="text-2xs text-text-muted">
-              Cách kết nối — chạy trên máy của bạn:
+              {t("Cách kết nối — chạy trên máy của bạn:")}
             </p>
             <pre className="mono overflow-x-auto rounded-lg bg-bg px-3 py-2 text-2xs text-text-muted">
               python scripts/shopee_connect.py --email &lt;email AREA-303 của bạn&gt;
@@ -580,14 +575,13 @@ function ShopeeConnectionCard({
               Script mở browser, bạn tự đăng nhập Shopee trong đó (Google, mật khẩu hay
               OTP đều được).{" "}
               <span className="font-semibold text-text-muted">
-                Mật khẩu Shopee của bạn không bao giờ được gửi tới AREA-303
+                {t("Mật khẩu Shopee của bạn không bao giờ được gửi tới AREA-303")}
               </span>{" "}
               — chỉ cookie phiên, và nó được mã hoá trước khi lưu. Đó cũng là lý do
               2FA/OTP vẫn hoạt động bình thường.
             </p>
             <p className="text-2xs text-text-dim">
-              Kết nối được kiểm tra bằng một lần đọc thật trước khi lưu, nên nếu Shopee
-              từ chối thì bạn biết ngay, không phải đợi tới lần thu thập sau.
+              {t("Kết nối được kiểm tra bằng một lần đọc thật trước khi lưu, nên nếu Shopee từ chối thì bạn biết ngay, không phải đợi tới lần thu thập sau.")}
             </p>
           </div>
         )}

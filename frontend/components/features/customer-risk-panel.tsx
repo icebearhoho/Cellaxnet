@@ -11,6 +11,7 @@ import {
   type RiskPortfolio,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /* ------------------------------------------------------------------ */
 /* Nhóm khách theo việc cần làm, không theo mức độ nặng nhẹ            */
@@ -42,6 +43,7 @@ const TONE = {
 const PAGE_SIZE = 12;
 
 function RiskPortfolioTable() {
+  const t = useT();
   const [portfolio, setPortfolio] = useState<RiskPortfolio | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -112,9 +114,9 @@ function RiskPortfolioTable() {
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
         <div>
-          <CardTitle>Ai cần can thiệp trước</CardTitle>
+          <CardTitle>{t("Ai cần can thiệp trước")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Khách được chia theo việc cần làm — mỗi nhóm một hành động.
+            {t("Khách được chia theo việc cần làm — mỗi nhóm một hành động.")}
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={load} disabled={loading}>
@@ -128,10 +130,10 @@ function RiskPortfolioTable() {
           <p className="text-sm text-danger" role="alert">{loadError}</p>
         ) : !portfolio ? (
           <p className="text-sm text-text-muted">
-            {loading ? "Đang phân tích khách hàng…" : "Chưa có dữ liệu."}
+            {loading ? t("Đang phân tích khách hàng…") : t("Chưa có dữ liệu.")}
           </p>
         ) : rows.length === 0 ? (
-          <p className="text-sm text-text-muted">Không có khách hàng nào.</p>
+          <p className="text-sm text-text-muted">{t("Không có khách hàng nào.")}</p>
         ) : (
           <div className="space-y-5">
             {/* How the base splits across the three risk bands. The customer
@@ -140,7 +142,7 @@ function RiskPortfolioTable() {
             <div className="rounded-2xl border border-border bg-bg-alt p-4 lg:p-5">
               <div className="min-w-0">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-text">Phân bổ rủi ro</p>
+                  <p className="text-sm font-semibold text-text">{t("Phân bổ rủi ro")}</p>
                   <p className="tnum text-xs text-text-muted">{portfolio.total} khách hàng</p>
                 </div>
                 <div
@@ -209,7 +211,7 @@ function RiskPortfolioTable() {
                 <div className={cn("rounded-xl border px-5 py-4", TONE[active.tone].panel)}>
                   <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
                     <Lightbulb className={cn("h-3.5 w-3.5", TONE[active.tone].text)} aria-hidden="true" />
-                    Hành động đề xuất
+                    {t("Hành động đề xuất")}
                   </p>
                   <p className={cn("mt-2 text-sm leading-6", TONE[active.tone].text)}>
                     {active.action}
@@ -218,24 +220,24 @@ function RiskPortfolioTable() {
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-text-muted">
-                    Hiển thị <span className="tnum">{filtered.length}</span> trên{" "}
-                    <span className="tnum">{active.count}</span> khách hàng
+                    {t("Hiển thị")} <span className="tnum">{filtered.length}</span> trên{" "}
+                    <span className="tnum">{active.count}</span> {t("khách hàng")}
                   </p>
                   <div className="relative sm:w-64">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-dim" />
                     <Input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Tìm khách, sản phẩm, mã đơn…"
+                      placeholder={t("Tìm khách, sản phẩm, mã đơn…")}
                       className="h-9 pl-9 text-xs"
-                      aria-label="Tìm khách hàng"
+                      aria-label={t("Tìm khách hàng")}
                     />
                   </div>
                 </div>
 
                 {filtered.length === 0 ? (
                   <p className="py-8 text-center text-sm text-text-muted">
-                    Không có khách nào khớp từ khoá này.
+                    {t("Không có khách nào khớp từ khoá này.")}
                   </p>
                 ) : (
                   <>
@@ -243,9 +245,9 @@ function RiskPortfolioTable() {
                       <table className="w-full text-left text-sm">
                         <thead>
                           <tr className="border-b border-border text-2xs uppercase tracking-wider text-text-dim">
-                            <th className="py-2 pr-3 font-medium">Khách hàng</th>
-                            <th className="px-3 py-2 font-medium">Sản phẩm gần nhất</th>
-                            <th className="px-3 py-2 font-medium">Kênh</th>
+                            <th className="py-2 pr-3 font-medium">{t("Khách hàng")}</th>
+                            <th className="px-3 py-2 font-medium">{t("Sản phẩm gần nhất")}</th>
+                            <th className="px-3 py-2 font-medium">{t("Kênh")}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -294,7 +296,7 @@ function RiskPortfolioTable() {
                             onClick={() => setPage((p) => Math.max(0, p - 1))}
                             disabled={current === 0}
                           >
-                            Trước
+                            {t("Trước")}
                           </Button>
                           <Button
                             variant="secondary" size="sm"

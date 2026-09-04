@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mic } from "lucide-react";
 import { isVoiceInputSupported, listenOnce } from "@/lib/voice";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * Push-to-talk mic button — the "Hey Cellaxnet" trigger. Renders nothing if
@@ -21,6 +22,7 @@ export function VoiceMicButton({
   disabled?: boolean;
   className?: string;
 }) {
+  const t = useT();
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const stopRef = useRef<(() => void) | null>(null);
@@ -51,7 +53,7 @@ export function VoiceMicButton({
       onClick={toggle}
       disabled={disabled}
       title='Nhấn để nói · "Hey Cellaxnet"'
-      aria-label={listening ? "Đang nghe — nhấn để dừng" : "Nhấn để nói bằng giọng nói"}
+      aria-label={listening ? "Đang nghe — nhấn để dừng" : t("Nhấn để nói bằng giọng nói")}
       aria-pressed={listening}
       className={cn(
         "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition-colors",

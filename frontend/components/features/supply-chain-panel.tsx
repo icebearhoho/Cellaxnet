@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { checkSupplyChain, type SupplyChainResult } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const REGIONS = ["Miền Bắc", "Miền Trung", "Miền Nam"] as const;
 const CATEGORIES = ["Thời trang", "Mỹ phẩm", "Phụ kiện"] as const;
@@ -18,6 +19,7 @@ const SEVERITY: Record<string, { label: string; cls: string; badge: "success" | 
 };
 
 export function SupplyChainPanel() {
+  const t = useT();
   const [region, setRegion] = useState<(typeof REGIONS)[number]>("Miền Trung");
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("Thời trang");
   const [busy, setBusy] = useState(false);
@@ -41,9 +43,9 @@ export function SupplyChainPanel() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Khu vực &amp; danh mục</CardTitle>
+            <CardTitle>{t("Khu vực & danh mục")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Cảnh báo sớm gián đoạn logistics + <span className="text-text">tin tức thật</span> (Google News) theo khu vực.
+              {t("Cảnh báo sớm gián đoạn logistics +")} <span className="text-text">tin tức thật</span> (Google News) theo khu vực.
             </p>
           </div>
           <Badge variant="muted">scenario + optional news</Badge>
@@ -51,7 +53,7 @@ export function SupplyChainPanel() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="text-xs font-medium text-text-dim">Khu vực kho/vận chuyển</label>
+              <label className="text-xs font-medium text-text-dim">{t("Khu vực kho/vận chuyển")}</label>
               <div className="mt-1.5 inline-flex overflow-hidden rounded-md border border-border">
                 {REGIONS.map((r) => (
                   <button key={r} type="button" onClick={() => setRegion(r)}
@@ -63,7 +65,7 @@ export function SupplyChainPanel() {
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-text-dim">Danh mục hàng</label>
+              <label className="text-xs font-medium text-text-dim">{t("Danh mục hàng")}</label>
               <div className="mt-1.5 inline-flex overflow-hidden rounded-md border border-border">
                 {CATEGORIES.map((c) => (
                   <button key={c} type="button" onClick={() => setCategory(c)}
@@ -83,7 +85,7 @@ export function SupplyChainPanel() {
       </Card>
 
       {error && (
-        <p className="text-sm text-danger">Không lấy được cảnh báo. Kiểm tra kết nối backend rồi thử lại.</p>
+        <p className="text-sm text-danger">{t("Không lấy được cảnh báo. Kiểm tra kết nối backend rồi thử lại.")}</p>
       )}
 
       {result && (
@@ -91,14 +93,14 @@ export function SupplyChainPanel() {
           <Card>
             <CardContent className="py-4">
               <div className={cn("text-xl font-semibold", overall?.cls)}>
-                {result.scenario_mode ? "Mức rủi ro kịch bản" : "Nguy cơ tổng thể"}: {overall?.label}
+                {result.scenario_mode ? "Mức rủi ro kịch bản" : t("Nguy cơ tổng thể")}: {overall?.label}
               </div>
               <p className="mt-1 text-sm text-text-muted">{result.summary}</p>
             </CardContent>
           </Card>
 
           {result.alerts.length === 0 ? (
-            <Card><CardContent className="py-6 text-center text-sm text-text-muted">Không có cảnh báo nào cho khu vực này.</CardContent></Card>
+            <Card><CardContent className="py-6 text-center text-sm text-text-muted">{t("Không có cảnh báo nào cho khu vực này.")}</CardContent></Card>
           ) : (
             <div className="space-y-3">
               {result.alerts.map((a, i) => (
@@ -113,7 +115,7 @@ export function SupplyChainPanel() {
                     </div>
                     <div className="mono text-2xs text-text-dim">Dự kiến chậm thêm {a.estimated_delay_days} ngày</div>
                     <div className="rounded-md border border-border bg-bg-alt px-3 py-2 text-xs text-text-muted">
-                      <span className="text-xs font-medium text-text-dim">Phương án dự phòng: </span>
+                      <span className="text-xs font-medium text-text-dim">{t("Phương án dự phòng:")} </span>
                       {a.contingency}
                     </div>
                   </CardContent>
@@ -127,7 +129,7 @@ export function SupplyChainPanel() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Newspaper className="h-4 w-4 text-accent" />
-                  <CardTitle>Tin tức liên quan</CardTitle>
+                  <CardTitle>{t("Tin tức liên quan")}</CardTitle>
                 </div>
                 <Badge variant={result.news_live ? "success" : "muted"}>
                   {result.news_live ? "Google News · trực tiếp" : "cache"}

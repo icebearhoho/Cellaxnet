@@ -13,6 +13,7 @@ import {
   type ChannelLinkStatus,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /** Status encoding — never colour alone: each pairs an icon with a label. */
 const STATUS: Record<
@@ -46,6 +47,7 @@ function compactVnd(n: number) {
 }
 
 export function ChannelLinkPanel() {
+  const t = useT();
   const [data, setData] = useState<ChannelLinkStatus | null>(null);
   const [busy, setBusy] = useState<"connect" | "sync" | "disconnect" | null>(null);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
@@ -68,7 +70,7 @@ export function ChannelLinkPanel() {
     const r = await connectChannel();
     setNotice(
       r.ok
-        ? { ok: true, text: "Đã kết nối KiotViet — bấm “Lấy đơn hàng” để kéo đơn về." }
+        ? { ok: true, text: t("Đã kết nối KiotViet — bấm “Lấy đơn hàng” để kéo đơn về.") }
         : { ok: false, text: r.message },
     );
     setBusy(null);
@@ -97,7 +99,7 @@ export function ChannelLinkPanel() {
     setBusy("disconnect");
     await disconnectChannel();
     setBusy(null);
-    setNotice({ ok: true, text: "Đã ngắt kết nối và xoá token" });
+    setNotice({ ok: true, text: t("Đã ngắt kết nối và xoá token") });
     void load();
   }
 
@@ -108,9 +110,9 @@ export function ChannelLinkPanel() {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Kết nối tài khoản bán hàng</CardTitle>
+          <CardTitle>{t("Kết nối tài khoản bán hàng")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
-            Nối qua <strong>KiotViet</strong> — nền tảng bán hàng đa kênh đã
+            {t("Nối qua")} <strong>KiotViet</strong> — nền tảng bán hàng đa kênh đã
             được Shopee, Lazada và TikTok Shop cấp quyền sẵn. Một liên kết mang
             về đơn của cả ba sàn, mỗi đơn có ghi rõ đến từ kênh nào.
           </p>
@@ -138,10 +140,10 @@ export function ChannelLinkPanel() {
         ) : null}
 
         {loading ? (
-          <p className="py-4 text-center text-xs text-text-muted">Đang tải…</p>
+          <p className="py-4 text-center text-xs text-text-muted">{t("Đang tải…")}</p>
         ) : !data ? (
           <p className="py-4 text-center text-xs text-danger">
-            Không gọi được backend.
+            {t("Không gọi được backend.")}
           </p>
         ) : (
           <>
@@ -172,14 +174,14 @@ export function ChannelLinkPanel() {
                         variant="secondary" size="sm"
                         onClick={disconnect} disabled={busy !== null}
                       >
-                        <Unplug className="h-3.5 w-3.5" /> Ngắt
+                        <Unplug className="h-3.5 w-3.5" /> {t("Ngắt")}
                       </Button>
                     </>
                   ) : (
                     <Button
                       size="sm" onClick={connect}
                       disabled={busy !== null || !data.configured}
-                      title={data.configured ? undefined : "Chưa khai khoá API của cửa hàng"}
+                      title={data.configured ? undefined : t("Chưa khai khoá API của cửa hàng")}
                     >
                       {busy === "connect" ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -195,7 +197,7 @@ export function ChannelLinkPanel() {
               {/* Which marketplaces one link can carry — shown before any sync
                   so the seller knows what to expect. */}
               <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-border pt-2.5">
-                <span className="text-2xs text-text-muted">Mang về đơn từ:</span>
+                <span className="text-2xs text-text-muted">{t("Mang về đơn từ:")}</span>
                 {data.supported.map((name) => (
                   <Badge key={name} variant="muted">{name}</Badge>
                 ))}
@@ -224,9 +226,9 @@ export function ChannelLinkPanel() {
                   <table className="w-full text-xs">
                     <thead className="text-text-muted">
                       <tr className="border-b border-border text-left">
-                        <th className="py-1.5 pr-3 font-medium">Sàn</th>
-                        <th className="py-1.5 pr-3 text-right font-medium">Đơn</th>
-                        <th className="py-1.5 pr-3 text-right font-medium">Đơn/ngày</th>
+                        <th className="py-1.5 pr-3 font-medium">{t("Sàn")}</th>
+                        <th className="py-1.5 pr-3 text-right font-medium">{t("Đơn")}</th>
+                        <th className="py-1.5 pr-3 text-right font-medium">{t("Đơn/ngày")}</th>
                         <th className="py-1.5 text-right font-medium">Doanh thu</th>
                       </tr>
                     </thead>
@@ -254,7 +256,7 @@ export function ChannelLinkPanel() {
         <div className="flex items-start gap-2 border-t border-border pt-3 text-2xs text-text-dim">
           <Info className="mt-0.5 h-3 w-3 shrink-0" />
           <span>
-            Khoá API lấy trong <strong>{data?.credentials_hint}</strong> của cửa
+            {t("Khoá API lấy trong")} <strong>{data?.credentials_hint}</strong> của cửa
             hàng bạn. Hệ thống chỉ lưu số đơn và doanh thu tổng hợp, không lưu
             thông tin khách hàng, và ngắt kết nối được bất cứ lúc nào.{" "}
             {data ? (
@@ -262,7 +264,7 @@ export function ChannelLinkPanel() {
                 href={data.docs_url} target="_blank" rel="noreferrer"
                 className="inline-flex items-center gap-0.5 text-accent hover:underline"
               >
-                Tài liệu API <ExternalLink className="h-2.5 w-2.5" />
+                {t("Tài liệu API")} <ExternalLink className="h-2.5 w-2.5" />
               </a>
             ) : null}
           </span>

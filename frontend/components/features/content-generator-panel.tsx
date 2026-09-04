@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CONTENT_DEMO, type ContentVariant } from "@/lib/mock-data";
 import { contentGenerate } from "@/lib/features";
+import { useT } from "@/lib/i18n";
 
 const PLATFORMS = ["Shopee", "Tiki", "TikTok Shop"] as const;
 type Platform = (typeof PLATFORMS)[number];
@@ -20,12 +21,13 @@ const PLATFORM_VARIANT: Record<Platform, "warning" | "info" | "success"> = {
 };
 
 function CtrBar({ value }: { value: number }) {
+  const t = useT();
   const pct = Math.round(value * 1000) / 10;
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-2xs">
         <span className="mono uppercase tracking-wider text-text-dim">
-          CTR ước tính (quy tắc)
+          {t("CTR ước tính (quy tắc)")}
         </span>
         <span className="mono text-text" data-tnum>
           {pct.toFixed(1)}%
@@ -42,6 +44,7 @@ function CtrBar({ value }: { value: number }) {
 }
 
 export function ContentGeneratorPanel() {
+  const t = useT();
   const [productName, setProductName] = useState("Áo khoác denim unisex form rộng");
   const [features, setFeatures] = useState("Denim 12oz, wash nhẹ, 2 size, unisex, free ship");
   const [activePlatform, setActivePlatform] = useState<Platform>("Shopee");
@@ -78,32 +81,32 @@ export function ContentGeneratorPanel() {
       <Card className="lg:col-span-4">
         <CardHeader>
           <div>
-            <CardTitle>Thông tin sản phẩm</CardTitle>
+            <CardTitle>{t("Thông tin sản phẩm")}</CardTitle>
             <p className="mt-1 text-xs text-text-muted">
-              Nhập thông tin một lần để tạo nội dung phù hợp cho từng sàn.
+              {t("Nhập thông tin một lần để tạo nội dung phù hợp cho từng sàn.")}
             </p>
           </div>
-          <Badge variant="muted">3 sàn</Badge>
+          <Badge variant="muted">{t("3 sàn")}</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Field label="Tên sản phẩm">
+          <Field label={t("Tên sản phẩm")}>
             <Input
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               placeholder="Áo khoác denim unisex form rộng"
             />
           </Field>
-          <Field label="Đặc điểm nổi bật">
+          <Field label={t("Đặc điểm nổi bật")}>
             <textarea
               value={features}
               onChange={(e) => setFeatures(e.target.value)}
               rows={4}
               className="flex w-full rounded-lg border border-border-strong bg-bg-alt px-3 py-2 text-sm text-text placeholder:text-text-dim focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              placeholder="Mỗi dòng 1 đặc điểm"
+              placeholder={t("Mỗi dòng 1 đặc điểm")}
             />
           </Field>
 
-          <Field label="Sàn đang xem">
+          <Field label={t("Sàn đang xem")}>
             <div className="grid grid-cols-3 gap-2">
               {PLATFORMS.map((p) => (
                 <button
@@ -127,12 +130,12 @@ export function ContentGeneratorPanel() {
             {generating ? (
               <>
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                Đang tạo…
+                {t("Đang tạo…")}
               </>
             ) : (
               <>
                 <Wand2 className="h-3.5 w-3.5" />
-                Tạo 3 phiên bản
+                {t("Tạo 3 phiên bản")}
               </>
             )}
           </Button>
@@ -144,19 +147,19 @@ export function ContentGeneratorPanel() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs font-medium text-text-dim">
-              Nội dung đã tạo
+              {t("Nội dung đã tạo")}
             </div>
             <div className="text-sm text-text-muted">
-              So sánh nội dung và hiệu quả dự kiến trên 3 sàn
+              {t("So sánh nội dung và hiệu quả dự kiến trên 3 sàn")}
             </div>
           </div>
           <Badge variant="warning">
-            Cần duyệt trước khi đăng
+            {t("Cần duyệt trước khi đăng")}
           </Badge>
         </div>
 
         {error && (
-          <p className="text-sm text-danger">Không tạo được nội dung. Kiểm tra kết nối backend rồi thử lại.</p>
+          <p className="text-sm text-danger">{t("Không tạo được nội dung. Kiểm tra kết nối backend rồi thử lại.")}</p>
         )}
 
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">

@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { LanguageToggle } from "@/components/shell/language-toggle";
 import { useMounted } from "@/lib/hooks/use-mounted";
+import { useT } from "@/lib/i18n";
 
 type Crumb = { label: string; href?: string };
 
@@ -25,6 +26,7 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
   const [open, setOpen] = useState(false);
   const mounted = useMounted();
   const { user, logout } = useAuth();
+  const t = useT();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,10 +58,10 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
             {i > 0 && <span className="text-text-dim">/</span>}
             {c.href ? (
               <a href={c.href} className="text-text-muted hover:text-text">
-                {c.label}
+                {t(c.label)}
               </a>
             ) : (
-              <span className="text-text">{c.label}</span>
+              <span className="text-text">{t(c.label)}</span>
             )}
           </span>
         ))}
@@ -73,7 +75,7 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
         className="ml-auto h-9 w-72 justify-start gap-2 rounded-xl px-3 text-text-muted"
       >
         <Search className="h-3.5 w-3.5" />
-        <span className="text-xs">Tìm tính năng…</span>
+        <span className="text-xs">{t("Tìm tính năng…")}</span>
         <CommandShortcut>Ctrl K</CommandShortcut>
       </Button>
 
@@ -89,16 +91,16 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
             <div className="text-xs font-semibold">{user.name || user.email}</div>
             <div className="text-2xs font-medium text-text-dim">
               {user.role === "admin"
-                ? "Quản trị viên"
+                ? t("Quản trị viên")
                 : user.role === "seller"
-                  ? "Người bán"
-                  : "Người mua"}
+                  ? t("Người bán")
+                  : t("Người mua")}
             </div>
           </div>
           <button
             onClick={logout}
-            title="Đăng xuất"
-            aria-label="Đăng xuất"
+            title={t("Đăng xuất")}
+            aria-label={t("Đăng xuất")}
             className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface-2 text-text-muted transition-colors hover:border-danger/40 hover:text-danger"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -112,10 +114,10 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
 
       {mounted ? (
         <CommandDialog open={open} onOpenChange={setOpen}>
-          <CommandInput placeholder="Tìm tính năng…" />
+          <CommandInput placeholder={t("Tìm tính năng…")} />
           <CommandList>
-            <CommandEmpty>Không tìm thấy.</CommandEmpty>
-            <CommandGroup heading="Điều hướng">
+            <CommandEmpty>{t("Không tìm thấy.")}</CommandEmpty>
+            <CommandGroup heading={t("Điều hướng")}>
               {READY_NAV_ITEMS.filter(
                 (item) =>
                   item.app !== "seller" ||
@@ -124,11 +126,11 @@ export function TopBar({ breadcrumb }: { breadcrumb: Crumb[] }) {
               ).map((item) => (
                 <CommandItem
                   key={item.slug}
-                  value={`${item.label} ${item.slug}`}
+                  value={`${item.label} ${t(item.label)} ${item.slug}`}
                   onSelect={() => runCommand(item.href)}
                 >
                   <item.icon className="h-3.5 w-3.5 text-text-muted" />
-                  <span>{item.label}</span>
+                  <span>{t(item.label)}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

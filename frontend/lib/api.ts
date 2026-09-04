@@ -39,6 +39,20 @@ export class ApiClientError extends Error {
   }
 }
 
+/** Ngôn ngữ đang chọn, đọc thẳng từ localStorage.
+ *
+ *  Không dùng `useLanguage()` được vì đây là module gọi API chứ không phải
+ *  component. Khoá phải khớp `components/shell/language-toggle.tsx`.
+ */
+function readLanguage(): string {
+  if (typeof window === "undefined") return "vi";
+  try {
+    return localStorage.getItem("area303:lang") === "en" ? "en" : "vi";
+  } catch {
+    return "vi";
+  }
+}
+
 async function request<T>(
   path: string,
   init?: RequestInit,
@@ -55,6 +69,9 @@ async function request<T>(
       // Admin-gated endpoints need this; harmless when absent.
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(workspaceId ? { "X-Workspace-ID": String(workspaceId) } : {}),
+      // Backend sinh ra một phần văn bản hiển thị (lời giải thích giá, nhãn
+      // ba mốc thị trường), nên nó phải biết người dùng đang đọc ngôn ngữ nào.
+      "Accept-Language": readLanguage(),
       // Spread last so an explicit per-call header still wins.
       ...init?.headers,
     },

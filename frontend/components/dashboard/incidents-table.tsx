@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Table,
   TableBody,
@@ -9,6 +11,7 @@ import {
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Alert, ALERTS } from "@/lib/mock-data";
+import { useT } from "@/lib/i18n";
 
 type AlertRow = (typeof ALERTS)[number];
 
@@ -43,6 +46,7 @@ const statusLabel: Record<Alert["status"], string> = {
 };
 
 export function AlertsTable({ data }: { data: AlertRow[] }) {
+  const t = useT();
   return (
     <Card>
       <CardHeader>
@@ -61,7 +65,7 @@ export function AlertsTable({ data }: { data: AlertRow[] }) {
             <TableHead>Tính năng</TableHead>
             <TableHead>Vùng</TableHead>
             <TableHead>Mức độ</TableHead>
-            <TableHead>Trạng thái</TableHead>
+            <TableHead>{t("Trạng thái")}</TableHead>
             <TableHead className="text-right">Bắt đầu</TableHead>
           </TableRow>
         </TableHeader>

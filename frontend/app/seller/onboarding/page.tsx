@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n";
 
 const ROLE_LABEL: Record<SellerWorkspace["current_role"], string> = {
   owner: "Chủ sở hữu",
@@ -47,6 +48,7 @@ function errorMessage(error: unknown): string {
 }
 
 export default function SellerOnboardingPage() {
+  const t = useT();
   const router = useRouter();
   const { user, acceptAccessToken, logout } = useAuth();
   const [workspaces, setWorkspaces] = useState<SellerWorkspace[]>([]);
@@ -97,12 +99,12 @@ export default function SellerOnboardingPage() {
             href="/shop"
             className="inline-flex items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-text"
           >
-            <ArrowLeft className="h-4 w-4" /> Cửa hàng
+            <ArrowLeft className="h-4 w-4" /> {t("Cửa hàng")}
           </Link>
           <div className="flex items-center gap-3 text-sm text-text-muted">
             <span className="hidden sm:inline">{user?.name || user?.email}</span>
             <button onClick={logout} className="font-medium hover:text-text">
-              Đăng xuất
+              {t("Đăng xuất")}
             </button>
           </div>
         </header>
@@ -110,11 +112,10 @@ export default function SellerOnboardingPage() {
         <section className="mb-8 max-w-3xl">
           <Badge variant="info">Seller workspace</Badge>
           <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            Thiết lập không gian bán hàng
+            {t("Thiết lập không gian bán hàng")}
           </h1>
           <p className="mt-3 text-sm leading-6 text-text-muted sm:text-base">
-            Workspace là nơi gom shop, sản phẩm, đơn hàng và thành viên của một đơn vị bán hàng.
-            Dữ liệu của mỗi workspace được tách riêng.
+            {t("Workspace là nơi gom shop, sản phẩm, đơn hàng và thành viên của một đơn vị bán hàng. Dữ liệu của mỗi workspace được tách riêng.")}
           </p>
         </section>
 
@@ -122,7 +123,7 @@ export default function SellerOnboardingPage() {
           <Card className="h-fit">
             <CardHeader>
               <div>
-                <CardTitle className="text-base">Workspace của bạn</CardTitle>
+                <CardTitle className="text-base">{t("Workspace của bạn")}</CardTitle>
                 <p className="mt-1 text-xs text-text-muted">
                   {loading ? "Đang tải..." : `${workspaces.length} workspace`}
                 </p>
@@ -165,7 +166,7 @@ export default function SellerOnboardingPage() {
                           router.push("/seller/workspace");
                         }}
                       >
-                        Vào workspace
+                        {t("Vào workspace")}
                       </Button>
                     </div>
                   ))}
@@ -173,9 +174,9 @@ export default function SellerOnboardingPage() {
               ) : (
                 <div className="rounded-xl border border-dashed border-border p-6 text-center">
                   <Store className="mx-auto h-7 w-7 text-text-dim" />
-                  <p className="mt-3 text-sm font-medium">Chưa có workspace</p>
+                  <p className="mt-3 text-sm font-medium">{t("Chưa có workspace")}</p>
                   <p className="mt-1 text-xs text-text-muted">
-                    Tạo workspace đầu tiên để kích hoạt vai trò người bán.
+                    {t("Tạo workspace đầu tiên để kích hoạt vai trò người bán.")}
                   </p>
                 </div>
               )}
@@ -187,9 +188,9 @@ export default function SellerOnboardingPage() {
               <CardHeader>
                 <div>
                   <CardTitle className="text-base">
-                    {workspaces.length ? "Tạo workspace khác" : "Tạo workspace đầu tiên"}
+                    {workspaces.length ? "Tạo workspace khác" : t("Tạo workspace đầu tiên")}
                   </CardTitle>
-                  <p className="mt-1 text-xs text-text-muted">Ví dụ: Minh Anh Fashion</p>
+                  <p className="mt-1 text-xs text-text-muted">{t("Ví dụ: Minh Anh Fashion")}</p>
                 </div>
                 <Plus className="h-5 w-5 text-accent" />
               </CardHeader>
@@ -197,14 +198,14 @@ export default function SellerOnboardingPage() {
                 <form onSubmit={submit} className="space-y-4">
                   <div>
                     <label htmlFor="workspace-name" className="mb-1.5 block text-sm font-medium">
-                      Tên đơn vị bán hàng
+                      {t("Tên đơn vị bán hàng")}
                     </label>
                     <Input
                       id="workspace-name"
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       maxLength={100}
-                      placeholder="Tên shop hoặc doanh nghiệp"
+                      placeholder={t("Tên shop hoặc doanh nghiệp")}
                     />
                   </div>
                   {error && (
@@ -226,7 +227,7 @@ export default function SellerOnboardingPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Tiến độ thiết lập</CardTitle>
+                <CardTitle className="text-base">{t("Tiến độ thiết lập")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-3">
@@ -234,8 +235,8 @@ export default function SellerOnboardingPage() {
                     {workspaces.length ? <Check className="h-4 w-4" /> : "1"}
                   </span>
                   <div>
-                    <p className="text-sm font-medium">Tạo workspace</p>
-                    <p className="mt-0.5 text-xs text-text-muted">Kích hoạt tài khoản người bán.</p>
+                    <p className="text-sm font-medium">{t("Tạo workspace")}</p>
+                    <p className="mt-0.5 text-xs text-text-muted">{t("Kích hoạt tài khoản người bán.")}</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -243,14 +244,14 @@ export default function SellerOnboardingPage() {
                     2
                   </span>
                   <div>
-                    <p className="text-sm font-medium">Kết nối cửa hàng</p>
+                    <p className="text-sm font-medium">{t("Kết nối cửa hàng")}</p>
                     <p className="mt-0.5 text-xs leading-5 text-text-muted">
-                      Shopee OAuth sẽ được gắn vào workspace ở bước tích hợp tiếp theo.
+                      {t("Shopee OAuth sẽ được gắn vào workspace ở bước tích hợp tiếp theo.")}
                     </p>
                   </div>
                 </div>
                 <Button variant="outline" className="w-full" disabled>
-                  <RefreshCw className="h-4 w-4" /> Kết nối Shopee — sắp có
+                  <RefreshCw className="h-4 w-4" /> {t("Kết nối Shopee — sắp có")}
                 </Button>
               </CardContent>
             </Card>

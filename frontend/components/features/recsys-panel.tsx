@@ -11,6 +11,7 @@ import {
   type Recommendation,
 } from "@/lib/mock-data";
 import { recsysRecommend } from "@/lib/features";
+import { useT } from "@/lib/i18n";
 
 type Mode = "traditional" | "ai";
 
@@ -22,6 +23,8 @@ const PROFILE_CHIPS = [
   { label: "Quan tâm", value: "serum, dưỡng ẩm" },
 ];
 
+// Gửi lên API, không hiển thị: giữ tiếng Việt. Backend khớp ý định người mua
+// trên chuỗi này, dịch sang tiếng Anh là mất khớp.
 const SIGNAL_PAYLOAD = {
   intent: "serum dưỡng ẩm",
   preferred_channel: "Shopee",
@@ -34,6 +37,7 @@ const VND = new Intl.NumberFormat("vi-VN", {
 });
 
 export function RecsysPanel() {
+  const t = useT();
   const [mode, setMode] = useState<Mode>("ai");
   const [aiItems, setAiItems] = useState<Recommendation[]>(RECSYS_AI);
   const [error, setError] = useState(false);
@@ -88,7 +92,7 @@ export function RecsysPanel() {
                 : "text-text-muted hover:text-text",
             )}
           >
-            Người mua tương tự
+            {t("Người mua tương tự")}
           </button>
           <button
             type="button"
@@ -100,7 +104,7 @@ export function RecsysPanel() {
                 : "text-text-muted hover:text-text",
             )}
           >
-            Gợi ý theo bạn
+            {t("Gợi ý theo bạn")}
           </button>
         </div>
 
@@ -111,7 +115,7 @@ export function RecsysPanel() {
           {PROFILE_CHIPS.map((s) => (
             <Badge key={s.label} variant="muted">
               <span className="normal-case tracking-normal">
-                {s.label}: <span className="text-text">{s.value}</span>
+                {t(s.label)}: <span className="text-text">{t(s.value)}</span>
               </span>
             </Badge>
           ))}
@@ -120,7 +124,7 @@ export function RecsysPanel() {
 
       {error && mode === "ai" && (
         <p className="text-sm text-danger">
-          Không lấy được gợi ý. Kiểm tra kết nối backend rồi thử lại.
+          {t("Không lấy được gợi ý. Kiểm tra kết nối backend rồi thử lại.")}
         </p>
       )}
 
@@ -129,17 +133,17 @@ export function RecsysPanel() {
           <div>
             <CardTitle>
               {mode === "ai"
-                ? "Gợi ý theo hồ sơ minh hoạ"
-                : "Sản phẩm mua cùng minh hoạ"}
+                ? t("Gợi ý theo hồ sơ minh hoạ")
+                : t("Sản phẩm mua cùng minh hoạ")}
             </CardTitle>
             <p className="mt-1 text-xs text-text-muted">
               {mode === "ai"
-                ? "Dữ liệu mẫu để minh hoạ luồng cá nhân hoá; chưa lấy lịch sử thật của tài khoản."
-                : "Dữ liệu mẫu; chưa có ma trận đồng mua thật từ cửa hàng."}
+                ? t("Dữ liệu mẫu để minh hoạ luồng cá nhân hoá; chưa lấy lịch sử thật của tài khoản.")
+                : t("Dữ liệu mẫu; chưa có ma trận đồng mua thật từ cửa hàng.")}
             </p>
           </div>
           <Badge variant={mode === "ai" ? "live" : "muted"}>
-            {mode === "ai" ? "Hồ sơ demo" : "Dữ liệu demo"}
+            {mode === "ai" ? t("Hồ sơ demo") : t("Dữ liệu demo")}
           </Badge>
         </CardHeader>
       </Card>
@@ -150,7 +154,7 @@ export function RecsysPanel() {
             <ProductCard product={p} similarity={p.similarity ?? 0.5 + i * 0.05} />
             <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs text-text-muted">
               <span className="text-2xs font-medium uppercase tracking-wider text-text-dim">
-                Vì sao phù hợp
+                {t("Vì sao phù hợp")}
               </span>
               <p className="mt-1 leading-relaxed text-text">{p.reason}</p>
             </div>
@@ -160,24 +164,24 @@ export function RecsysPanel() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <InsightCard
-          label="Độ khớp TB"
+          label={t("Độ khớp TB")}
           value={insights.matchPct}
-          hint="Trung bình mức phù hợp với hồ sơ"
+          hint={t("Trung bình mức phù hợp với hồ sơ")}
         />
         <InsightCard
-          label="Số gợi ý"
+          label={t("Số gợi ý")}
           value={insights.count}
-          hint="Sản phẩm trong danh sách dành cho bạn"
+          hint={t("Sản phẩm trong danh sách dành cho bạn")}
         />
         <InsightCard
-          label="Khoảng giá"
+          label={t("Khoảng giá")}
           value={insights.priceRange}
-          hint="Từ thấp nhất đến cao nhất"
+          hint={t("Từ thấp nhất đến cao nhất")}
         />
         <InsightCard
-          label="Đánh giá TB"
+          label={t("Đánh giá TB")}
           value={insights.avgRating}
-          hint="Sao trung bình các món gợi ý"
+          hint={t("Sao trung bình các món gợi ý")}
         />
       </div>
     </div>

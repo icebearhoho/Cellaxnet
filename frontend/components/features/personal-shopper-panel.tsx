@@ -18,6 +18,7 @@ import { shopperProducts } from "@/lib/features";
 import { trackEvent, guessCategory } from "@/lib/journey-track";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 type Turn = {
   id: string;
@@ -68,6 +69,7 @@ function makeAssistantReply(query: string, picks: Product[]): string {
 }
 
 export function PersonalShopperPanel() {
+  const t = useT();
   const [turns, setTurns] = useState<Turn[]>([INITIAL_GREETING]);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
@@ -139,7 +141,7 @@ export function PersonalShopperPanel() {
             <div className="flex items-center gap-2">
               <span className="live-dot" />
               <span className="text-xs font-medium text-text-dim">
-                Trợ lý mua sắm · sẵn sàng
+                {t("Trợ lý mua sắm · sẵn sàng")}
               </span>
             </div>
             <div className="flex items-center gap-2 text-2xs text-text-muted">
@@ -184,7 +186,7 @@ export function PersonalShopperPanel() {
               </div>
             ))}
             {error && (
-              <p className="text-sm text-danger">Không lấy được gợi ý. Kiểm tra kết nối backend rồi thử lại.</p>
+              <p className="text-sm text-danger">{t("Không lấy được gợi ý. Kiểm tra kết nối backend rồi thử lại.")}</p>
             )}
           </div>
 
@@ -212,7 +214,7 @@ export function PersonalShopperPanel() {
               <VoiceMicButton disabled={pending} onTranscript={(t) => send(t, true)} />
               <Button type="submit" size="lg" disabled={pending || !draft.trim()}>
                 <Send className="h-3.5 w-3.5" />
-                Gửi
+                {t("Gửi")}
               </Button>
             </form>
           </div>
@@ -223,19 +225,19 @@ export function PersonalShopperPanel() {
       <aside className="lg:col-span-4 space-y-4">
         <div className="rounded-lg border border-border bg-surface p-4">
           <div className="text-xs font-medium text-text-dim">
-            Nguồn gợi ý
+            {t("Nguồn gợi ý")}
           </div>
           <div className="mt-3 space-y-2 text-sm">
-            <Row k="Danh mục" v="Thời trang, mỹ phẩm, phụ kiện" />
-            <Row k="Sàn tham khảo" v="Shopee · Tiki · TikTok Shop" />
-            <Row k="Ưu tiên" v="Nhu cầu, ngân sách và đánh giá" />
-            <Row k="Cập nhật" v="Dữ liệu mẫu gần đây" />
+            <Row k={t("Danh mục")} v={t("Thời trang, mỹ phẩm, phụ kiện")} />
+            <Row k={t("Sàn tham khảo")} v="Shopee · Tiki · TikTok Shop" />
+            <Row k="Ưu tiên" v={t("Nhu cầu, ngân sách và đánh giá")} />
+            <Row k={t("Cập nhật")} v={t("Dữ liệu mẫu gần đây")} />
           </div>
         </div>
 
         <div className="rounded-lg border border-border bg-surface p-4">
           <div className="text-xs font-medium text-text-dim">
-            Gợi ý nhanh
+            {t("Gợi ý nhanh")}
           </div>
           <div className="mt-3">
             <PromptChips items={SHOPPER_CHIPS} onSelect={(v) => send(v)} />
@@ -244,10 +246,10 @@ export function PersonalShopperPanel() {
 
         <div className="rounded-lg border border-border bg-surface p-4 text-xs text-text-muted">
           <span className="text-xs font-medium text-text-dim">
-            Lưu ý
+            {t("Lưu ý")}
           </span>
           <p className="mt-2">
-            Gợi ý được tạo từ danh mục mẫu. Hãy kiểm tra giá và thông tin trên trang sản phẩm trước khi mua.
+            {t("Gợi ý được tạo từ danh mục mẫu. Hãy kiểm tra giá và thông tin trên trang sản phẩm trước khi mua.")}
           </p>
         </div>
       </aside>

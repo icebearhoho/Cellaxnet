@@ -12,6 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 
 type ClothType = "upper" | "lower" | "overall";
 type ServiceStatus = "checking" | "ready" | "offline";
@@ -19,6 +20,7 @@ type ServiceStatus = "checking" | "ready" | "offline";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 function useObjectUrl(file: File | null) {
+  const t = useT();
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,6 +54,7 @@ function UploadCard({
   previewUrl: string | null;
   onChange: (file: File | null) => void;
 }) {
+  const t = useT();
   return (
     <div className="rounded-xl border border-border bg-white p-4">
       <div className="mb-3 flex items-center gap-2">
@@ -78,14 +81,14 @@ function UploadCard({
               className="object-contain"
             />
             <span className="absolute inset-x-3 bottom-3 rounded-lg bg-black/65 px-3 py-2 text-center text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
-              Chọn ảnh khác
+              {t("Chọn ảnh khác")}
             </span>
           </>
         ) : (
           <div className="px-6 text-center text-text-muted">
             <ImagePlus className="mx-auto mb-3 h-8 w-8" />
-            <p className="text-sm font-semibold text-text">Bấm để tải ảnh</p>
-            <p className="mt-1 text-xs">JPG, PNG hoặc WebP · tối đa 10 MB</p>
+            <p className="text-sm font-semibold text-text">{t("Bấm để tải ảnh")}</p>
+            <p className="mt-1 text-xs">{t("JPG, PNG hoặc WebP · tối đa 10 MB")}</p>
           </div>
         )}
       </label>
@@ -107,6 +110,7 @@ function UploadCard({
 }
 
 export function VirtualTryOnPanel() {
+  const t = useT();
   const [personFile, setPersonFile] = useState<File | null>(null);
   const [garmentFile, setGarmentFile] = useState<File | null>(null);
   const [clothType, setClothType] = useState<ClothType>("upper");
@@ -143,7 +147,7 @@ export function VirtualTryOnPanel() {
     setError(null);
     if (file && file.size > MAX_FILE_SIZE) {
       setter(null);
-      setError("Ảnh vượt quá 10 MB. Hãy chọn ảnh nhỏ hơn.");
+      setError(t("Ảnh vượt quá 10 MB. Hãy chọn ảnh nhỏ hơn."));
       return;
     }
     setter(file);
@@ -173,7 +177,7 @@ export function VirtualTryOnPanel() {
         const payload = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(payload?.error ?? "Không thể tạo ảnh thử đồ.");
+        throw new Error(payload?.error ?? t("Không thể tạo ảnh thử đồ."));
       }
 
       const blob = await response.blob();
@@ -183,7 +187,7 @@ export function VirtualTryOnPanel() {
       setError(
         caught instanceof Error
           ? caught.message
-          : "Không kết nối được dịch vụ thử đồ local.",
+          : t("Không kết nối được dịch vụ thử đồ local."),
       );
       setServiceStatus("offline");
     } finally {
@@ -208,9 +212,9 @@ export function VirtualTryOnPanel() {
             <Sparkles className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="font-bold">Phòng thử đồ AI</h2>
+            <h2 className="font-bold">{t("Phòng thử đồ AI")}</h2>
             <p className="mt-1 max-w-2xl text-sm text-text-muted">
-              Tải ảnh người và trang phục lên để thử trực tiếp ngay trong AREA-303.
+              {t("Tải ảnh người và trang phục lên để thử trực tiếp ngay trong AREA-303.")}
             </p>
           </div>
         </div>
@@ -225,10 +229,10 @@ export function VirtualTryOnPanel() {
             }`}
           />
           {serviceStatus === "ready"
-            ? "GPU sẵn sàng"
+            ? t("GPU sẵn sàng")
             : serviceStatus === "checking"
-              ? "Đang kiểm tra GPU"
-              : "Dịch vụ đang tắt"}
+              ? t("Đang kiểm tra GPU")
+              : t("Dịch vụ đang tắt")}
         </div>
       </div>
 
@@ -237,8 +241,8 @@ export function VirtualTryOnPanel() {
           <div className="grid gap-4 sm:grid-cols-2">
             <UploadCard
               id="tryon-person"
-              title="Ảnh người mẫu"
-              hint="Đứng thẳng, thấy rõ toàn thân"
+              title={t("Ảnh người mẫu")}
+              hint={t("Đứng thẳng, thấy rõ toàn thân")}
               icon={<UserRound className="h-4 w-4" />}
               file={personFile}
               previewUrl={personPreview}
@@ -246,8 +250,8 @@ export function VirtualTryOnPanel() {
             />
             <UploadCard
               id="tryon-garment"
-              title="Ảnh trang phục"
-              hint="Chụp chính diện, nền đơn giản"
+              title={t("Ảnh trang phục")}
+              hint={t("Chụp chính diện, nền đơn giản")}
               icon={<Shirt className="h-4 w-4" />}
               file={garmentFile}
               previewUrl={garmentPreview}
@@ -256,13 +260,13 @@ export function VirtualTryOnPanel() {
           </div>
 
           <div className="mt-5">
-            <p className="mb-2 text-sm font-bold">Loại trang phục</p>
+            <p className="mb-2 text-sm font-bold">{t("Loại trang phục")}</p>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  ["upper", "Áo"],
-                  ["lower", "Quần / váy"],
-                  ["overall", "Đầm / toàn bộ"],
+                  ["upper", t("Áo")],
+                  ["lower", t("Quần / váy")],
+                  ["overall", t("Đầm / toàn bộ")],
                 ] as const
               ).map(([value, label]) => (
                 <button
@@ -297,12 +301,12 @@ export function VirtualTryOnPanel() {
             {isRunning ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Đang thử đồ · khoảng 15 giây
+                {t("Đang thử đồ · khoảng 15 giây")}
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                Tạo ảnh thử đồ
+                {t("Tạo ảnh thử đồ")}
               </>
             )}
           </button>
@@ -311,7 +315,7 @@ export function VirtualTryOnPanel() {
         <div className="card-surface flex min-h-[520px] flex-col rounded-lg border p-5">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-bold">Kết quả</h3>
+              <h3 className="font-bold">{t("Kết quả")}</h3>
               <p className="text-xs text-text-muted">Ảnh được xử lý hoàn toàn trên máy này</p>
             </div>
             {personFile || garmentFile || resultUrl ? (
@@ -321,7 +325,7 @@ export function VirtualTryOnPanel() {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-bg-subtle"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                Làm lại
+                {t("Làm lại")}
               </button>
             ) : null}
           </div>
@@ -330,7 +334,7 @@ export function VirtualTryOnPanel() {
             {resultUrl ? (
               <Image
                 src={resultUrl}
-                alt="Kết quả thử đồ AI"
+                alt={t("Kết quả thử đồ AI")}
                 fill
                 unoptimized
                 className="object-contain"
@@ -338,14 +342,14 @@ export function VirtualTryOnPanel() {
             ) : isRunning ? (
               <div className="px-6 text-center">
                 <Loader2 className="mx-auto h-10 w-10 animate-spin text-accent" />
-                <p className="mt-4 text-sm font-bold">AI đang thay trang phục</p>
-                <p className="mt-1 text-xs text-text-muted">Giữ trang này mở trong lúc xử lý</p>
+                <p className="mt-4 text-sm font-bold">{t("AI đang thay trang phục")}</p>
+                <p className="mt-1 text-xs text-text-muted">{t("Giữ trang này mở trong lúc xử lý")}</p>
               </div>
             ) : (
               <div className="px-8 text-center text-text-muted">
                 <Sparkles className="mx-auto mb-3 h-9 w-9 opacity-50" />
-                <p className="text-sm font-semibold text-text">Ảnh kết quả sẽ xuất hiện tại đây</p>
-                <p className="mt-1 text-xs">Chọn đủ hai ảnh để bắt đầu</p>
+                <p className="text-sm font-semibold text-text">{t("Ảnh kết quả sẽ xuất hiện tại đây")}</p>
+                <p className="mt-1 text-xs">{t("Chọn đủ hai ảnh để bắt đầu")}</p>
               </div>
             )}
           </div>
@@ -357,7 +361,7 @@ export function VirtualTryOnPanel() {
               className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-accent px-4 py-2.5 text-sm font-bold text-accent hover:bg-accent/5"
             >
               <Download className="h-4 w-4" />
-              Tải ảnh kết quả
+              {t("Tải ảnh kết quả")}
             </a>
           ) : null}
         </div>
@@ -366,8 +370,7 @@ export function VirtualTryOnPanel() {
       <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          Máy đang chạy chế độ chất lượng cao 768×1024, 50 bước. Kết quả phụ
-          thuộc tư thế người mẫu và ảnh trang phục; ảnh chính diện cho kết quả ổn định nhất.
+          {t("Máy đang chạy chế độ chất lượng cao 768×1024, 50 bước. Kết quả phụ thuộc tư thế người mẫu và ảnh trang phục; ảnh chính diện cho kết quả ổn định nhất.")}
         </p>
       </div>
     </div>

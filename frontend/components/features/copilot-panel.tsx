@@ -10,6 +10,7 @@ import { VoiceMicButton } from "@/components/genai/voice-mic-button";
 import { askAgent, type CopilotAgentResult } from "@/lib/features";
 import { speak } from "@/lib/voice";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 type Message =
   | { id: string; role: "user"; text: string }
@@ -23,6 +24,7 @@ const EXAMPLES = [
 ];
 
 export function CopilotPanel() {
+  const t = useT();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -66,7 +68,7 @@ export function CopilotPanel() {
             <div className="flex items-center gap-2">
               <span className="live-dot" />
               <span className="text-xs font-medium text-text-dim">
-                Trợ lý vận hành · sẵn sàng
+                {t("Trợ lý vận hành · sẵn sàng")}
               </span>
             </div>
           </div>
@@ -75,9 +77,9 @@ export function CopilotPanel() {
             {!hasMessages && (
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <Bot className="h-9 w-9 text-accent" />
-                <p className="mt-3 text-sm font-medium text-text">Hỏi bất cứ điều gì về shop của bạn</p>
+                <p className="mt-3 text-sm font-medium text-text">{t("Hỏi bất cứ điều gì về shop của bạn")}</p>
                 <p className="mt-1 max-w-sm text-xs text-text-muted">
-                  Hỏi về doanh số, giá đối thủ, nhà sáng tạo hoặc tồn kho để nhận một câu trả lời tổng hợp.
+                  {t("Hỏi về doanh số, giá đối thủ, nhà sáng tạo hoặc tồn kho để nhận một câu trả lời tổng hợp.")}
                 </p>
               </div>
             )}
@@ -117,7 +119,7 @@ export function CopilotPanel() {
               </div>
             )}
             {error && (
-              <p className="text-sm text-danger">Không lấy được câu trả lời. Kiểm tra kết nối backend rồi thử lại.</p>
+              <p className="text-sm text-danger">{t("Không lấy được câu trả lời. Kiểm tra kết nối backend rồi thử lại.")}</p>
             )}
           </div>
 
@@ -148,7 +150,7 @@ export function CopilotPanel() {
 
       <aside className="lg:col-span-4 space-y-4">
         <div className="rounded-lg border border-border bg-surface p-4">
-          <div className="text-xs font-medium text-text-dim">Câu hỏi mẫu</div>
+          <div className="text-xs font-medium text-text-dim">{t("Câu hỏi mẫu")}</div>
           <div className="mt-3 flex flex-col gap-2">
             {EXAMPLES.map((q) => (
               <button
@@ -168,9 +170,9 @@ export function CopilotPanel() {
         </div>
 
         <div className="rounded-lg border border-border bg-surface p-4 text-xs text-text-muted">
-          <span className="text-xs font-medium text-text-dim">Cách hoạt động</span>
+          <span className="text-xs font-medium text-text-dim">{t("Cách hoạt động")}</span>
           <p className="mt-2">
-            Trợ lý kết hợp dữ liệu giá, doanh số, nhà sáng tạo và tồn kho để đưa ra câu trả lời ngắn gọn cùng việc nên làm tiếp theo. Có thể hỏi bằng giọng nói — bấm mic và nói.
+            {t("Trợ lý kết hợp dữ liệu giá, doanh số, nhà sáng tạo và tồn kho để đưa ra câu trả lời ngắn gọn cùng việc nên làm tiếp theo. Có thể hỏi bằng giọng nói — bấm mic và nói.")}
           </p>
         </div>
       </aside>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { analyzeDecisionIntelligence, type DecisionIntelligenceResult, type DecisionInput, type Category } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const CATEGORIES: Category[] = ["Thời trang", "Mỹ phẩm", "Phụ kiện"];
 const KINDS: DecisionInput["kind"][] = ["price", "promo", "ad", "inventory"];
@@ -21,12 +22,13 @@ const METRIC_LABEL: Record<string, string> = {
 };
 
 export function DecisionIntelligencePanel() {
-  const [situation, setSituation] = useState("Chuẩn bị chiến dịch cho mùa cao điểm quý 4");
+  const t = useT();
+  const [situation, setSituation] = useState(t("Chuẩn bị chiến dịch cho mùa cao điểm quý 4"));
   const [category, setCategory] = useState<Category>("Thời trang");
   const [decisions, setDecisions] = useState<DecisionInput[]>([
-    { kind: "ad", description: "Chạy ads TikTok tháng 11", metric: "ROAS", value: 4.2, month: 11 },
+    { kind: "ad", description: t("Chạy ads TikTok tháng 11"), metric: "ROAS", value: 4.2, month: 11 },
     { kind: "promo", description: "Flash sale 12.12", metric: "sales_lift_pct", value: 65, month: 12 },
-    { kind: "price", description: "Giảm giá 10% dòng bán chậm", metric: "sell_through_pct", value: 48, month: null },
+    { kind: "price", description: t("Giảm giá 10% dòng bán chậm"), metric: "sell_through_pct", value: 48, month: null },
   ]);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<DecisionIntelligenceResult | null>(null);
@@ -63,18 +65,18 @@ export function DecisionIntelligencePanel() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Học từ quyết định quá khứ</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">Đối chiếu các quyết định đã thực hiện để rút ra hành động nên lặp lại.</p>
+            <CardTitle>{t("Học từ quyết định quá khứ")}</CardTitle>
+            <p className="mt-1 text-xs text-text-muted">{t("Đối chiếu các quyết định đã thực hiện để rút ra hành động nên lặp lại.")}</p>
           </div>
           <Badge variant="muted">decision log</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-text-dim">Bối cảnh</label>
+            <label className="text-xs font-medium text-text-dim">{t("Bối cảnh")}</label>
             <Input value={situation} onChange={(e) => setSituation(e.target.value)} className="mt-1.5 h-10" />
           </div>
           <div>
-            <label className="text-xs font-medium text-text-dim">Danh mục</label>
+            <label className="text-xs font-medium text-text-dim">{t("Danh mục")}</label>
             <div className="mt-1.5 inline-flex overflow-hidden rounded-md border border-border">
               {CATEGORIES.map((c) => (
                 <button key={c} type="button" onClick={() => setCategory(c)}
@@ -104,21 +106,21 @@ export function DecisionIntelligencePanel() {
                   </button>
                 </div>
                 <Input value={d.description} onChange={(e) => update(i, { description: e.target.value })}
-                  placeholder="Mô tả quyết định" className="mt-2 h-9" />
+                  placeholder={t("Mô tả quyết định")} className="mt-2 h-9" />
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <div>
-                    <label className="text-xs font-medium text-text-dim">Chỉ số</label>
+                    <label className="text-xs font-medium text-text-dim">{t("Chỉ số")}</label>
                     <select value={d.metric} onChange={(e) => update(i, { metric: e.target.value as DecisionInput["metric"] })}
                       className="mt-1 h-9 w-full rounded-md border border-border bg-surface px-2 text-xs text-text">
                       {METRICS.map((m) => <option key={m} value={m}>{METRIC_LABEL[m]}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-text-dim">Giá trị</label>
+                    <label className="text-xs font-medium text-text-dim">{t("Giá trị")}</label>
                     <Input type="number" min={0} value={d.value} onChange={(e) => update(i, { value: Math.max(0, Number(e.target.value)) })} className="mt-1 h-9" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-text-dim">Tháng (nếu ads)</label>
+                    <label className="text-xs font-medium text-text-dim">{t("Tháng (nếu ads)")}</label>
                     <Input type="number" min={0} value={d.month ?? ""} placeholder="—"
                       onChange={(e) => update(i, { month: e.target.value === "" ? null : Math.max(0, Number(e.target.value)) })}
                       className="mt-1 h-9" />
@@ -130,7 +132,7 @@ export function DecisionIntelligencePanel() {
 
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={addRow}>
-              <Plus className="h-3.5 w-3.5" /> Thêm quyết định
+              <Plus className="h-3.5 w-3.5" /> {t("Thêm quyết định")}
             </Button>
             <Button onClick={run} disabled={busy || !decisions.length}>
               {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lightbulb className="h-3.5 w-3.5" />}
@@ -141,13 +143,13 @@ export function DecisionIntelligencePanel() {
       </Card>
 
       {error && (
-        <p className="text-sm text-danger">Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.</p>
+        <p className="text-sm text-danger">{t("Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.")}</p>
       )}
 
       {result && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <Card>
-            <CardHeader><CardTitle>Quyết định tốt nhất</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Quyết định tốt nhất")}</CardTitle></CardHeader>
             <CardContent>
               <Badge variant="live">{KIND_LABEL[result.best_decision.kind] ?? result.best_decision.kind}</Badge>
               <div className="mt-2 text-sm font-medium text-text">{result.best_decision.description}</div>
@@ -157,21 +159,21 @@ export function DecisionIntelligencePanel() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Tháng chạy ads tốt nhất</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Tháng chạy ads tốt nhất")}</CardTitle></CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold text-text">
-                {result.best_ad_month != null ? `Tháng ${result.best_ad_month}` : "Chưa xác định"}
+                {result.best_ad_month != null ? `Tháng ${result.best_ad_month}` : t("Chưa xác định")}
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Hành động đề xuất</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Hành động đề xuất")}</CardTitle></CardHeader>
             <CardContent>
               <p className="text-sm font-medium text-text">{result.recommended_action}</p>
             </CardContent>
           </Card>
           <Card className="lg:col-span-3">
-            <CardHeader><CardTitle>Lý giải</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Lý giải")}</CardTitle></CardHeader>
             <CardContent>
               <p className="text-sm text-text-muted">{result.reasoning}</p>
             </CardContent>

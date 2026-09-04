@@ -23,6 +23,7 @@ import {
   type Category,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const CATEGORIES: Category[] = ["Thời trang", "Mỹ phẩm", "Phụ kiện"];
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
@@ -48,6 +49,7 @@ function compactVnd(value: number) {
 }
 
 function Stat({ label, value, helper, tone = "text-text" }: { label: string; value: string; helper: string; tone?: string }) {
+  const t = useT();
   return (
     <div className="rounded-xl border border-border bg-surface-2/55 p-4">
       <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">{label}</p>
@@ -58,11 +60,12 @@ function Stat({ label, value, helper, tone = "text-text" }: { label: string; val
 }
 
 function PlanningGuide() {
+  const t = useT();
   return (
     <div className="grid gap-2 text-xs text-text-muted sm:grid-cols-3">
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5"><WalletCards className="h-4 w-4 shrink-0 text-accent" /><span><b className="text-text">Chọn vốn</b> bạn có thể dùng</span></div>
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5"><PackagePlus className="h-4 w-4 shrink-0 text-accent" /><span><b className="text-text">Xem nên nhập gì</b> và bao nhiêu</span></div>
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5"><CheckCircle2 className="h-4 w-4 shrink-0 text-accent" /><span><b className="text-text">Kiểm tra hiệu quả</b> trước khi nhập</span></div>
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5"><WalletCards className="h-4 w-4 shrink-0 text-accent" /><span><b className="text-text">{t("Chọn vốn")}</b> {t("bạn có thể dùng")}</span></div>
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5"><PackagePlus className="h-4 w-4 shrink-0 text-accent" /><span><b className="text-text">{t("Xem nên nhập gì")}</b> {t("và bao nhiêu")}</span></div>
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5"><CheckCircle2 className="h-4 w-4 shrink-0 text-accent" /><span><b className="text-text">{t("Kiểm tra hiệu quả")}</b> {t("trước khi nhập")}</span></div>
     </div>
   );
 }
@@ -83,25 +86,27 @@ function OutlookCard({ row }: { row: RestockPlan["outlook"][number] }) {
 }
 
 function PriorityRow({ item }: { item: RestockPlan["items"][number] }) {
+  const t = useT();
   const reason = item.partial
-    ? "Ưu tiên nhưng ngân sách chưa đủ để nhập đủ nhu cầu"
+    ? t("Ưu tiên nhưng ngân sách chưa đủ để nhập đủ nhu cầu")
     : item.days_of_stock_left <= 7
-      ? "Sắp hết hàng"
-      : "Nhu cầu dự kiến cao";
+      ? t("Sắp hết hàng")
+      : t("Nhu cầu dự kiến cao");
   return (
     <div className="grid gap-3 border-b border-border/70 px-4 py-3.5 last:border-0 sm:grid-cols-[minmax(0,1fr)_5rem_6.5rem_minmax(10rem,0.9fr)] sm:items-center sm:px-5">
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-text">{item.name}</p>
         <p className="mt-0.5 truncate text-2xs text-text-muted">{item.brand} · {item.category} · {item.channel_name}</p>
       </div>
-      <div className="sm:text-right"><p className="text-2xs text-text-dim sm:hidden">Số lượng</p><p className="tnum text-sm font-bold text-text">{item.order_qty} cái</p></div>
-      <div className="sm:text-right"><p className="text-2xs text-text-dim sm:hidden">Vốn cần</p><p className="tnum text-sm font-semibold text-text">{compactVnd(item.spend_vnd)}</p></div>
+      <div className="sm:text-right"><p className="text-2xs text-text-dim sm:hidden">{t("Số lượng")}</p><p className="tnum text-sm font-bold text-text">{item.order_qty} cái</p></div>
+      <div className="sm:text-right"><p className="text-2xs text-text-dim sm:hidden">{t("Vốn cần")}</p><p className="tnum text-sm font-semibold text-text">{compactVnd(item.spend_vnd)}</p></div>
       <p className="line-clamp-2 text-xs leading-5 text-text-muted">{reason}</p>
     </div>
   );
 }
 
 export function RestockPlannerPanel() {
+  const t = useT();
   const now = new Date().getMonth() + 1;
   const [budgetText, setBudgetText] = useState("50000000");
   const [month, setMonth] = useState(now);
@@ -149,8 +154,8 @@ export function RestockPlannerPanel() {
           <div className="flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent"><PackagePlus className="h-5 w-5" /></span>
             <div>
-              <h2 className="text-lg font-bold text-text">Kế hoạch nhập hàng</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">Tính nhanh với số vốn hiện có: nên nhập nhóm hàng nào, bao nhiêu sản phẩm và dự kiến thu được gì.</p>
+              <h2 className="text-lg font-bold text-text">{t("Kế hoạch nhập hàng")}</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-text-muted">{t("Tính nhanh với số vốn hiện có: nên nhập nhóm hàng nào, bao nhiêu sản phẩm và dự kiến thu được gì.")}</p>
             </div>
           </div>
           <div className="mt-5"><PlanningGuide /></div>
@@ -160,52 +165,52 @@ export function RestockPlannerPanel() {
       <Card>
         <CardHeader className="border-b border-border">
           <div>
-            <CardTitle>Thông tin lập kế hoạch</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">Chỉ cần nhập ba thông tin dưới đây. Bỏ trống ngành để xem toàn bộ cửa hàng.</p>
+            <CardTitle>{t("Thông tin lập kế hoạch")}</CardTitle>
+            <p className="mt-1 text-xs text-text-muted">{t("Chỉ cần nhập ba thông tin dưới đây. Bỏ trống ngành để xem toàn bộ cửa hàng.")}</p>
           </div>
           <Badge variant="muted">Tối đa {HORIZON_MAX} ngày</Badge>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
           <div className="grid gap-4 md:grid-cols-3">
-            <label className="block"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">Ngân sách nhập</span><Input type="number" inputMode="numeric" value={budgetText} min={100_000} step={1_000_000} onChange={(event) => setBudgetText(event.target.value)} className="mt-1" aria-invalid={!budgetValid} /><span className={cn("mt-1 block text-2xs", budgetValid ? "text-text-dim" : "text-danger")}>{budgetValid ? vnd(budget) : "Nhập số vốn lớn hơn 0"}</span></label>
-            <label className="block"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">Tháng cần hàng</span><select value={month} onChange={(event) => setMonth(Number(event.target.value))} className="mt-1 h-9 w-full rounded-md border border-border bg-surface-2 px-3 text-sm">{MONTHS.map((item) => <option key={item} value={item}>Tháng {item}{item === now ? " (hiện tại)" : ""}</option>)}</select></label>
-            <label className="block"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">Số ngày muốn đủ hàng</span><Input type="number" inputMode="numeric" value={horizonText} min={HORIZON_MIN} max={HORIZON_MAX} onChange={(event) => setHorizonText(event.target.value)} className="mt-1" aria-invalid={!horizonValid} /><span className={cn("mt-1 block text-2xs", horizonValid ? "text-text-dim" : "text-danger")}>{horizonValid ? `Đủ bán trong ${horizon} ngày` : `Nhập từ ${HORIZON_MIN} đến ${HORIZON_MAX}`}</span></label>
+            <label className="block"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">{t("Ngân sách nhập")}</span><Input type="number" inputMode="numeric" value={budgetText} min={100_000} step={1_000_000} onChange={(event) => setBudgetText(event.target.value)} className="mt-1" aria-invalid={!budgetValid} /><span className={cn("mt-1 block text-2xs", budgetValid ? "text-text-dim" : "text-danger")}>{budgetValid ? vnd(budget) : t("Nhập số vốn lớn hơn 0")}</span></label>
+            <label className="block"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">{t("Tháng cần hàng")}</span><select value={month} onChange={(event) => setMonth(Number(event.target.value))} className="mt-1 h-9 w-full rounded-md border border-border bg-surface-2 px-3 text-sm">{MONTHS.map((item) => <option key={item} value={item}>Tháng {item}{item === now ? " (hiện tại)" : ""}</option>)}</select></label>
+            <label className="block"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">{t("Số ngày muốn đủ hàng")}</span><Input type="number" inputMode="numeric" value={horizonText} min={HORIZON_MIN} max={HORIZON_MAX} onChange={(event) => setHorizonText(event.target.value)} className="mt-1" aria-invalid={!horizonValid} /><span className={cn("mt-1 block text-2xs", horizonValid ? "text-text-dim" : "text-danger")}>{horizonValid ? `Đủ bán trong ${horizon} ngày` : `Nhập từ ${HORIZON_MIN} đến ${HORIZON_MAX}`}</span></label>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">Chỉ xem ngành</span>{CATEGORIES.map((category) => <button key={category} type="button" onClick={() => toggleCategory(category)} className={cn("rounded-md border px-2.5 py-1 text-xs transition-colors", categories.includes(category) ? "border-accent bg-accent/10 text-accent" : "border-border text-text-muted hover:text-text")}>{category}</button>)}{categories.length > 0 ? <button type="button" onClick={() => setCategories([])} className="text-2xs text-text-dim underline">Xoá lọc</button> : null}</div>
-          <div className="flex justify-end border-t border-border pt-4"><Button onClick={run} disabled={!canRun}>{busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Đang tính…</> : <><RefreshCw className="h-4 w-4" /> Cập nhật kế hoạch</>}</Button></div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4"><span className="text-2xs font-medium uppercase tracking-wider text-text-muted">{t("Chỉ xem ngành")}</span>{CATEGORIES.map((category) => <button key={category} type="button" onClick={() => toggleCategory(category)} className={cn("rounded-md border px-2.5 py-1 text-xs transition-colors", categories.includes(category) ? "border-accent bg-accent/10 text-accent" : "border-border text-text-muted hover:text-text")}>{t(category)}</button>)}{categories.length > 0 ? <button type="button" onClick={() => setCategories([])} className="text-2xs text-text-dim underline">{t("Xoá lọc")}</button> : null}</div>
+          <div className="flex justify-end border-t border-border pt-4"><Button onClick={run} disabled={!canRun}>{busy ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("Đang tính…")}</> : <><RefreshCw className="h-4 w-4" /> {t("Cập nhật kế hoạch")}</>}</Button></div>
         </CardContent>
       </Card>
 
-      {failure ? <Card><CardContent className={cn("flex items-start gap-2 py-4 text-sm", failure.kind === "rate_limited" ? "text-warning" : "text-danger")}><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span>{failure.message}{result ? <span className="mt-1 block text-2xs text-text-dim">Đang giữ kết quả gần nhất để bạn vẫn xem được.</span> : null}</span></CardContent></Card> : null}
+      {failure ? <Card><CardContent className={cn("flex items-start gap-2 py-4 text-sm", failure.kind === "rate_limited" ? "text-warning" : "text-danger")}><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span>{failure.message}{result ? <span className="mt-1 block text-2xs text-text-dim">{t("Đang giữ kết quả gần nhất để bạn vẫn xem được.")}</span> : null}</span></CardContent></Card> : null}
 
       {result ? <div className="space-y-5">
         <Card>
-          <CardHeader className="border-b border-border"><div><CardTitle>Kết quả cần nhớ</CardTitle><p className="mt-1 max-w-3xl text-xs leading-5 text-text-muted">{result.summary}</p></div><Badge variant="muted">{result.horizon_days} ngày</Badge></CardHeader>
+          <CardHeader className="border-b border-border"><div><CardTitle>{t("Kết quả cần nhớ")}</CardTitle><p className="mt-1 max-w-3xl text-xs leading-5 text-text-muted">{result.summary}</p></div><Badge variant="muted">{result.horizon_days} ngày</Badge></CardHeader>
           <CardContent className="grid gap-3 pt-5 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Vốn cần dùng" value={compactVnd(result.spent_vnd)} helper={`để đủ hàng trong ${result.horizon_days} ngày`} />
-            <Stat label={result.unfunded_vnd > 0 ? "Vốn còn thiếu" : "Ngân sách còn lại"} value={compactVnd(result.unfunded_vnd > 0 ? result.unfunded_vnd : result.remaining_vnd)} helper={result.unfunded_vnd > 0 ? "để đáp ứng toàn bộ nhu cầu dự báo" : result.budget_status === "surplus" ? "không cần nhập dư để dùng hết vốn" : "đã phân bổ đủ"} tone={result.unfunded_vnd > 0 ? "text-warning" : result.budget_status === "surplus" ? "text-success" : "text-text"} />
-            <Stat label="Số sản phẩm nhập" value={`${result.total_units} cái`} helper={`${result.item_count} mã được ưu tiên`} />
-            <Stat label="Lãi gộp dự kiến" value={compactVnd(result.expected_profit_vnd)} helper="trước phí sàn và chi phí vận hành" tone="text-success" />
+            <Stat label={t("Vốn cần dùng")} value={compactVnd(result.spent_vnd)} helper={`để đủ hàng trong ${result.horizon_days} ngày`} />
+            <Stat label={result.unfunded_vnd > 0 ? "Vốn còn thiếu" : t("Ngân sách còn lại")} value={compactVnd(result.unfunded_vnd > 0 ? result.unfunded_vnd : result.remaining_vnd)} helper={result.unfunded_vnd > 0 ? "để đáp ứng toàn bộ nhu cầu dự báo" : result.budget_status === "surplus" ? "không cần nhập dư để dùng hết vốn" : t("đã phân bổ đủ")} tone={result.unfunded_vnd > 0 ? "text-warning" : result.budget_status === "surplus" ? "text-success" : "text-text"} />
+            <Stat label={t("Số sản phẩm nhập")} value={`${result.total_units} cái`} helper={`${result.item_count} mã được ưu tiên`} />
+            <Stat label={t("Lãi gộp dự kiến")} value={compactVnd(result.expected_profit_vnd)} helper={t("trước phí sàn và chi phí vận hành")} tone="text-success" />
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="border-b border-border"><div><CardTitle>Ưu tiên theo ngành</CardTitle><p className="mt-1 text-xs text-text-muted">Một dòng cho mỗi ngành để biết nên tăng, giữ hay nhập thận trọng.</p></div></CardHeader>
+          <CardHeader className="border-b border-border"><div><CardTitle>{t("Ưu tiên theo ngành")}</CardTitle><p className="mt-1 text-xs text-text-muted">{t("Một dòng cho mỗi ngành để biết nên tăng, giữ hay nhập thận trọng.")}</p></div></CardHeader>
           <CardContent className="grid gap-3 pt-5 md:grid-cols-3">{result.outlook.map((row) => <OutlookCard key={row.category} row={row} />)}</CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="border-b border-border"><div><CardTitle>Sản phẩm nên nhập trước</CardTitle><p className="mt-1 text-xs text-text-muted">Danh sách rút gọn theo mức ưu tiên. Mở rộng danh sách chỉ khi cần kiểm tra chi tiết.</p></div><Badge variant="muted">{result.item_count} mã</Badge></CardHeader>
+          <CardHeader className="border-b border-border"><div><CardTitle>{t("Sản phẩm nên nhập trước")}</CardTitle><p className="mt-1 text-xs text-text-muted">{t("Danh sách rút gọn theo mức ưu tiên. Mở rộng danh sách chỉ khi cần kiểm tra chi tiết.")}</p></div><Badge variant="muted">{result.item_count} mã</Badge></CardHeader>
           <CardContent className="p-0">
-            <div className="hidden grid-cols-[minmax(0,1fr)_5rem_6.5rem_minmax(10rem,0.9fr)] gap-3 border-b border-border bg-surface-2/50 px-5 py-2.5 text-2xs font-medium uppercase tracking-wider text-text-muted sm:grid"><span>Sản phẩm</span><span className="text-right">Nhập</span><span className="text-right">Vốn</span><span>Lý do</span></div>
+            <div className="hidden grid-cols-[minmax(0,1fr)_5rem_6.5rem_minmax(10rem,0.9fr)] gap-3 border-b border-border bg-surface-2/50 px-5 py-2.5 text-2xs font-medium uppercase tracking-wider text-text-muted sm:grid"><span>{t("Sản phẩm")}</span><span className="text-right">{t("Nhập")}</span><span className="text-right">{t("Vốn")}</span><span>{t("Lý do")}</span></div>
             {result.items.slice(0, 8).map((item) => <PriorityRow key={`${item.sku}-${item.channel}`} item={item} />)}
             {result.items.length > 8 ? <p className="border-t border-border bg-surface-2/35 px-5 py-3 text-xs text-text-muted">Còn {result.items.length - 8} mã ít ưu tiên hơn — không đưa lên màn hình chính.</p> : null}
-            {result.items.length === 0 ? <div className="flex flex-col items-center py-10 text-center"><PackagePlus className="h-7 w-7 text-text-dim" /><p className="mt-2 text-sm font-semibold text-text">Chưa có sản phẩm cần nhập</p><p className="mt-1 text-xs text-text-muted">Với ngân sách và thời gian hiện tại, hàng đang có là đủ.</p></div> : null}
+            {result.items.length === 0 ? <div className="flex flex-col items-center py-10 text-center"><PackagePlus className="h-7 w-7 text-text-dim" /><p className="mt-2 text-sm font-semibold text-text">{t("Chưa có sản phẩm cần nhập")}</p><p className="mt-1 text-xs text-text-muted">{t("Với ngân sách và thời gian hiện tại, hàng đang có là đủ.")}</p></div> : null}
           </CardContent>
         </Card>
 
-        {result.skipped_count > 0 ? <div className="flex items-center gap-2 rounded-xl border border-warning/20 bg-warning/[0.05] px-4 py-3 text-xs text-text-muted"><AlertTriangle className="h-4 w-4 shrink-0 text-warning" /><span><b className="text-text">{result.skipped_count} mã chưa được đưa vào kế hoạch</b> vì ngân sách không đủ; hệ thống ưu tiên các mã có tác động cao hơn.</span></div> : null}
+        {result.skipped_count > 0 ? <div className="flex items-center gap-2 rounded-xl border border-warning/20 bg-warning/[0.05] px-4 py-3 text-xs text-text-muted"><AlertTriangle className="h-4 w-4 shrink-0 text-warning" /><span><b className="text-text">{result.skipped_count} mã chưa được đưa vào kế hoạch</b> {t("vì ngân sách không đủ; hệ thống ưu tiên các mã có tác động cao hơn.")}</span></div> : null}
 
       </div> : null}
     </div>

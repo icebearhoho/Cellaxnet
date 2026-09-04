@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DEMO_CUSTOMERS } from "@/lib/demo-customers";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const PERSONAS = [
   "Active Buyers",
@@ -30,6 +31,18 @@ type PersonaMeta = {
   badge: "success" | "live" | "warning" | "danger";
 };
 
+/** Hành động cho nhóm người bán — là JSX vì có in đậm tên tính năng. */
+function SellerAction() {
+  const t = useT();
+  return (
+    <>
+      {t("Hướng dẫn dùng")}{" "}
+      <span className="font-semibold text-text">{t("Cải thiện cửa hàng")}</span>{" "}
+      {t("để rà soát lại gian hàng. Sau đó xin phản hồi để biết họ đang vướng ở đâu và giới thiệu đúng tính năng hỗ trợ tiếp theo.")}
+    </>
+  );
+}
+
 const PERSONA_META: Record<Persona, PersonaMeta> = {
   "Active Buyers": {
     label: "Khách hàng tích cực",
@@ -45,8 +58,7 @@ const PERSONA_META: Record<Persona, PersonaMeta> = {
     shortDescription: "Có lịch sử đăng bán hoặc bán được hàng, nhưng phần lớn đã lâu không quay lại.",
     action: (
       <>
-        Hướng dẫn dùng <span className="font-semibold text-text">Cải thiện cửa hàng</span> để rà soát lại gian hàng.
-        Sau đó xin phản hồi để biết họ đang vướng ở đâu và giới thiệu đúng tính năng hỗ trợ tiếp theo.
+        <SellerAction />
       </>
     ),
     icon: Store,
@@ -80,6 +92,7 @@ const PERSONA_META: Record<Persona, PersonaMeta> = {
 const PAGE_SIZE = 12;
 
 export function SegmentationPanel() {
+  const t = useT();
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -122,13 +135,13 @@ export function SegmentationPanel() {
         <CardHeader className="border-b border-border bg-gradient-to-r from-accent/[0.07] to-accent-2/[0.05] p-5 sm:p-6">
           <div className="min-w-0">
             <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-              <UsersRound className="h-4 w-4" aria-hidden="true" /> Phân khúc khách hàng
+              <UsersRound className="h-4 w-4" aria-hidden="true" /> {t("Phân khúc khách hàng")}
             </div>
             <CardTitle id="customer-segments-title" className="text-lg sm:text-xl">
-              Bạn muốn xem nhóm khách hàng nào?
+              {t("Bạn muốn xem nhóm khách hàng nào?")}
             </CardTitle>
             <p className="mt-1.5 max-w-3xl text-sm leading-6 text-text-muted">
-              Chọn một phân khúc để xem toàn bộ khách hàng thuộc nhóm, thông tin liên hệ, hành vi và lịch sử hoạt động.
+              {t("Chọn một phân khúc để xem toàn bộ khách hàng thuộc nhóm, thông tin liên hệ, hành vi và lịch sử hoạt động.")}
             </p>
           </div>
           <Badge variant="muted" className="hidden shrink-0 sm:inline-flex">
@@ -142,21 +155,21 @@ export function SegmentationPanel() {
                 <ChartNoAxesColumnIncreasing className="h-5 w-5" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">Tổng quy mô</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">{t("Tổng quy mô")}</p>
                 <p className="tnum mt-1 text-3xl font-bold tracking-tight text-text">{DEMO_CUSTOMERS.length}</p>
-                <p className="text-xs text-text-muted">khách hàng đã phân nhóm</p>
+                <p className="text-xs text-text-muted">{t("khách hàng đã phân nhóm")}</p>
               </div>
             </div>
 
             <div className="min-w-0">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-text">Phân bổ khách hàng</p>
-                <p className="text-xs text-text-muted">4 phân khúc</p>
+                <p className="text-sm font-semibold text-text">{t("Phân bổ khách hàng")}</p>
+                <p className="text-xs text-text-muted">{t("4 phân khúc")}</p>
               </div>
               <div
                 className="mt-3 flex h-4 w-full overflow-hidden rounded-full bg-surface-3"
                 role="img"
-                aria-label="Phân bổ gồm 85 khách hàng tích cực, 42 người bán, 44 khách hàng có nguy cơ rời bỏ và 129 khách hàng không còn hoạt động"
+                aria-label={t("Phân bổ gồm 85 khách hàng tích cực, 42 người bán, 44 khách hàng có nguy cơ rời bỏ và 129 khách hàng không còn hoạt động")}
               >
                 {PERSONAS.map((persona) => (
                   <span
@@ -167,13 +180,13 @@ export function SegmentationPanel() {
                   />
                 ))}
               </div>
-              <ul className="mt-4 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-4" aria-label="Chú thích phân khúc">
+              <ul className="mt-4 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-4" aria-label={t("Chú thích phân khúc")}>
                 {PERSONAS.map((persona) => {
                   const meta = PERSONA_META[persona];
                   return (
                     <li key={persona} className="flex min-w-0 items-center gap-2">
                       <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", meta.bar)} aria-hidden="true" />
-                      <span className="min-w-0 truncate text-xs text-text-muted" title={meta.label}>{meta.label}</span>
+                      <span className="min-w-0 truncate text-xs text-text-muted" title={t(meta.label)}>{t(meta.label)}</span>
                     </li>
                   );
                 })}
@@ -181,7 +194,7 @@ export function SegmentationPanel() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" role="group" aria-label="Chọn phân khúc khách hàng">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" role="group" aria-label={t("Chọn phân khúc khách hàng")}>
             {PERSONAS.map((persona) => {
               const meta = PERSONA_META[persona];
               const Icon = meta.icon;
@@ -209,9 +222,9 @@ export function SegmentationPanel() {
                       <span className="tnum text-2xl font-bold">{count}</span>
                     </span>
                   </div>
-                  <p className="mt-4 font-semibold text-text">{meta.label}</p>
-                  <p className="mt-1 text-sm leading-5 text-text-muted">{meta.shortDescription}</p>
-                  <p className={cn("mt-3 text-xs font-semibold", isSelected ? "text-current" : "text-accent")}>Chọn để xem danh sách</p>
+                  <p className="mt-4 font-semibold text-text">{t(meta.label)}</p>
+                  <p className="mt-1 text-sm leading-5 text-text-muted">{t(meta.shortDescription)}</p>
+                  <p className={cn("mt-3 text-xs font-semibold", isSelected ? "text-current" : "text-accent")}>{t("Chọn để xem danh sách")}</p>
                 </button>
               );
             })}
@@ -225,9 +238,9 @@ export function SegmentationPanel() {
             <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-accent/10 text-accent">
               <UsersRound className="h-7 w-7" aria-hidden="true" />
             </div>
-            <p className="font-semibold text-text">Chưa chọn phân khúc</p>
+            <p className="font-semibold text-text">{t("Chưa chọn phân khúc")}</p>
             <p className="mt-2 max-w-md text-sm leading-6 text-text-muted">
-              Chọn một trong bốn nhóm phía trên để mở danh sách khách hàng tương ứng.
+              {t("Chọn một trong bốn nhóm phía trên để mở danh sách khách hàng tương ứng.")}
             </p>
           </CardContent>
         </Card>
@@ -236,7 +249,7 @@ export function SegmentationPanel() {
           <CardHeader className="gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:p-6">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <CardTitle className="text-lg">{selectedMeta.label}</CardTitle>
+                <CardTitle className="text-lg">{t(selectedMeta.label)}</CardTitle>
                 <Badge variant={selectedMeta.badge}>{segmentCounts[selectedPersona]} khách hàng</Badge>
               </div>
             </div>
@@ -246,9 +259,9 @@ export function SegmentationPanel() {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm tên, SĐT, email, thành phố…"
+                placeholder={t("Tìm tên, SĐT, email, thành phố…")}
                 className="pl-10"
-                aria-label={`Tìm trong nhóm ${selectedMeta.label}`}
+                aria-label={`${t("Tìm trong nhóm")} ${t(selectedMeta.label)}`}
               />
             </div>
           </CardHeader>
@@ -256,9 +269,13 @@ export function SegmentationPanel() {
           <CardContent className="space-y-5 p-5 sm:p-6">
             <div className="rounded-2xl border border-border bg-bg-alt p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-text">
-                <Lightbulb className="h-4 w-4 text-warning" aria-hidden="true" /> Hành động đề xuất
+                <Lightbulb className="h-4 w-4 text-warning" aria-hidden="true" /> {t("Hành động đề xuất")}
               </p>
-              <p className="mt-1.5 text-sm leading-6 text-text-muted">{selectedMeta.action}</p>
+              <p className="mt-1.5 text-sm leading-6 text-text-muted">
+                {typeof selectedMeta.action === "string"
+                  ? t(selectedMeta.action)
+                  : selectedMeta.action}
+              </p>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -271,11 +288,11 @@ export function SegmentationPanel() {
             {customers.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-10 text-center">
                 <Search className="mx-auto h-6 w-6 text-text-dim" aria-hidden="true" />
-                <p className="mt-3 font-semibold text-text">Không tìm thấy khách hàng</p>
-                <p className="mt-1 text-sm text-text-muted">Thử tên, số điện thoại, email hoặc thành phố khác.</p>
+                <p className="mt-3 font-semibold text-text">{t("Không tìm thấy khách hàng")}</p>
+                <p className="mt-1 text-sm text-text-muted">{t("Thử tên, số điện thoại, email hoặc thành phố khác.")}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2" aria-label={`Danh sách ${selectedMeta.label}`}>
+              <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2" aria-label={`${t("Danh sách")} ${t(selectedMeta.label)}`}>
                 {visible.map((customer) => (
                   <article key={customer.id} className="rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-border-strong">
                     <div className="flex items-start justify-between gap-3">
@@ -283,17 +300,17 @@ export function SegmentationPanel() {
                         <h3 className="truncate font-semibold text-text" title={customer.name}>{customer.name}</h3>
                         <p className="mt-1 text-xs text-text-muted">{customer.gender} · {customer.age} tuổi · {customer.id}</p>
                       </div>
-                      <Badge variant={selectedMeta.badge} className="shrink-0">{selectedMeta.label}</Badge>
+                      <Badge variant={selectedMeta.badge} className="shrink-0">{t(selectedMeta.label)}</Badge>
                     </div>
 
                     <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
                       <div className="flex min-w-0 items-center gap-2 text-text-muted">
                         <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        <dt className="sr-only">Số điện thoại</dt><dd className="tnum truncate">{customer.phone}</dd>
+                        <dt className="sr-only">{t("Số điện thoại")}</dt><dd className="tnum truncate">{customer.phone}</dd>
                       </div>
                       <div className="flex min-w-0 items-center gap-2 text-text-muted">
                         <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        <dt className="sr-only">Thành phố</dt><dd className="truncate">{customer.city}</dd>
+                        <dt className="sr-only">{t("Thành phố")}</dt><dd className="truncate">{customer.city}</dd>
                       </div>
                       <div className="flex min-w-0 items-center gap-2 text-text-muted sm:col-span-2">
                         <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -303,12 +320,12 @@ export function SegmentationPanel() {
 
                     <details className="group mt-4 border-t border-border pt-3">
                       <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between text-sm font-semibold text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-                        Xem hành vi và lịch sử
+                        {t("Xem hành vi và lịch sử")}
                         <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
                       </summary>
                       <div className="mt-3 space-y-3 rounded-xl bg-bg-alt p-3 text-sm leading-6">
-                        <div><p className="text-xs font-semibold uppercase tracking-wider text-text-dim">Hành vi</p><p className="mt-1 text-text-muted">{customer.behavior}</p></div>
-                        <div><p className="text-xs font-semibold uppercase tracking-wider text-text-dim">Lịch sử hoạt động</p><p className="mt-1 text-text-muted">{customer.history}</p></div>
+                        <div><p className="text-xs font-semibold uppercase tracking-wider text-text-dim">{t("Hành vi")}</p><p className="mt-1 text-text-muted">{customer.behavior}</p></div>
+                        <div><p className="text-xs font-semibold uppercase tracking-wider text-text-dim">{t("Lịch sử hoạt động")}</p><p className="mt-1 text-text-muted">{customer.history}</p></div>
                       </div>
                     </details>
                   </article>
@@ -328,7 +345,7 @@ export function SegmentationPanel() {
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                     disabled={current === 0}
                   >
-                    Trước
+                    {t("Trước")}
                   </Button>
                   <Button
                     variant="secondary" size="sm"

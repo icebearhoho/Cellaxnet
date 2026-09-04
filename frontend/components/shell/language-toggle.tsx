@@ -3,13 +3,14 @@
 /**
  * Công tắc ngôn ngữ EN ⇄ VI.
  *
- * Hiện mới chỉ là công tắc: nó nhớ lựa chọn (localStorage) và phát sự kiện
- * `LANGUAGE_EVENT` để phần khác của app hưởng ứng, nhưng chưa có chuỗi dịch nào —
- * giao diện vẫn tiếng Việt. Khi nào làm i18n thật thì đọc `getLanguage()` ở đây
- * làm nguồn sự thật, không cần dựng lại công tắc.
+ * Nút nhớ lựa chọn trong localStorage và phát `LANGUAGE_EVENT`;
+ * `LanguageProvider` (lib/i18n.tsx) nghe sự kiện đó và cấp ngôn ngữ cho mọi
+ * `useT()` bên dưới. Nút không giữ state ngôn ngữ riêng — nó đọc từ provider,
+ * để chỉ có một nguồn sự thật.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 export type Language = "en" | "vi";
 
@@ -80,26 +81,22 @@ const INSET = 3;
 const THUMB = TRACK_H - INSET * 2;
 
 export function LanguageToggle() {
-  const [lang, setLang] = useState<Language>("vi");
+  // Ngôn ngữ lấy từ provider, không giữ bản sao ở đây: provider đã đọc
+  // localStorage sau khi mount và nghe sự kiện, nên hai bên không thể lệch.
+  const lang = useLanguage();
   const [pop, setPop] = useState(false);
   const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Đọc sau khi mount: server không biết localStorage, đọc lúc render đầu sẽ
-  // lệch markup giữa server và client.
-  useEffect(() => {
-    setLang(getLanguage());
-  }, []);
 
   useEffect(() => () => {
     if (popTimer.current) clearTimeout(popTimer.current);
   }, []);
 
   const toggle = useCallback(() => {
-    setLang((prev) => {
-      const next: Language = prev === "en" ? "vi" : "en";
-      setLanguage(next);
-      return next;
-    });
+    // Phát sự kiện ngay trong handler, không lồng trong updater của setState:
+    // updater chạy trong lúc render, nên sự kiện phát từ đó khiến provider
+    // setState giữa render — React báo "Cannot update a component while
+    // rendering a different component".
+    setLanguage(getLanguage() === "en" ? "vi" : "en");
     setPop(true);
     if (popTimer.current) clearTimeout(popTimer.current);
     popTimer.current = setTimeout(() => setPop(false), 420);

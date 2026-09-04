@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono, Patrick_Hand } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { LanguageProvider } from "@/lib/i18n";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,7 +40,9 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} ${patrickHand.variable}`}
     >
       <body className="min-h-screen bg-bg text-text antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

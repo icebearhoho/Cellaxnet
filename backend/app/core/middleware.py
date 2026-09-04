@@ -10,6 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.core.config import settings
+from app.core.i18n import set_language
 from app.core.logging import get_logger
 
 log = get_logger(__name__)
@@ -43,6 +44,11 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
         request.state.request_id = request_id
+
+        # Ngôn ngữ phải đặt trước khi handler chạy: một phần văn bản hiển thị
+        # do backend sinh ra, và ContextVar chỉ có hiệu lực trong ngữ cảnh của
+        # chính request này.
+        set_language(request.headers.get("accept-language"))
 
         start = time.perf_counter()
         response = await call_next(request)

@@ -19,6 +19,7 @@ import {
   type Alert,
   type ProvinceNode,
 } from "@/lib/mock-data";
+import { useT } from "@/lib/i18n";
 
 type Summary = {
   shop: { name: string; channels: string[]; data_as_of: string; demo_mode: boolean };
@@ -31,6 +32,7 @@ type Summary = {
 };
 
 export function SellerOverview() {
+  const t = useT();
   const [data, setData] = useState<Summary | null>(null);
 
   useEffect(() => {
@@ -57,19 +59,19 @@ export function SellerOverview() {
             {data?.shop.name ?? "Mây House Official"} · dữ liệu demo thống nhất
           </div>
           <h1 className="mt-2 text-5xl font-extrabold leading-[1.05] tracking-tight text-text sm:text-6xl">
-            Tình hình <span className="text-gradient">cửa hàng</span>
+            {t("Tình hình")} <span className="text-gradient">{t("cửa hàng")}</span>
           </h1>
           <p className="mt-3 max-w-2xl text-base text-text-muted">
             {data
               ? `${data.counts.products} SKU · ${data.counts.customers} khách · ${data.counts.orders} đơn · ${data.counts.reviews} đánh giá.`
-              : "Đang tải snapshot sản phẩm, khách, đơn, tồn kho và đánh giá dùng chung cho mọi feature."}
+              : t("Đang tải snapshot sản phẩm, khách, đơn, tồn kho và đánh giá dùng chung cho mọi feature.")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="muted">shop demo có quan hệ dữ liệu</Badge>
+          <Badge variant="muted">{t("shop demo có quan hệ dữ liệu")}</Badge>
           <span className="mono text-xs text-text-muted">{okNodes}/{provinces.length} khu vực ổn định</span>
           <Button asChild size="sm" variant="primary">
-            <Link href="/seller/review-intelligence"><Star className="h-3.5 w-3.5" />Phân tích đánh giá</Link>
+            <Link href="/seller/review-intelligence"><Star className="h-3.5 w-3.5" />{t("Phân tích đánh giá")}</Link>
           </Button>
         </div>
       </div>

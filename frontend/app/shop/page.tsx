@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Sparkles, Store } from "lucide-react";
 import { navForApp } from "@/lib/nav";
@@ -25,8 +27,7 @@ export default function ShopHome() {
             Tìm đúng món <span className="text-gradient">bạn thích</span>
           </h1>
           <p className="mt-5 text-text-muted">
-            Trợ lý mua sắm thông minh cho thời trang &amp; mỹ phẩm — cứ nói bạn cần gì,
-            Cellaxnet gợi ý ngay.
+            Trợ lý mua sắm thông minh cho thời trang & mỹ phẩm — cứ nói bạn cần gì, Cellaxnet gợi ý ngay.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link

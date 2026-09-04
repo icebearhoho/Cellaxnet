@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { analyzeCreatorPerformance, type CreatorPerformanceResult, type CreatorItemInput, type Category } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const CATEGORIES: Category[] = ["Thời trang", "Mỹ phẩm", "Phụ kiện"];
 const CONTENT_TYPES: CreatorItemInput["content_type"][] = ["video", "livestream", "post"];
@@ -18,6 +19,7 @@ function vnd(n: number) {
 }
 
 export function CreatorPerformancePanel() {
+  const t = useT();
   const [category, setCategory] = useState<Category>("Thời trang");
   const [items, setItems] = useState<CreatorItemInput[]>([
     { creator: "Hà Linh Official", content_type: "livestream", views: 120000, engagements: 9800, attributed_sales_vnd: 45000000 },
@@ -59,14 +61,14 @@ export function CreatorPerformancePanel() {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Hiệu quả KOL/KOC theo chiến dịch</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">So sánh creator theo doanh số quy đổi, doanh số / 1k view và tỷ lệ tương tác.</p>
+            <CardTitle>{t("Hiệu quả KOL/KOC theo chiến dịch")}</CardTitle>
+            <p className="mt-1 text-xs text-text-muted">{t("So sánh creator theo doanh số quy đổi, doanh số / 1k view và tỷ lệ tương tác.")}</p>
           </div>
           <Badge variant="muted">creator analytics</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-text-dim">Danh mục chiến dịch</label>
+            <label className="text-xs font-medium text-text-dim">{t("Danh mục chiến dịch")}</label>
             <div className="mt-1.5 inline-flex overflow-hidden rounded-md border border-border">
               {CATEGORIES.map((c) => (
                 <button key={c} type="button" onClick={() => setCategory(c)}
@@ -83,7 +85,7 @@ export function CreatorPerformancePanel() {
               <div key={i} className="rounded-md border border-border bg-bg-alt p-3">
                 <div className="flex items-center gap-2">
                   <Input value={it.creator} onChange={(e) => update(i, { creator: e.target.value })}
-                    placeholder="Tên creator" className="h-9 flex-1" />
+                    placeholder={t("Tên creator")} className="h-9 flex-1" />
                   <div className="inline-flex overflow-hidden rounded-md border border-border">
                     {CONTENT_TYPES.map((t) => (
                       <button key={t} type="button" onClick={() => update(i, { content_type: t })}
@@ -103,11 +105,11 @@ export function CreatorPerformancePanel() {
                     <Input type="number" min={0} value={it.views} onChange={(e) => update(i, { views: Math.max(0, Number(e.target.value)) })} className="mt-1 h-9" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-text-dim">Tương tác</label>
+                    <label className="text-xs font-medium text-text-dim">{t("Tương tác")}</label>
                     <Input type="number" min={0} value={it.engagements} onChange={(e) => update(i, { engagements: Math.max(0, Number(e.target.value)) })} className="mt-1 h-9" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-text-dim">Doanh số (₫)</label>
+                    <label className="text-xs font-medium text-text-dim">{t("Doanh số (₫)")}</label>
                     <Input type="number" min={0} value={it.attributed_sales_vnd} onChange={(e) => update(i, { attributed_sales_vnd: Math.max(0, Number(e.target.value)) })} className="mt-1 h-9" />
                   </div>
                 </div>
@@ -117,7 +119,7 @@ export function CreatorPerformancePanel() {
 
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={addRow}>
-              <Plus className="h-3.5 w-3.5" /> Thêm creator
+              <Plus className="h-3.5 w-3.5" /> {t("Thêm creator")}
             </Button>
             <Button onClick={run} disabled={busy || !items.length}>
               {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
@@ -128,26 +130,26 @@ export function CreatorPerformancePanel() {
       </Card>
 
       {error && (
-        <p className="text-sm text-danger">Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.</p>
+        <p className="text-sm text-danger">{t("Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.")}</p>
       )}
 
       {result && (
         <>
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card>
-              <CardHeader><CardTitle>Định dạng tốt nhất</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Định dạng tốt nhất")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="text-xl font-semibold text-accent">{CONTENT_LABEL[result.best_content_type] ?? result.best_content_type}</div>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle>Creator nên hợp tác</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Creator nên hợp tác")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="text-xl font-semibold text-text">{result.recommended_creator}</div>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle>Nhận định</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Nhận định")}</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-text-muted">{result.insight}</p>
               </CardContent>
@@ -155,7 +157,7 @@ export function CreatorPerformancePanel() {
           </div>
 
           <Card>
-            <CardHeader><CardTitle>Xếp hạng creator</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("Xếp hạng creator")}</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {result.top_creators.map((c, i) => (

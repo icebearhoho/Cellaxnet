@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { analyzeMarketIntelligence, type MarketIntelligenceResult, type Category } from "@/lib/features";
 import { CompetitorWatch } from "@/components/features/competitor-watch";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const CATEGORIES: Category[] = ["Thời trang", "Mỹ phẩm", "Phụ kiện"];
 
@@ -31,6 +32,7 @@ function vnd(n: number) {
 }
 
 export function MarketIntelligencePanel() {
+  const t = useT();
   const [ourProduct, setOurProduct] = useState("Kem chống nắng SPF50 50ml");
   const [category, setCategory] = useState<Category>("Mỹ phẩm");
   const [ourPrice, setOurPrice] = useState(189000);
@@ -74,18 +76,18 @@ export function MarketIntelligencePanel() {
       <Card className="lg:col-span-7">
         <CardHeader>
           <div>
-            <CardTitle>Sản phẩm của bạn &amp; đối thủ</CardTitle>
-            <p className="mt-1 text-xs text-text-muted">So sánh giá với đối thủ và đề xuất mức giá tối ưu, không phá sàn lợi nhuận.</p>
+            <CardTitle>{t("Sản phẩm của bạn & đối thủ")}</CardTitle>
+            <p className="mt-1 text-xs text-text-muted">{t("So sánh giá với đối thủ và đề xuất mức giá tối ưu, không phá sàn lợi nhuận.")}</p>
           </div>
           <Badge variant="muted">competitive pricing</Badge>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-text-dim">Sản phẩm của bạn</label>
+            <label className="text-xs font-medium text-text-dim">{t("Sản phẩm của bạn")}</label>
             <Input value={ourProduct} onChange={(e) => setOurProduct(e.target.value)} className="mt-1.5 h-10" />
           </div>
           <div>
-            <label className="text-xs font-medium text-text-dim">Danh mục</label>
+            <label className="text-xs font-medium text-text-dim">{t("Danh mục")}</label>
             <div className="mt-1.5 inline-flex overflow-hidden rounded-md border border-border">
               {CATEGORIES.map((c) => (
                 <button key={c} type="button" onClick={() => setCategory(c)}
@@ -98,29 +100,29 @@ export function MarketIntelligencePanel() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-text-dim">Giá bán của bạn (₫)</label>
+              <label className="text-xs font-medium text-text-dim">{t("Giá bán của bạn (₫)")}</label>
               <Input type="number" min={0} value={ourPrice} onChange={(e) => setOurPrice(Math.max(0, Number(e.target.value)))} className="mt-1.5 h-10" />
             </div>
             <div>
-              <label className="text-xs font-medium text-text-dim">Giá vốn (₫)</label>
+              <label className="text-xs font-medium text-text-dim">{t("Giá vốn (₫)")}</label>
               <Input type="number" min={0} value={ourCost} onChange={(e) => setOurCost(Math.max(0, Number(e.target.value)))} className="mt-1.5 h-10" />
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-text-dim">Tên đối thủ</label>
+            <label className="text-xs font-medium text-text-dim">{t("Tên đối thủ")}</label>
             <Input value={competitorName} onChange={(e) => setCompetitorName(e.target.value)} className="mt-1.5 h-10" />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-xs font-medium text-text-dim">Giá đối thủ (₫)</label>
+              <label className="text-xs font-medium text-text-dim">{t("Giá đối thủ (₫)")}</label>
               <Input type="number" min={0} value={competitorPrice} onChange={(e) => setCompetitorPrice(Math.max(0, Number(e.target.value)))} className="mt-1.5 h-10" />
             </div>
             <div>
-              <label className="text-xs font-medium text-text-dim">Giảm giá (%)</label>
+              <label className="text-xs font-medium text-text-dim">{t("Giảm giá (%)")}</label>
               <Input type="number" min={0} value={competitorDiscount} onChange={(e) => setCompetitorDiscount(Math.max(0, Number(e.target.value)))} className="mt-1.5 h-10" />
             </div>
             <div>
-              <label className="text-xs font-medium text-text-dim">Biên tối thiểu (%)</label>
+              <label className="text-xs font-medium text-text-dim">{t("Biên tối thiểu (%)")}</label>
               <Input type="number" min={0} value={minMargin} onChange={(e) => setMinMargin(Math.max(0, Number(e.target.value)))} className="mt-1.5 h-10" />
             </div>
           </div>
@@ -132,31 +134,31 @@ export function MarketIntelligencePanel() {
       </Card>
 
       <Card className="lg:col-span-5">
-        <CardHeader><CardTitle>Đề xuất</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t("Đề xuất")}</CardTitle></CardHeader>
         <CardContent>
           {error ? (
-            <p className="text-sm text-danger">Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.</p>
+            <p className="text-sm text-danger">{t("Không lấy được kết quả. Kiểm tra kết nối backend rồi thử lại.")}</p>
           ) : !result ? (
-            <p className="text-sm text-text-muted">Bấm Phân tích để so sánh giá với đối thủ.</p>
+            <p className="text-sm text-text-muted">{t("Bấm Phân tích để so sánh giá với đối thủ.")}</p>
           ) : (
             <div className="space-y-4">
               <div className={cn("text-xl font-semibold tracking-tight", pos?.cls)}>{pos?.label}</div>
               <div className="rounded-md border border-accent/40 bg-accent/10 px-3 py-3">
-                <div className="text-xs font-medium text-text-dim">Hành động đề xuất</div>
+                <div className="text-xs font-medium text-text-dim">{t("Hành động đề xuất")}</div>
                 <div className="mt-1 text-sm font-medium text-text">{ACTION[result.recommended_action] ?? result.recommended_action}</div>
                 <div className="mono mt-2 text-2xl font-semibold text-accent">{vnd(result.recommended_price_vnd)}</div>
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="rounded-md border border-border bg-bg-alt px-3 py-2">
-                  <div className="text-xs font-medium text-text-dim">Giá sàn</div>
+                  <div className="text-xs font-medium text-text-dim">{t("Giá sàn")}</div>
                   <div className="mono mt-1 text-text">{vnd(result.price_floor_vnd)}</div>
                 </div>
                 <div className="rounded-md border border-border bg-bg-alt px-3 py-2">
-                  <div className="text-xs font-medium text-text-dim">Biên tại giá đề xuất</div>
+                  <div className="text-xs font-medium text-text-dim">{t("Biên tại giá đề xuất")}</div>
                   <div className="mono mt-1 text-text">{result.margin_pct_at_recommended}%</div>
                 </div>
                 <div className="col-span-2 rounded-md border border-border bg-bg-alt px-3 py-2">
-                  <div className="text-xs font-medium text-text-dim">Giá thực tế của đối thủ</div>
+                  <div className="text-xs font-medium text-text-dim">{t("Giá thực tế của đối thủ")}</div>
                   <div className="mono mt-1 text-text">{vnd(result.competitor_effective_price_vnd)}</div>
                 </div>
               </div>

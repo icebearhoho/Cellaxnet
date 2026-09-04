@@ -12,6 +12,7 @@ import {
   type OrderStatus,
 } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const VND = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -36,6 +37,7 @@ const NEXT: Record<OrderStatus, OrderStatus[]> = {
 };
 
 export function OrdersPanel() {
+  const t = useT();
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [busyNo, setBusyNo] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export function OrdersPanel() {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Đơn hàng</CardTitle>
+          <CardTitle>{t("Đơn hàng")}</CardTitle>
           <p className="mt-1 text-xs text-text-muted">
             Đơn thật do khách đặt từ cửa hàng. Chưa có cổng thanh toán — người bán
             xác nhận trạng thái thủ công.
